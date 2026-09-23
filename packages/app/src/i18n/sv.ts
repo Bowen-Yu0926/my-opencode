@@ -754,6 +754,8 @@ export const dict = {
   "session.followupDock.edit": "Redigera",
   "session.followupDock.collapse": "Fäll ihop köade meddelanden",
   "session.followupDock.expand": "Fäll ut köade meddelanden",
+  "session.followupDock.moveUp": "Flytta uppåt",
+  "session.followupDock.moveDown": "Flytta nedåt",
   "session.revertDock.summary.one": "{{count}} återställt meddelande",
   "session.revertDock.summary.other": "{{count}} återställda meddelanden",
   "session.revertDock.collapse": "Fäll ihop återställda meddelanden",

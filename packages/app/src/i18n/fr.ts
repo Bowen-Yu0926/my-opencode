@@ -749,6 +749,8 @@ export const dict = {
   "session.followupDock.edit": "Modifier",
   "session.followupDock.collapse": "Réduire les messages en file d'attente",
   "session.followupDock.expand": "Développer les messages en file d'attente",
+  "session.followupDock.moveUp": "Déplacer vers le haut",
+  "session.followupDock.moveDown": "Déplacer vers le bas",
   "session.revertDock.summary.one": "{{count}} message annulé",
   "session.revertDock.summary.many": "{{count}} de messages annulés",
   "session.revertDock.summary.other": "{{count}} messages annulés",

@@ -754,6 +754,8 @@ export const dict = {
   "session.followupDock.edit": "Խմբագրել",
   "session.followupDock.collapse": "Ծալել հերթագրված հաղորդագրությունները",
   "session.followupDock.expand": "Ընդարձակել հերթագրված հաղորդագրությունները",
+  "session.followupDock.moveUp": "Տեղափոխել վերև",
+  "session.followupDock.moveDown": "Տեղափոխել ներքև",
   "session.revertDock.summary.one": "{{count}} վերադարձված հաղորդագրություն",
   "session.revertDock.summary.other": "{{count}} վերադարձված հաղորդագրություններ",
   "session.revertDock.collapse": "Ծալել վերադարձված հաղորդագրությունները",

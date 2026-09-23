@@ -758,6 +758,8 @@ export const dict = {
   "session.followupDock.edit": "Uredi",
   "session.followupDock.collapse": "Sažmi poruke u redu čekanja",
   "session.followupDock.expand": "Proširi poruke u čekanju",
+  "session.followupDock.moveUp": "Premjesti gore",
+  "session.followupDock.moveDown": "Premjesti dolje",
   "session.revertDock.summary.one": "{{count}} vratio poruku",
   "session.revertDock.summary.other": "{{count}} je vratio poruke",
   "session.revertDock.summary.few": "{{count}} vraćene poruke",

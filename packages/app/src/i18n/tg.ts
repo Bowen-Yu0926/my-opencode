@@ -752,6 +752,8 @@ export const dict = {
   "session.followupDock.edit": "Таҳрир",
   "session.followupDock.collapse": "Паёмҳои навбатдорро қатъ кунед",
   "session.followupDock.expand": "Паёмҳои навбатдорро васеъ кунед",
+  "session.followupDock.moveUp": "Ба боло кучидан",
+  "session.followupDock.moveDown": "Ба поён кучидан",
   "session.revertDock.summary.one": "{{count}} Паём баргашт",
   "session.revertDock.summary.other": "{{count}} паёмҳоро баргардонд",
   "session.revertDock.collapse": "Паёмҳои баргардонидашуда",

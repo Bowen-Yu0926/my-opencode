@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "cli-anything-photoshop": {
+      "source": "yb2460/harness-anything",
+      "sourceType": "github",
+      "skillPath": "photoshop-harness/skills/cli-anything-photoshop/SKILL.md",
+      "computedHash": "01e99b61347e1660dde2705923e8215a9ab1d081e03b74b7b4ddf0efceb22eb3"
+    },
+    "cli-anything-wps": {
+      "source": "yb2460/harness-anything",
+      "sourceType": "github",
+      "skillPath": "cli_anything/wps/skills/SKILL.md",
+      "computedHash": "80be4452531d46dbc19d1c5ebb8b4e20af1b7b9cdeb45ef968f704e0b429af97"
+    },
+    "cli-anything-zotero": {
+      "source": "yb2460/harness-anything",
+      "sourceType": "github",
+      "skillPath": "cli_anything/zotero/skills/SKILL.md",
+      "computedHash": "68fc27fbc56a034173fb1e31698d241a95ba428151be8455603d80902050b4cb"
+    }
+  }
+}

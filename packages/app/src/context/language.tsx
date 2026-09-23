@@ -8,7 +8,6 @@ import { dict as en } from "@/i18n/en"
 import { dict as uiEn } from "@opencode-ai/ui/i18n/en"
 import {
   createDesktopNativeBundle,
-  detectDesktopNativeLocale,
   DESKTOP_NATIVE_ENGLISH,
   DESKTOP_NATIVE_LABELS,
   DESKTOP_NATIVE_LOCALES,
@@ -128,13 +127,9 @@ export function loadLocaleDict(locale: Locale) {
   return loadDict(locale).then(() => undefined)
 }
 
-function detectLocale(): Locale {
-  if (typeof navigator !== "object") return "en"
-  return detectDesktopNativeLocale(navigator.languages?.length ? navigator.languages : [navigator.language])
-}
-
-export function normalizeLocale(value: string): Locale {
-  return LOCALES.includes(value as Locale) ? (value as Locale) : "en"
+export function normalizeLocale(value: string): Exclude<Locale, "en"> {
+  if (value !== "en" && LOCALES.includes(value as Locale)) return value as Exclude<Locale, "en">
+  return "zh"
 }
 
 function readStoredLocale() {
@@ -150,14 +145,11 @@ function readStoredLocale() {
   }
 }
 
-const warm = readStoredLocale() ?? detectLocale()
-const initialLocale =
-  warm === "en"
-    ? Promise.resolve(warm)
-    : loadDict(warm).then(
-        () => warm,
-        () => "en" as const,
-      )
+const warm = readStoredLocale() ?? "zh"
+const initialLocale = loadDict(warm).then(
+  () => warm,
+  () => "zh" as const,
+)
 
 export function loadInitialLocale() {
   return initialLocale
@@ -167,7 +159,7 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
   name: "Language",
   gate: false,
   init: (props: { locale?: Locale; onNativeTranslations?: (bundle: DesktopNativeBundle) => void }) => {
-    const initial = props.locale ?? readStoredLocale() ?? detectLocale()
+    const initial = props.locale ?? readStoredLocale() ?? "zh"
     const [store, setStore, _, ready] = persisted(
       Persist.global("language", ["language.v1"]),
       createStore({
@@ -175,7 +167,7 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
       }),
     )
 
-    const locale = createMemo<Locale>(() => normalizeLocale(store.locale))
+    const locale = createMemo<Exclude<Locale, "en">>(() => normalizeLocale(store.locale))
     const intl = createMemo(() => INTL[locale()])
     const [layout, setLayout] = createStore({ direction: undefined as Direction | undefined })
     const direction = createMemo(() => layout.direction ?? localeDirection(locale()))
@@ -227,7 +219,7 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
       intl,
       direction,
       layoutLocale,
-      locales: LOCALES,
+      locales: LOCALES.filter((value): value is Exclude<Locale, "en"> => value !== "en"),
       label,
       t,
       plural,

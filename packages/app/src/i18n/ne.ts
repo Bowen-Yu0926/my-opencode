@@ -751,6 +751,8 @@ export const dict: Record<string, string> = {
   "session.followupDock.edit": "सम्पादन गर्नुहोस्",
   "session.followupDock.collapse": "लामबद्ध सन्देशहरू संक्षिप्त गर्नुहोस्",
   "session.followupDock.expand": "लामबद्ध सन्देशहरू विस्तार गर्नुहोस्",
+  "session.followupDock.moveUp": "माथि सार्नुहोस्",
+  "session.followupDock.moveDown": "तल सार्नुहोस्",
   "session.revertDock.summary.one": "{{count}} रोल्ड ब्याक सन्देश",
   "session.revertDock.summary.other": "{{count}} रोल्ड ब्याक सन्देशहरू",
   "session.revertDock.collapse": "रोल्ड ब्याक सन्देशहरू संक्षिप्त गर्नुहोस्",

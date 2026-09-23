@@ -753,6 +753,8 @@ export const dict = {
   "session.followupDock.edit": "Upravit",
   "session.followupDock.collapse": "Sbalit zprávy ve frontě",
   "session.followupDock.expand": "Rozbalte zprávy ve frontě",
+  "session.followupDock.moveUp": "Přesunout nahoru",
+  "session.followupDock.moveDown": "Přesunout dolů",
   "session.revertDock.summary.one": "{{count}} vrácená zpráva",
   "session.revertDock.summary.other": "{{count}} vrátilo zpět zprávy",
   "session.revertDock.summary.few": "{{count}} vrácené zprávy",

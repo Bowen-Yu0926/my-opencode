@@ -736,6 +736,8 @@ export const dict = {
   "session.followupDock.edit": "አርትዕ",
   "session.followupDock.collapse": "የተሰለፉ መልዕክቶችን ሰብስብ",
   "session.followupDock.expand": "የተሰለፉ መልዕክቶችን ዘርጋ",
+  "session.followupDock.moveUp": "ላይ ማንቀሳቀስ",
+  "session.followupDock.moveDown": "በታች ማንቀሳቀስ",
   "session.revertDock.summary.one": "{{count}}የተመለሰ መልዕክት",
   "session.revertDock.summary.other": "{{count}}የተመለሱ መልዕክቶች",
   "session.revertDock.collapse": "የተመለሱ መልዕክቶችን ሰብስብ",

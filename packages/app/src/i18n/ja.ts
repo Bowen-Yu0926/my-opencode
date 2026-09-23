@@ -732,6 +732,8 @@ export const dict = {
   "session.followupDock.edit": "編集",
   "session.followupDock.collapse": "待機中のメッセージを折りたたむ",
   "session.followupDock.expand": "待機中のメッセージを展開",
+  "session.followupDock.moveUp": "上へ移動",
+  "session.followupDock.moveDown": "下へ移動",
   "session.revertDock.summary.one": "{{count}} 件のロールバックされたメッセージ",
   "session.revertDock.summary.other": "{{count}} 件のロールバックされたメッセージ",
   "session.revertDock.collapse": "ロールバックされたメッセージを折りたたむ",

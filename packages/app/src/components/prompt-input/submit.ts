@@ -20,6 +20,8 @@ import { setCursorPosition } from "./editor-dom"
 import { formatServerError } from "@/utils/server-errors"
 import { ScopedKey } from "@/utils/server-scope"
 import { createPromptSubmissionState } from "./submission-state"
+import { parseQuestionAnswers } from "./question-answer"
+import { sessionQuestionRequest } from "@/pages/session/composer/session-request-tree"
 import { normalizeSessionInfo } from "@/utils/session"
 import { Event } from "@opencode-ai/schema/event"
 import { blobDataUrl } from "@/utils/draft-store"
@@ -333,6 +335,32 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     if (text.trim().length === 0 && images.length === 0 && input.commentCount() === 0) {
       if (input.working()) void abort()
       return
+    }
+
+    const answerText = text.trim()
+    if (mode === "normal" && answerText.length > 0) {
+      const sessions = sync().data.session
+      const questions = sync().data.question
+      const questionRequest =
+        params.id && sessions && questions ? sessionQuestionRequest(sessions, questions, params.id) : undefined
+      if (questionRequest) {
+        const answers = parseQuestionAnswers(questionRequest, answerText)
+        input.onSubmit?.()
+        clearContext(submission.target())
+        submission.clear()
+        input.setMode("normal")
+        input.setPopover(null)
+        input.resetHistoryNavigation()
+        void sdk()
+          .api.question.reply({ sessionID: questionRequest.sessionID, requestID: questionRequest.id, answers })
+          .catch((err: unknown) => {
+            showToast({
+              title: language.t("prompt.toast.promptSendFailed.title"),
+              description: errorMessage(err),
+            })
+          })
+        return
+      }
     }
 
     const modelSelection = input.model ?? local.model

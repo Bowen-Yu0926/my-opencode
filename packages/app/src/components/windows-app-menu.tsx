@@ -1,9 +1,6 @@
-import { Show, type JSX } from "solid-js"
+import { Show, For } from "solid-js"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
-import { Icon } from "@opencode-ai/ui/icon"
-import { IconButton } from "@opencode-ai/ui/icon-button"
-import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
-import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
+import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 
 import { useCommand } from "@/context/command"
 import { DESKTOP_MENU, desktopMenuVisible, type DesktopMenuAction, type DesktopMenuEntry } from "@/desktop-menu"
@@ -48,76 +45,54 @@ export function WindowsAppMenu(props: {
     if (entry.href) props.platform.openExternal(entry.href)
   }
 
-  return (
-    <DropdownMenu gutter={4} modal={false} placement="bottom-start">
-      {props.variant === "v2" ? (
-        <div
-          data-component="desktop-icon-button"
-          class="flex h-7 w-9 shrink-0 items-center justify-center rounded-[6px] px-1"
-        >
-          <DropdownMenu.Trigger
-            as={IconButtonV2}
-            variant="ghost-muted"
-            size="large"
-            icon={<IconV2 name="menu" />}
-            aria-label={language.t("desktop.menu.ariaLabel")}
-            onPointerDown={rememberFocus}
-            onKeyDown={rememberFocus}
-          />
-        </div>
-      ) : (
-        <DropdownMenu.Trigger
-          as={IconButton}
-          icon="menu"
-          variant="ghost"
-          class="titlebar-icon rounded-md shrink-0"
-          aria-label={language.t("desktop.menu.ariaLabel")}
-          onPointerDown={rememberFocus}
-          onKeyDown={rememberFocus}
-        />
-      )}
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content class="desktop-app-menu">
-          <DropdownMenu.Group>
-            <DropdownMenu.GroupLabel class="desktop-app-menu-heading">OpenCode</DropdownMenu.GroupLabel>
-            {DESKTOP_MENU.filter((menu) => desktopMenuVisible(menu, "windows")).map((menu) => (
-              <DesktopMenuSubmenu label={language.t(menu.labelKey)}>
-                {menu.items
-                  ?.filter((entry) => desktopMenuVisible(entry, "windows"))
-                  .map((entry) =>
-                    entry.type === "separator" ? (
-                      <DropdownMenu.Separator />
-                    ) : (
-                      <DesktopMenuItem
-                        label={entry.labelKey ? language.t(entry.labelKey) : ""}
-                        keybind={entry.command ? props.command.keybind(entry.command) : entry.accelerator?.windows}
-                        disabled={entry.command ? commandDisabled(entry.command) : false}
-                        onSelect={() => runEntry(entry)}
-                      />
-                    ),
-                  )}
-              </DesktopMenuSubmenu>
-            ))}
-          </DropdownMenu.Group>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu>
-  )
-}
+  const menus = () => DESKTOP_MENU.filter((menu) => desktopMenuVisible(menu, "windows"))
 
-function DesktopMenuSubmenu(props: { label: string; children: JSX.Element }) {
   return (
-    <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger>
-        <span data-slot="dropdown-menu-item-label">{props.label}</span>
-        <span data-slot="desktop-app-menu-chevron">
-          <Icon name="chevron-right" size="small" />
-        </span>
-      </DropdownMenu.SubTrigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.SubContent class="desktop-app-menu">{props.children}</DropdownMenu.SubContent>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    <div data-component="desktop-menu-bar" class="flex h-7 shrink-0 items-center gap-0.5">
+      <For each={menus()}>
+        {(menu) => (
+          <DropdownMenu gutter={4} modal={false} placement="bottom-start">
+            <DropdownMenu.Trigger
+              as={ButtonV2}
+              variant="ghost-muted"
+              size="small"
+              class={
+                props.variant === "v2"
+                  ? "h-7 rounded-[6px] px-2 text-[13px] leading-4 [font-weight:440] hover:text-v2-text-text-base"
+                  : "h-7 px-2 text-[13px] leading-4"
+              }
+              onPointerDown={rememberFocus}
+              onKeyDown={rememberFocus}
+            >
+              {language.t(menu.labelKey)}
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content class="desktop-app-menu">
+                <DropdownMenu.Group>
+                  <DropdownMenu.GroupLabel class="desktop-app-menu-heading">
+                    {language.t(menu.labelKey)}
+                  </DropdownMenu.GroupLabel>
+                  <For each={menu.items?.filter((entry) => desktopMenuVisible(entry, "windows")) ?? []}>
+                    {(entry) =>
+                      entry.type === "separator" ? (
+                        <DropdownMenu.Separator />
+                      ) : (
+                        <DesktopMenuItem
+                          label={entry.labelKey ? language.t(entry.labelKey) : ""}
+                          keybind={entry.command ? props.command.keybind(entry.command) : entry.accelerator?.windows}
+                          disabled={entry.command ? commandDisabled(entry.command) : false}
+                          onSelect={() => runEntry(entry)}
+                        />
+                      )
+                    }
+                  </For>
+                </DropdownMenu.Group>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu>
+        )}
+      </For>
+    </div>
   )
 }
 

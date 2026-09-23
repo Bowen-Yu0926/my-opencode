@@ -716,6 +716,8 @@ export const dict = {
   "session.followupDock.edit": "Edit",
   "session.followupDock.collapse": "Collapse queued messages",
   "session.followupDock.expand": "Expand queued messages",
+  "session.followupDock.moveUp": "Move up",
+  "session.followupDock.moveDown": "Move down",
   "session.revertDock.summary.one": "{{count}} rolled back message",
   "session.revertDock.summary.other": "{{count}} rolled back messages",
   "session.revertDock.collapse": "Collapse rolled back messages",

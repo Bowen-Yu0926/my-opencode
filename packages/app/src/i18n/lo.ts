@@ -744,6 +744,8 @@ export const dict = {
   "session.followupDock.edit": "ແກ້ໄຂ",
   "session.followupDock.collapse": "ຫຍໍ້ຂໍ້ຄວາມທີ່ຢູ່ໃນຄິວລົງ",
   "session.followupDock.expand": "ຂະຫຍາຍຂໍ້ຄວາມທີ່ຢູ່ໃນຄິວ",
+  "session.followupDock.moveUp": "ຍ້າຍຂຶ້ນ",
+  "session.followupDock.moveDown": "ຍ້າຍລົງ",
   "session.revertDock.summary.one": "{{count}} ມ້ວນຂໍ້ຄວາມກັບຄືນ",
   "session.revertDock.summary.other": "{{count}} ມ້ວນຂໍ້ຄວາມກັບຄືນ",
   "session.revertDock.collapse": "ຫຍໍ້ຂໍ້ຄວາມທີ່ມ້ວນຄືນ",

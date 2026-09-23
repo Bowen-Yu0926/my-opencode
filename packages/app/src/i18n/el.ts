@@ -757,6 +757,8 @@ export const dict = {
   "session.followupDock.edit": "Επεξεργασία",
   "session.followupDock.collapse": "Σύμπτυξη μηνυμάτων στην ουρά",
   "session.followupDock.expand": "Ανάπτυξη μηνυμάτων στην ουρά",
+  "session.followupDock.moveUp": "Μετακίνηση πάνω",
+  "session.followupDock.moveDown": "Μετακίνηση κάτω",
   "session.revertDock.summary.one": "{{count}} ανανεωμένο μήνυμα",
   "session.revertDock.summary.other": "{{count}} επαναλαμβανόμενα μηνύματα",
   "session.revertDock.collapse": "Σύμπτυξη επαναλαμβανόμενων μηνυμάτων",

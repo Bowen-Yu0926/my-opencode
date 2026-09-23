@@ -504,6 +504,8 @@ export const dict = {
   "session.followupDock.edit": "편집",
   "session.followupDock.collapse": "대기 중인 메시지 접기",
   "session.followupDock.expand": "대기 중인 메시지 펼치기",
+  "session.followupDock.moveUp": "위로 이동",
+  "session.followupDock.moveDown": "아래로 이동",
   "session.revertDock.summary.one": "{{count}}개의 롤백된 메시지",
   "session.revertDock.summary.other": "{{count}}개의 롤백된 메시지",
   "session.revertDock.collapse": "롤백된 메시지 접기",

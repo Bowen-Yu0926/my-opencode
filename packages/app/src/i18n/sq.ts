@@ -752,6 +752,8 @@ export const dict = {
   "session.followupDock.edit": "Redakto",
   "session.followupDock.collapse": "Palos mesazhet në radhë",
   "session.followupDock.expand": "Zgjero mesazhet në radhë",
+  "session.followupDock.moveUp": "Lëviz lart",
+  "session.followupDock.moveDown": "Lëviz poshtë",
   "session.revertDock.summary.one": "{{count}} u kthye në mesazh",
   "session.revertDock.summary.other": "{{count}} i ktheu mesazhet",
   "session.revertDock.collapse": "Palos mesazhet e kthyera",

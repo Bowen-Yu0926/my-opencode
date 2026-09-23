@@ -753,6 +753,8 @@ export const dict = {
   "session.followupDock.edit": "Rediģēt",
   "session.followupDock.collapse": "Sakļaut rindā gaidošās ziņas",
   "session.followupDock.expand": "Izvērst rindā gaidošās ziņas",
+  "session.followupDock.moveUp": "Pārvietot uz augšu",
+  "session.followupDock.moveDown": "Pārvietot uz leju",
   "session.revertDock.summary.one": "{{count}} atsaukta ziņa",
   "session.revertDock.summary.other": "{{count}} atsauktas ziņas",
   "session.revertDock.summary.zero": "{{count}} atsauktu ziņu",

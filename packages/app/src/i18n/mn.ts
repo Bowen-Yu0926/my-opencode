@@ -755,6 +755,8 @@ export const dict = {
   "session.followupDock.edit": "Засварлах",
   "session.followupDock.collapse": "Дараалалд байгаа мессежүүдийг буулгах",
   "session.followupDock.expand": "Дараалсан мессежүүдийг дэлгэх",
+  "session.followupDock.moveUp": "Дээш зөөх",
+  "session.followupDock.moveDown": "Доош зөөх",
   "session.revertDock.summary.one": "{{count}} буцаасан мессеж",
   "session.revertDock.summary.other": "{{count}} буцаасан зурвасууд",
   "session.revertDock.collapse": "Буцаасан мессежүүдийг буулгах",

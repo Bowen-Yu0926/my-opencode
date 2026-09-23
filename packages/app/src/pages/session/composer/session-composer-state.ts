@@ -46,7 +46,7 @@ export function createSessionComposerController(options?: { closeMs?: number | (
   const blocked = createMemo(() => {
     const id = params.id
     if (!id) return false
-    return !!permissionRequest() || !!questionRequest()
+    return !!permissionRequest()
   })
 
   const todos = createMemo((): Todo[] => {

@@ -78,6 +78,7 @@ import { PromptContextItems } from "./prompt-input/context-items"
 import { PromptImageAttachments } from "./prompt-input/image-attachments"
 import { PromptDragOverlay } from "./prompt-input/drag-overlay"
 import { promptPlaceholder } from "./prompt-input/placeholder"
+import { sessionQuestionRequest } from "@/pages/session/composer/session-request-tree"
 import { createPromptInputTransientState } from "./prompt-input/transient-state"
 import { showToast } from "@/utils/toast"
 import { ImagePreview } from "@opencode-ai/ui/image-preview"
@@ -320,12 +321,21 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const suggest = createMemo(() => !hasUserPrompt())
 
+  const answerPending = createMemo(() => {
+    const id = props.controls.session.id
+    const sessions = sync().data.session
+    const questions = sync().data.question
+    if (!id || !sessions || !questions) return false
+    return !!sessionQuestionRequest(sessions, questions, id)
+  })
+
   const placeholder = createMemo(() =>
     promptPlaceholder({
       mode: store.mode,
       commentCount: commentCount(),
       example: suggest() ? (store.mode === "shell" ? "git status" : language.t(EXAMPLES[store.placeholder])) : "",
       suggest: suggest(),
+      answer: answerPending(),
       t: (key, params) => language.t(key as Parameters<typeof language.t>[0], params as never),
     }),
   )

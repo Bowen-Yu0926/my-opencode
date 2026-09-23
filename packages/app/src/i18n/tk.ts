@@ -749,6 +749,8 @@ export const dict = {
   "session.followupDock.edit": "Redaktirläň",
   "session.followupDock.collapse": "Nobatly habarlary ýykmak",
   "session.followupDock.expand": "Nobatly habarlary giňeltmek",
+  "session.followupDock.moveUp": "Ýokary gürzat",
+  "session.followupDock.moveDown": "Aşakda gürzat",
   "session.revertDock.summary.one": "{{count}} yzyna gaýdyp geldi",
   "session.revertDock.summary.other": "{{count}} yzyna iberilen habarlar",
   "session.revertDock.collapse": "Yzyna gaýdyp gelen habarlary ýykmak",

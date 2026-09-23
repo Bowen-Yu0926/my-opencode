@@ -753,6 +753,8 @@ export const dict = {
   "session.followupDock.edit": "Editează",
   "session.followupDock.collapse": "Restrânge mesajele în coadă",
   "session.followupDock.expand": "Extinde mesajele în coadă",
+  "session.followupDock.moveUp": "Mută în sus",
+  "session.followupDock.moveDown": "Mută în jos",
   "session.revertDock.summary.one": "{{count}} mesaj anulat",
   "session.revertDock.summary.other": "{{count}} mesaje anulate",
   "session.revertDock.summary.few": "{{count}} mesaje anulate",

@@ -757,6 +757,8 @@ export const dict = {
   "session.followupDock.edit": "တည်းဖြတ်ပါ။",
   "session.followupDock.collapse": "တန်းစီထားသော စာများကို ခေါက်သိမ်းပါ။",
   "session.followupDock.expand": "တန်းစီထားသောစာများကို ချဲ့ပါ။",
+  "session.followupDock.moveUp": "အပေါ်သို့ ရွှေ့",
+  "session.followupDock.moveDown": "အောက်သို့ ရွှေ့",
   "session.revertDock.summary.one": "{{count}} သည် မက်ဆေ့ဂျ်ကို ပြန်ပြောင်းထားသည်။",
   "session.revertDock.summary.other": "{{count}} သည် မက်ဆေ့ဂျ်များကို ပြန်ဖွင့်ခဲ့သည်။",
   "session.revertDock.collapse": "ပြန်လှန်ထားသော စာတိုများကို ခေါက်သိမ်းပါ။",

@@ -456,8 +456,8 @@ function HomeSessionRow(props: HomeSessionsViewProps & { record: HomeSessionReco
       <Show when={SHOW_HOME_SESSION_ARCHIVE}>
         <div
           class={`
-            hover-reveal absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1
-            group-hover/session:opacity-100 focus-within:opacity-100
+            absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1
+            focus-within:opacity-100
           `}
         >
           <TooltipV2 class="flex shrink-0 items-center" placement="bottom" value={props.language.t("common.archive")}>

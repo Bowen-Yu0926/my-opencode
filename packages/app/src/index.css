@@ -34,57 +34,66 @@
   [data-component="dropdown-menu-sub-content"].desktop-app-menu {
     min-width: 160px;
     padding: 2px;
+    border: 1px solid color-mix(in srgb, var(--v2-border-border-base) 55%, transparent);
+    border-radius: 8px;
+    background-color: var(--v2-background-bg-layer-02);
+    box-shadow: var(--v2-elevation-floating);
   }
 
   [data-component="dropdown-menu-content"].desktop-app-menu {
-    width: 160px;
-  }
-
-  [data-component="dropdown-menu-sub-content"].desktop-app-menu {
     width: max-content;
-    min-width: 240px;
-    max-width: min(320px, calc(100vw - 24px));
+    min-width: 260px;
+    max-width: min(360px, calc(100vw - 24px));
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
   }
 
   [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-group-label"] {
     display: flex;
     align-items: center;
     height: 28px;
-    padding: 0 12px;
-    font-size: var(--font-size-x-small);
-    font-weight: var(--font-weight-medium);
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 440;
     line-height: 1;
-    color: var(--text-weak);
+    color: var(--v2-text-text-faint);
   }
 
   [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-item"],
-  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-sub-trigger"],
-  [data-component="dropdown-menu-sub-content"].desktop-app-menu [data-slot="dropdown-menu-item"],
-  [data-component="dropdown-menu-sub-content"].desktop-app-menu [data-slot="dropdown-menu-sub-trigger"] {
+  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-sub-trigger"] {
     min-height: 28px;
-    padding: 0 12px;
+    padding: 0 10px;
     gap: 8px;
-    font-weight: var(--font-weight-regular);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 440;
     line-height: 1;
+    color: var(--v2-text-text-base);
   }
 
-  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-item-label"],
-  [data-component="dropdown-menu-sub-content"].desktop-app-menu [data-slot="dropdown-menu-item-label"] {
+  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-item"][data-highlighted] {
+    background: var(--v2-background-bg-layer-01);
+  }
+
+  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-item"][data-disabled] {
+    color: var(--v2-text-text-faint);
+  }
+
+  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-separator"] {
+    margin: 4px -2px;
+    border-top-color: var(--v2-border-border-muted);
+  }
+
+  [data-component="dropdown-menu-content"].desktop-app-menu [data-slot="dropdown-menu-item-label"] {
     white-space: nowrap;
   }
 
   [data-slot="desktop-app-menu-keybind"] {
     margin-left: auto;
-    color: var(--text-weak);
-    font-size: var(--font-size-x-small);
-    font-weight: var(--font-weight-regular);
+    color: var(--v2-text-text-faint);
+    font-size: 12px;
+    font-weight: 400;
     white-space: nowrap;
-  }
-
-  [data-slot="desktop-app-menu-chevron"] {
-    display: flex;
-    margin-left: auto;
-    color: var(--icon-base);
   }
 
   [data-component="getting-started-actions"] {

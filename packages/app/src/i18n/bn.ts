@@ -749,6 +749,8 @@ export const dict: Record<string, string> = {
   "session.followupDock.edit": "সম্পাদনা করুন",
   "session.followupDock.collapse": "সারিবদ্ধ বার্তাগুলি সঙ্কুচিত করুন৷",
   "session.followupDock.expand": "সারিবদ্ধ বার্তাগুলি প্রসারিত করুন",
+  "session.followupDock.moveUp": "উপরে সরান",
+  "session.followupDock.moveDown": "নিচে সরান",
   "session.revertDock.summary.one": "{{count}} রোল ব্যাক বার্তা৷",
   "session.revertDock.summary.other": "{{count}} রোল ব্যাক বার্তা",
   "session.revertDock.collapse": "রোল ব্যাক বার্তাগুলিকে আড়াল করুন৷",

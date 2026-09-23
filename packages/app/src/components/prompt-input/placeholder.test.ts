@@ -45,6 +45,18 @@ describe("promptPlaceholder", () => {
     })
     expect(value).toBe("prompt.placeholder.simple")
   })
+
+  test("returns answer placeholder while a question is pending", () => {
+    const value = promptPlaceholder({
+      mode: "normal",
+      commentCount: 0,
+      example: "",
+      suggest: true,
+      answer: true,
+      t,
+    })
+    expect(value).toBe("ui.question.custom.placeholder")
+  })
 })
 
 describe("promptDesignPlaceholder", () => {
@@ -59,5 +71,11 @@ describe("promptDesignPlaceholder", () => {
 
   test("preserves the shell placeholder", () => {
     expect(promptDesignPlaceholder("shell", "Enter shell command...", t)).toBe("Enter shell command...")
+  })
+
+  test("keeps the answer placeholder while a question is pending", () => {
+    expect(promptDesignPlaceholder("normal", "ui.question.custom.placeholder", t, true)).toBe(
+      "ui.question.custom.placeholder",
+    )
   })
 })

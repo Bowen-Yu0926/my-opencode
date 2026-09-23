@@ -1,7 +1,6 @@
 import * as i18n from "@solid-primitives/i18n"
 import {
   DESKTOP_NATIVE_LOCALES,
-  detectDesktopNativeLocale,
   type DesktopNativeLocale,
 } from "../../../../app/src/i18n/desktop-native"
 
@@ -74,11 +73,6 @@ export type Locale = DesktopNativeLocale
 type RawDictionary = typeof desktopEn
 type Dictionary = Record<keyof i18n.Flatten<RawDictionary>, string>
 
-function detectLocale(): Locale {
-  if (typeof navigator !== "object") return "en"
-  return detectDesktopNativeLocale(navigator.languages?.length ? navigator.languages : [navigator.language])
-}
-
 function parseLocale(value: unknown): Locale | null {
   if (!value) return null
   if (typeof value !== "string") return null
@@ -103,12 +97,13 @@ function parseStored(value: unknown) {
 
 function pickLocale(value: unknown): Locale | null {
   const direct = parseLocale(value)
-  if (direct) return direct
+  if (direct && direct !== "en") return direct
 
   const record = parseRecord(value)
   if (!record) return null
 
-  return parseLocale(record.locale)
+  const nested = parseLocale(record.locale)
+  return nested === "en" ? null : nested
 }
 
 const base = i18n.flatten(desktopEn)
@@ -179,7 +174,7 @@ function build(locale: Locale): Dictionary {
 }
 
 const state = {
-  locale: detectLocale(),
+  locale: "zh" as Locale,
   dict: base as Dictionary,
   init: undefined as Promise<Locale> | undefined,
 }

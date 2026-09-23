@@ -647,6 +647,8 @@ export const dict = {
   "session.followupDock.edit": "Muokkaa",
   "session.followupDock.collapse": "Kutista jonossa olevat viestit",
   "session.followupDock.expand": "Laajenna jonossa olevia viestejä",
+  "session.followupDock.moveUp": "Siirrä ylös",
+  "session.followupDock.moveDown": "Siirrä alas",
   "session.revertDock.summary.one": "{{count}} palautettu viesti",
   "session.revertDock.summary.other": "{{count}} palautettua viestiä",
   "session.revertDock.collapse": "Kutista palautetut viestit",

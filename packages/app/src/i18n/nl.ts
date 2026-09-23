@@ -757,6 +757,8 @@ export const dict = {
   "session.followupDock.edit": "Bewerken",
   "session.followupDock.collapse": "In de wachtrij geplaatste berichten samenvouwen",
   "session.followupDock.expand": "Berichten in de wachtrij uitvouwen",
+  "session.followupDock.moveUp": "Omhoog verplaatsen",
+  "session.followupDock.moveDown": "Omlaag verplaatsen",
   "session.revertDock.summary.one": "{{count}} teruggedraaid bericht",
   "session.revertDock.summary.other": "{{count}} teruggedraaide berichten",
   "session.revertDock.collapse": "Teruggedraaide berichten samenvouwen",

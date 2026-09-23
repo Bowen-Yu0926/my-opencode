@@ -753,6 +753,8 @@ export const dict = {
   "session.followupDock.edit": "Уреди",
   "session.followupDock.collapse": "Собери ги пораките во редица",
   "session.followupDock.expand": "Проширете ги пораките во редица",
+  "session.followupDock.moveUp": "Помести нагоре",
+  "session.followupDock.moveDown": "Помести надолу",
   "session.revertDock.summary.one": "{{count}} вратена порака",
   "session.revertDock.summary.other": "{{count}} вратени пораки",
   "session.revertDock.collapse": "Собери ги вратените пораки",

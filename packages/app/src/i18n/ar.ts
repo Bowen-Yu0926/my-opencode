@@ -737,6 +737,8 @@ export const dict = {
   "session.followupDock.edit": "تحرير",
   "session.followupDock.collapse": "طي الرسائل المنتظرة",
   "session.followupDock.expand": "توسيع الرسائل المنتظرة",
+  "session.followupDock.moveUp": "نقل إلى أعلى",
+  "session.followupDock.moveDown": "نقل إلى أسفل",
   "session.revertDock.summary.one": "{{count}} رسالة تم التراجع عنها",
   "session.revertDock.summary.zero": "عدد الرسائل التي تم التراجع عنها: {{count}}",
   "session.revertDock.summary.two": "عدد الرسائل التي تم التراجع عنها: {{count}}",

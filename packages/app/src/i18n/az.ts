@@ -759,6 +759,8 @@ export const dict = {
   "session.followupDock.edit": "Redaktə et",
   "session.followupDock.collapse": "Növbəyə qoyulmuş mesajları yığcamlaşdırın",
   "session.followupDock.expand": "Növbəyə qoyulmuş mesajları genişləndirin",
+  "session.followupDock.moveUp": "Yuxarı daşı",
+  "session.followupDock.moveDown": "Aşağı daşı",
   "session.revertDock.summary.one": "{{count}} geri alınmış mesaj",
   "session.revertDock.summary.other": "{{count}} geri alınmış mesaj",
   "session.revertDock.collapse": "Geri alınmış mesajları yığcamlaşdırın",

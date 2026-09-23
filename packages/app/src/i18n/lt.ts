@@ -760,6 +760,8 @@ export const dict = {
   "session.followupDock.edit": "Redaguoti",
   "session.followupDock.collapse": "Sutraukti eilėje esančius pranešimus",
   "session.followupDock.expand": "Išplėskite eilėje esančius pranešimus",
+  "session.followupDock.moveUp": "Perkelti aukštyn",
+  "session.followupDock.moveDown": "Perkelti žemyn",
   "session.revertDock.summary.one": "{{count}} atšauktas pranešimas",
   "session.revertDock.summary.other": "{{count}} atšaukti pranešimai",
   "session.revertDock.summary.few": "{{count}} atšaukti pranešimai",

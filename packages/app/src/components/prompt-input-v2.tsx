@@ -13,6 +13,7 @@ import type { PromptInputProps } from "@/components/prompt-input/contracts"
 import { normalizePromptHistoryEntry, promptLength, type PromptHistoryComment } from "@/components/prompt-input/history"
 import { createPersistedPromptInputHistory } from "@/components/prompt-input/history-store"
 import { promptDesignPlaceholder, promptPlaceholder } from "@/components/prompt-input/placeholder"
+import { sessionQuestionRequest } from "@/pages/session/composer/session-request-tree"
 import { createPromptSubmit } from "@/components/prompt-input/submit"
 import { selectionFromLines, type SelectedLineRange, useFile } from "@/context/file"
 import { useComments } from "@/context/comments"
@@ -128,18 +129,29 @@ export function usePromptInputV2Controller(props: PromptInputV2ControllerProps):
     return text.trim().length === 0 && attachments().length === 0 && commentCount() === 0
   })
   const stopping = createMemo(() => working() && blank())
+  const answerPending = createMemo(() => {
+    const id = props.controls.session.id
+    const sessions = sync().data.session
+    const questions = sync().data.question
+    if (!id || !sessions || !questions) return false
+    return !!sessionQuestionRequest(sessions, questions, id)
+  })
   const placeholder = createMemo(() =>
     promptPlaceholder({
       mode: mode(),
       commentCount: commentCount(),
       example: mode() === "shell" ? "git status" : "",
       suggest: false,
+      answer: answerPending(),
       t: (key, params) => language.t(key as Parameters<typeof language.t>[0], params as never),
     }),
   )
   const designPlaceholder = () =>
-    promptDesignPlaceholder(mode(), placeholder(), (key, params) =>
-      language.t(key as Parameters<typeof language.t>[0], params as never),
+    promptDesignPlaceholder(
+      mode(),
+      placeholder(),
+      (key, params) => language.t(key as Parameters<typeof language.t>[0], params as never),
+      answerPending(),
     )
 
   const historyComments = () => {

@@ -761,6 +761,8 @@ export const dict = {
   "session.followupDock.edit": "ބަދަލު ގެނައުން",
   "session.followupDock.collapse": "ކިއު ޖަހާފައިވާ މެސެޖުތައް ކޮލަޕްސް ކޮށްލާށެވެ",
   "session.followupDock.expand": "ކިއު ކުރެވިފައިވާ މެސެޖުތައް ފުޅާކުރުން",
+  "session.followupDock.moveUp": "މިނިންގެ މައިން ފުއްދަށް",
+  "session.followupDock.moveDown": "ތިބިގެންނަށް ފުއްދަށް",
   "session.revertDock.summary.one": "{{count}} ރޯލް ބެކް މެސެޖެއް",
   "session.revertDock.summary.other": "{{count}} ރޯލްބެކް މެސެޖުތައް",
   "session.revertDock.collapse": "ކޮލަޕްސް ރޯލް ބެކް މެސެޖުތަކެވެ",

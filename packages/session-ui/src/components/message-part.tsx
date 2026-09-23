@@ -711,7 +711,6 @@ function index<T extends { id: string }>(items: readonly T[]) {
 export function renderable(part: PartType, showReasoningSummaries = true) {
   if (part.type === "tool") {
     if (HIDDEN_TOOLS.has(part.tool)) return false
-    if (part.tool === "question") return part.state.status !== "pending" && part.state.status !== "running"
     return true
   }
   if (part.type === "text") return !!part.text?.trim()
@@ -1537,10 +1536,6 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
   const part = () => props.part as ToolPart
   if (part().tool === "todowrite") return null
 
-  const hideQuestion = createMemo(
-    () => part().tool === "question" && (part().state.status === "pending" || part().state.status === "running"),
-  )
-
   const emptyInput: Record<string, any> = {}
   const emptyMetadata: Record<string, any> = {}
 
@@ -1568,67 +1563,63 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
   const handleToolOpenChange = (open: boolean) => props.onToolOpenChange?.(open)
 
   return (
-    <Show when={!hideQuestion()}>
-      <div data-component="tool-part-wrapper" data-timeline-part-id={part().id}>
-        <Switch>
-          <Match when={part().state.status === "error" && (part().state as any).error}>
-            {(error) => {
-              const cleaned = error().replace("Error: ", "")
-              if (part().tool === "question" && cleaned.includes("dismissed this question")) {
-                return (
-                  <div style="width: 100%; display: flex; justify-content: flex-end;">
-                    <span class="text-13-regular text-text-weak cursor-default">
-                      {i18n.t("ui.messagePart.questions.dismissed")}
-                    </span>
-                  </div>
-                )
-              }
+    <div data-component="tool-part-wrapper" data-timeline-part-id={part().id}>
+      <Switch>
+        <Match when={part().state.status === "error" && (part().state as any).error}>
+          {(error) => {
+            const cleaned = error().replace("Error: ", "")
+            if (part().tool === "question" && cleaned.includes("dismissed this question")) {
               return (
-                <ToolErrorCard
-                  tool={part().tool}
-                  error={error()}
-                  title={
-                    part().tool === "websearch" ? webSearchProviderLabel(partMetadata().provider, i18n) : undefined
-                  }
-                  defaultOpen={props.defaultOpen}
-                  open={controlledOpen()}
-                  onOpenChange={props.onToolOpenChange ? handleToolOpenChange : undefined}
-                  subtitle={taskSubtitle()}
-                  href={taskHref()}
-                  onSubtitleClick={(event) => {
-                    if (!data.navigateToSession) return
-                    if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
-                    const id = taskId()
-                    if (!id) return
-                    event.preventDefault()
-                    data.navigateToSession(id)
-                  }}
-                />
+                <div style="width: 100%; display: flex; justify-content: flex-end;">
+                  <span class="text-13-regular text-text-weak cursor-default">
+                    {i18n.t("ui.messagePart.questions.dismissed")}
+                  </span>
+                </div>
               )
-            }}
-          </Match>
-          <Match when={true}>
-            <Dynamic
-              component={render()}
-              input={input()}
-              tool={part().tool}
-              sessionID={part().sessionID}
-              metadata={partMetadata()}
-              // @ts-expect-error
-              output={part().state.output}
-              status={part().state.status}
-              hideDetails={props.hideDetails}
-              defaultOpen={props.defaultOpen}
-              open={controlledOpen()}
-              onOpenChange={props.onToolOpenChange ? handleToolOpenChange : undefined}
-              deferContent={props.deferToolContent}
-              virtualizeDiff={props.virtualizeDiff}
-              onContentRendered={props.onContentRendered}
-            />
-          </Match>
-        </Switch>
-      </div>
-    </Show>
+            }
+            return (
+              <ToolErrorCard
+                tool={part().tool}
+                error={error()}
+                title={part().tool === "websearch" ? webSearchProviderLabel(partMetadata().provider, i18n) : undefined}
+                defaultOpen={props.defaultOpen}
+                open={controlledOpen()}
+                onOpenChange={props.onToolOpenChange ? handleToolOpenChange : undefined}
+                subtitle={taskSubtitle()}
+                href={taskHref()}
+                onSubtitleClick={(event) => {
+                  if (!data.navigateToSession) return
+                  if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+                  const id = taskId()
+                  if (!id) return
+                  event.preventDefault()
+                  data.navigateToSession(id)
+                }}
+              />
+            )
+          }}
+        </Match>
+        <Match when={true}>
+          <Dynamic
+            component={render()}
+            input={input()}
+            tool={part().tool}
+            sessionID={part().sessionID}
+            metadata={partMetadata()}
+            // @ts-expect-error
+            output={part().state.output}
+            status={part().state.status}
+            hideDetails={props.hideDetails}
+            defaultOpen={props.defaultOpen}
+            open={controlledOpen()}
+            onOpenChange={props.onToolOpenChange ? handleToolOpenChange : undefined}
+            deferContent={props.deferToolContent}
+            virtualizeDiff={props.virtualizeDiff}
+            onContentRendered={props.onContentRendered}
+          />
+        </Match>
+      </Switch>
+    </div>
   )
 }
 
@@ -2591,14 +2582,47 @@ ToolRegistry.register({
     return (
       <BasicTool
         {...props}
-        defaultOpen={completed()}
+        defaultOpen={!completed()}
+        allowOpenWhilePending
         icon="bubble-5"
         trigger={{
           title: i18n.t("ui.tool.questions"),
           subtitle: subtitle(),
         }}
       >
-        <Show when={completed()}>
+        <Show
+          when={completed()}
+          fallback={
+            <div data-component="question-answers">
+              <For each={questions()}>
+                {(q, index) => (
+                  <div data-slot="question-answer-item">
+                    <div data-slot="question-text">
+                      <Show when={questions().length > 1}>{`${index() + 1}. `}</Show>
+                      {q.question}
+                    </div>
+                    <div data-slot="question-options">
+                      <For each={q.options ?? []}>
+                        {(option, optionIndex) => (
+                          <div data-slot="question-option">
+                            <span data-slot="option-label">{`${String.fromCharCode(65 + optionIndex())}. ${option.label}`}</span>
+                            <Show when={option.description}>
+                              <span data-slot="option-description">{option.description}</span>
+                            </Show>
+                          </div>
+                        )}
+                      </For>
+                    </div>
+                    <div data-slot="question-hint">
+                      {i18n.t(q.multiple ? "ui.question.multiHint" : "ui.question.singleHint")}
+                    </div>
+                  </div>
+                )}
+              </For>
+              <div data-slot="question-hint">{i18n.t("ui.question.custom.placeholder")}</div>
+            </div>
+          }
+        >
           <div data-component="question-answers">
             <For each={questions()}>
               {(q, i) => {

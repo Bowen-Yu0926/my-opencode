@@ -56,8 +56,6 @@ export type HomeProjectsViewProps = {
   onRevealProject: (server: ServerConnection.Any, project: LocalProject) => void
   onClearNotifications: (server: ServerConnection.Any, project: LocalProject) => void
   onCloseProject: (server: ServerConnection.Any, directory: string) => void
-  onOpenSettings: () => void
-  onOpenHelp: () => void
 }
 
 export function HomeProjectsView(props: HomeProjectsViewProps) {
@@ -144,41 +142,7 @@ export function HomeProjectsView(props: HomeProjectsViewProps) {
           </div>
         </Show>
       </ScrollView>
-      <HomeUtilityNav
-        class="mb-8 mt-4 hidden shrink-0 lg:flex"
-        onOpenSettings={props.onOpenSettings}
-        onOpenHelp={props.onOpenHelp}
-        language={props.language}
-      />
     </aside>
-  )
-}
-
-export function HomeUtilityNav(props: {
-  class?: string
-  onOpenSettings: () => void
-  onOpenHelp: () => void
-  language: ReturnType<typeof useLanguage>
-}) {
-  return (
-    <div class={`${props.class ?? ""} min-w-0 flex-col gap-1 pr-3`}>
-      <HomeProjectNavButton
-        type="button"
-        class="text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted"
-        onClick={props.onOpenSettings}
-      >
-        <IconV2 name="settings-gear" size="small" />
-        <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.settings")}</span>
-      </HomeProjectNavButton>
-      <HomeProjectNavButton
-        type="button"
-        class="text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted"
-        onClick={props.onOpenHelp}
-      >
-        <IconV2 name="help" size="small" />
-        <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.help")}</span>
-      </HomeProjectNavButton>
-    </div>
   )
 }
 
@@ -267,8 +231,8 @@ function HomeServerRow(props: {
       </HomeProjectNavButton>
       <div
         class={`
-          hover-reveal absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1
-          group-hover/server:opacity-100 focus-within:opacity-100 data-[menu=true]:opacity-100
+          absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1
+          focus-within:opacity-100 data-[menu=true]:opacity-100
         `}
         data-menu={props.contextMenuOpen(contextMenuID())}
       >
@@ -523,8 +487,8 @@ function HomeProjectRow(
       </HomeProjectNavButton>
       <div
         class={`
-          hover-reveal absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1
-          group-hover/project:opacity-100 focus-within:opacity-100 data-[menu=true]:opacity-100
+          absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1
+          focus-within:opacity-100 data-[menu=true]:opacity-100
         `}
         data-menu={props.contextMenuOpen(contextMenuID())}
       >

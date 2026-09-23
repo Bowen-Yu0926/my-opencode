@@ -341,7 +341,7 @@ function DesktopRoot(props: { windowState: DesktopWindowState }) {
     const locale = raw.match(/"locale"\s*:\s*"([^"]+)"/)?.[1]
     if (!locale) return
     const next = normalizeLocale(locale)
-    if (next !== "en") await loadLocaleDict(next)
+    await loadLocaleDict(next)
     return next satisfies Locale
   }
 

@@ -360,12 +360,12 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
 
             return (
               <div
-                class="h-full flex-1 overflow-hidden flex flex-row items-center gap-1.5 px-2 md:pr-3"
+                class="h-full flex-1 overflow-hidden flex flex-row items-center gap-1 px-2 md:pr-3"
                 classList={{
                   "pt-2": !bottom(),
                   "pb-2": bottom(),
                   "md:pl-2": macTrafficLights(),
-                  "md:pl-4": !macTrafficLights(),
+                  "md:pl-3": !macTrafficLights(),
                 }}
               >
                 <ChannelIndicator debugTools={props.debugTools} />
@@ -651,7 +651,7 @@ function ChannelIndicator(props: { debugTools?: { visible: boolean; toggle: () =
     return (
       <button
         type="button"
-        class="bg-icon-interactive-base text-[#FFF] font-medium px-2 rounded-sm uppercase font-mono cursor-pointer"
+        class="shrink-0 rounded-[4px] bg-v2-background-bg-accent px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-wide text-white cursor-pointer"
         onClick={props.debugTools.toggle}
         aria-label="Toggle debug tools"
         aria-pressed={props.debugTools.visible}
@@ -664,7 +664,7 @@ function ChannelIndicator(props: { debugTools?: { visible: boolean; toggle: () =
   return (
     <>
       {["beta", "dev"].includes(channel) && (
-        <div class="bg-icon-interactive-base text-[#FFF] font-medium px-2 rounded-sm uppercase font-mono">
+        <div class="shrink-0 rounded-[4px] bg-v2-background-bg-accent px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-wide text-white">
           {channel.toUpperCase()}
         </div>
       )}

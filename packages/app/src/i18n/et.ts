@@ -745,6 +745,8 @@ export const dict = {
   "session.followupDock.edit": "Muuda",
   "session.followupDock.collapse": "Ahenda järjekorda pandud kirjad",
   "session.followupDock.expand": "Laiendage järjekorras olevaid sõnumeid",
+  "session.followupDock.moveUp": "Liiguta üles",
+  "session.followupDock.moveDown": "Liiguta alla",
   "session.revertDock.summary.one": "{{count}} tagasikeeratud sõnum",
   "session.revertDock.summary.other": "{{count}} tagasipööratud sõnumit",
   "session.revertDock.collapse": "Ahenda tagasi keritud sõnumid",

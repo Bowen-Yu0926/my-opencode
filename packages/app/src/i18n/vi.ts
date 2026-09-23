@@ -759,6 +759,8 @@ export const dict = {
   "session.followupDock.edit": "Chỉnh sửa",
   "session.followupDock.collapse": "Thu gọn tin nhắn đang chờ",
   "session.followupDock.expand": "Mở rộng tin nhắn đang chờ",
+  "session.followupDock.moveUp": "Di chuyển lên",
+  "session.followupDock.moveDown": "Di chuyển xuống",
   "session.revertDock.summary.one": "{{count}} tin nhắn đã hoàn tác",
   "session.revertDock.summary.other": "{{count}} tin nhắn đã hoàn tác",
   "session.revertDock.collapse": "Thu gọn tin nhắn đã hoàn tác",

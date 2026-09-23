@@ -748,6 +748,8 @@ export const dict = {
   "session.followupDock.edit": "ویرایش کنید",
   "session.followupDock.collapse": "کوچک کردن پیام‌های در صف",
   "session.followupDock.expand": "پیام های در صف را بزرگ کنید",
+  "session.followupDock.moveUp": "انتقال به بالا",
+  "session.followupDock.moveDown": "انتقال به پایین",
   "session.revertDock.summary.one": "پیام {{count}} برگشت داده شد",
   "session.revertDock.summary.other": "{{count}} پیام‌های برگشتی",
   "session.revertDock.collapse": "کوچک کردن پیام‌های برگشتی",

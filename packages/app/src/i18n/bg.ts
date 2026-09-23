@@ -755,6 +755,8 @@ export const dict = {
   "session.followupDock.edit": "Редактиране",
   "session.followupDock.collapse": "Свиване на съобщенията в опашката",
   "session.followupDock.expand": "Разгъване на съобщенията в опашката",
+  "session.followupDock.moveUp": "Премести нагоре",
+  "session.followupDock.moveDown": "Премести надолу",
   "session.revertDock.summary.one": "{{count}} върнато съобщение",
   "session.revertDock.summary.other": "{{count}} отменени съобщения",
   "session.revertDock.collapse": "Свиване на върнатите съобщения",
