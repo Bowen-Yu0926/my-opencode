@@ -170,6 +170,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "ክድ",
   "ui.permission.allowAlways": "ሁልጊዜ ፍቀድ",
   "ui.permission.allowOnce": "አንድ ጊዜ ፍቀድ",
+  "ui.permission.allowAll": "ሁሉንም ፍቀድ፣ እንደገና አይጠይቅ",
   "ui.message.expand": "መልዕክት ዘርጋ",
   "ui.message.collapse": "መልዕክት ሰብስብ",
   "ui.message.copy": "ኮፒ",

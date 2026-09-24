@@ -1,4 +1,4 @@
-import { batch, createEffect, createMemo, onCleanup } from "solid-js"
+import { batch, createEffect, createMemo, on, onCleanup } from "solid-js"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { createSimpleContext } from "@opencode-ai/ui/context"
 import { showToast } from "@/utils/toast"
@@ -24,7 +24,8 @@ import {
 import { createFileViewCache } from "./file/view-cache"
 import { useServerSDK } from "./server-sdk"
 import { SessionRouteKey, SessionStateKey } from "@/utils/server-scope"
-import { createFileTreeStore } from "./file/tree-store"
+import { pathKey } from "@/utils/path-key"
+import { createFileTreeStore, acquireSharedFileTree, peekSharedFileTree, releaseSharedFileTree } from "./file/tree-store"
 import { invalidateFromWatcher } from "./file/watcher"
 import {
   selectionFromLines,
@@ -55,9 +56,9 @@ function errorMessage(error: unknown, fallback: string) {
 export const { use: useFile, provider: FileProvider } = createSimpleContext({
   name: "File",
   gate: false,
-  init: () => {
+  init: (props: { passive?: boolean }) => {
     const sdk = useSDK()
-    useSync()
+    if (!props.passive) useSync()
     const params = useParams()
     const serverSDK = useServerSDK()
     const language = useLanguage()
@@ -76,20 +77,43 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       file: {},
     })
 
-    const tree = createFileTreeStore({
-      scope,
-      normalizeDir: path.normalizeDir,
-      list: (dir) =>
-        sdk()
-          .client.file.list({ path: dir })
-          .then((x) => x.data ?? []),
-      onError: (message) => {
-        showToast({
-          variant: "error",
-          title: language.t("toast.file.listFailed.title"),
-          description: message,
-        })
-      },
+    let acquiredTreeKey: string | undefined
+    const tree = createMemo(() => {
+      const directory = scope()
+      const shareKey = `${serverSDK().scope}\u0000${pathKey(directory)}`
+      if (acquiredTreeKey === shareKey) {
+        const existing = peekSharedFileTree(shareKey)
+        if (existing) return existing
+      }
+      const helpers = createPathHelpers(() => directory)
+      const store = acquireSharedFileTree(shareKey, () =>
+        createFileTreeStore({
+          scope: () => directory,
+          normalizeDir: helpers.normalizeDir,
+          list: (dir) =>
+            serverSDK()
+              .createClient({ directory, throwOnError: true })
+              .file.list({ path: dir })
+              .then((x) => x.data ?? []),
+          onError: (message) => {
+            showToast({
+              variant: "error",
+              title: language.t("toast.file.listFailed.title"),
+              description: message,
+            })
+          },
+        }),
+      )
+      if (acquiredTreeKey !== undefined && acquiredTreeKey !== shareKey) {
+        releaseSharedFileTree(acquiredTreeKey)
+      }
+      acquiredTreeKey = shareKey
+      return store
+    })
+    onCleanup(() => {
+      if (acquiredTreeKey === undefined) return
+      releaseSharedFileTree(acquiredTreeKey)
+      acquiredTreeKey = undefined
     })
 
     const evictContent = (keep?: Set<string>) => {
@@ -109,11 +133,10 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
     createEffect(() => {
       scope()
       inflight.clear()
-      resetFileContentLru()
       batch(() => {
         setStore("file", reconcile({}))
-        tree.reset()
       })
+      void tree().listDir("")
     })
 
     const viewCache = createFileViewCache(serverSDK().scope)
@@ -222,20 +245,45 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
           },
         )
 
-    const stop = sdk().event.listen((e) => {
-      invalidateFromWatcher(e.details, {
-        normalize: path.normalize,
-        hasFile: (file) => Boolean(store.file[file]),
-        isOpen: (file) => tabs.all().some((tab) => path.pathFromTab(tab) === file),
-        loadFile: (file) => {
-          void load(file, { force: true })
+    const refreshTimers = new Map<string, ReturnType<typeof setTimeout>>()
+    const scheduleRefresh = (dir: string) => {
+      const pending = refreshTimers.get(dir)
+      if (pending) clearTimeout(pending)
+      refreshTimers.set(
+        dir,
+        setTimeout(() => {
+          refreshTimers.delete(dir)
+          void tree().listDir(dir, { force: true })
+        }, 200),
+      )
+    }
+
+    let stopWatcher: (() => void) | undefined
+    createEffect(
+      on(
+        () => [sdk(), tree()] as const,
+        ([current, treeStore]) => {
+          stopWatcher?.()
+          stopWatcher = current.event.listen((e) => {
+            invalidateFromWatcher(e.details, {
+              normalize: path.normalize,
+              hasFile: (file) => Boolean(store.file[file]),
+              isOpen: (file) => tabs.all().some((tab) => path.pathFromTab(tab) === file),
+              loadFile: (file) => {
+                void load(file, { force: true })
+              },
+              node: treeStore.node,
+              isDirLoaded: treeStore.isLoaded,
+              refreshDir: scheduleRefresh,
+            })
+          })
         },
-        node: tree.node,
-        isDirLoaded: tree.isLoaded,
-        refreshDir: (dir) => {
-          void tree.listDir(dir, { force: true })
-        },
-      })
+      ),
+    )
+    onCleanup(() => {
+      stopWatcher?.()
+      for (const timer of refreshTimers.values()) clearTimeout(timer)
+      refreshTimers.clear()
     })
 
     const get = (input: string) => {
@@ -263,7 +311,7 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       withPath(input, (file) => view().setSelectedLines(file, range))
 
     onCleanup(() => {
-      stop()
+      stopWatcher?.()
       viewCache.clear()
     })
 
@@ -273,18 +321,20 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       tab: path.tab,
       pathFromTab: path.pathFromTab,
       tree: {
-        list: tree.listDir,
-        refresh: (input: string) => tree.listDir(input, { force: true }),
-        state: tree.dirState,
-        children: tree.children,
-        expand: tree.expandDir,
-        collapse: tree.collapseDir,
+        list: (input: string) => tree().listDir(input),
+        refresh: (input: string) => tree().listDir(input, { force: true }),
+        refreshAll: () => tree().refreshAll(),
+        state: (input: string) => tree().dirState(input),
+        children: (input: string) => tree().children(input),
+        expand: (input: string, behavior?: { list?: boolean }) => tree().expandDir(input, behavior),
+        collapse: (input: string) => tree().collapseDir(input),
         toggle(input: string) {
-          if (tree.dirState(input)?.expanded) {
-            tree.collapseDir(input)
+          const treeStore = tree()
+          if (treeStore.dirState(input)?.expanded) {
+            treeStore.collapseDir(input)
             return
           }
-          tree.expandDir(input)
+          treeStore.expandDir(input)
         },
       },
       get,

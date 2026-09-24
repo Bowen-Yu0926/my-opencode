@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Từ chối",
   "ui.permission.allowAlways": "Cho phép luôn",
   "ui.permission.allowOnce": "Cho phép một lần",
+  "ui.permission.allowAll": "Cho phép tất cả, đừng hỏi lại",
   "ui.message.expand": "Mở rộng tin nhắn",
   "ui.message.collapse": "Thu gọn tin nhắn",
   "ui.message.copy": "Sao chép",

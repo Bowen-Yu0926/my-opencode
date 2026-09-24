@@ -194,6 +194,7 @@ export const dict = {
   "ui.permission.deny": "رفض",
   "ui.permission.allowAlways": "السماح دائمًا",
   "ui.permission.allowOnce": "السماح مرة واحدة",
+  "ui.permission.allowAll": "السماح بكل شيء، لا تسأل مجددًا",
 
   "ui.message.expand": "توسيع الرسالة",
   "ui.message.collapse": "طي الرسالة",

@@ -171,6 +171,7 @@ export const dict = {
   "ui.permission.deny": "ປະຕິເສດ",
   "ui.permission.allowAlways": "ອະນຸຍາດສະເໝີ",
   "ui.permission.allowOnce": "ອະນຸຍາດຄັ້ງດຽວ",
+  "ui.permission.allowAll": "ອະນຸຍາດທັງໝົດ ບໍ່ຕອງຖາມອີກ",
   "ui.message.expand": "ຂະຫຍາຍຂໍ້ຄວາມ",
   "ui.message.collapse": "ຫຍໍ້ຂໍ້ຄວາມ",
   "ui.message.copy": "ສຳເນົາ",

@@ -881,6 +881,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "ޕްރޮޖެކްޓްތަކާއި ސެޝަންތައް",
   "sidebar.settings": "ސެޓިންގސް",
   "sidebar.help": "އެހީވުން",
+  "sidebar.refresh": "ރިފްރެޝް ކޮށްލާށެވެ",
   "sidebar.workspaces.enable": "ވޯކްސްޕޭސްތައް އެނެބަލްކުރުން",
   "sidebar.workspaces.disable": "ވޯކްސްޕޭސްތައް ޑިސެބަލްކުރުން",
   "sidebar.gettingStarted.title": "ފަށަނީ",

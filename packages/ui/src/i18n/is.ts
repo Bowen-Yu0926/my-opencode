@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Neita",
   "ui.permission.allowAlways": "Leyfðu alltaf",
   "ui.permission.allowOnce": "Leyfðu einu sinni",
+  "ui.permission.allowAll": "Leyfa allt, spyrja ekki aftur",
   "ui.message.expand": "Stækkaðu skilaboðin",
   "ui.message.collapse": "Draga saman skilaboð",
   "ui.message.copy": "Afrita",

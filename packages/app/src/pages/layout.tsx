@@ -977,7 +977,7 @@ export default function LegacyLayout(props: ParentProps) {
         title: language.t("workspace.new"),
         category: language.t("command.category.workspace"),
         keybind: "mod+shift+w",
-        disabled: !workspaceSetting(),
+        disabled: !currentProject(),
         onSelect: () => {
           const project = currentProject()
           if (!project) return
@@ -1821,8 +1821,32 @@ export default function LegacyLayout(props: ParentProps) {
 
   const createWorkspace = async (project: LocalProject) => {
     clearSidebarHoverState()
-    const created = await serverSDK()
-      .client.worktree.create({ directory: project.worktree })
+    const conn = server.current
+    if (!conn) return
+
+    pickDirectory({
+      server: conn,
+      title: language.t("workspace.new"),
+      onSelect: (result) => {
+        const directory = Array.isArray(result) ? result[0] : result
+        if (!directory) return
+        void importWorkspace(directory, project)
+      },
+    })
+  }
+
+  const importWorkspace = async (directory: string, project: LocalProject) => {
+    const root = pathKey(project.worktree)
+    const key = pathKey(directory)
+
+    if (key === root) {
+      serverSync().child(directory)
+      navigateWithSidebarReset(`/${base64Encode(directory)}/session`)
+      return
+    }
+
+    const added = await serverSDK()
+      .client.sandbox.add({ sandboxAddInput: { directory } })
       .then((x) => x.data)
       .catch((err) => {
         showToast({
@@ -1832,19 +1856,13 @@ export default function LegacyLayout(props: ParentProps) {
         return undefined
       })
 
-    if (!created?.directory) return
+    if (!added) return
 
-    setWorkspaceName(created.directory, created.branch ?? getFilename(created.directory), project.id, created.branch)
+    setWorkspaceName(directory, getFilename(directory), project.id)
 
-    const local = project.worktree
-    const key = pathKey(created.directory)
-    const root = pathKey(local)
-
-    setBusy(created.directory, true)
-    WorktreeState.pending(serverSDK().scope, created.directory)
     setStore("workspaceExpanded", key, true)
-    if (key !== created.directory) {
-      setStore("workspaceExpanded", created.directory, true)
+    if (key !== directory) {
+      setStore("workspaceExpanded", directory, true)
     }
     setStore("workspaceOrder", project.worktree, (prev) => {
       const existing = prev ?? []
@@ -1852,11 +1870,11 @@ export default function LegacyLayout(props: ParentProps) {
         const id = pathKey(item)
         return id !== root && id !== key
       })
-      return [created.directory, ...next]
+      return [directory, ...next]
     })
 
-    serverSync().child(created.directory)
-    navigateWithSidebarReset(`/${base64Encode(created.directory)}/session`)
+    serverSync().child(directory)
+    navigateWithSidebarReset(`/${base64Encode(directory)}/session`)
   }
 
   const workspaceSidebarCtx: WorkspaceSidebarContext = {

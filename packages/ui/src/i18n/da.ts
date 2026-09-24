@@ -157,6 +157,7 @@ export const dict = {
   "ui.permission.deny": "Afvis",
   "ui.permission.allowAlways": "Tillad altid",
   "ui.permission.allowOnce": "Tillad én gang",
+  "ui.permission.allowAll": "Tillad alt, spørg ikke igen",
 
   "ui.message.expand": "Udvid besked",
   "ui.message.collapse": "Skjul besked",

@@ -867,6 +867,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projek dan sesi",
   "sidebar.settings": "Tetapan",
   "sidebar.help": "Bantuan",
+  "sidebar.refresh": "Segar semula",
   "sidebar.workspaces.enable": "Aktifkan ruang kerja",
   "sidebar.workspaces.disable": "Nyahaktifkan ruang kerja",
   "sidebar.gettingStarted.title": "Bermula",

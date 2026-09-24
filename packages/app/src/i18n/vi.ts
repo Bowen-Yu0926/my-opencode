@@ -879,6 +879,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Dự án và phiên",
   "sidebar.settings": "Cài đặt",
   "sidebar.help": "Trợ giúp",
+  "sidebar.refresh": "Làm mới",
   "sidebar.workspaces.enable": "Bật không gian làm việc",
   "sidebar.workspaces.disable": "Tắt không gian làm việc",
   "sidebar.gettingStarted.title": "Bắt đầu",

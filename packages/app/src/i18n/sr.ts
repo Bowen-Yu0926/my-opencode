@@ -871,6 +871,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Пројекти и сесије",
   "sidebar.settings": "Подешавања",
   "sidebar.help": "Помоћ",
+  "sidebar.refresh": "Освежи",
   "sidebar.workspaces.enable": "Омогућите радне просторе",
   "sidebar.workspaces.disable": "Онемогућите радне просторе",
   "sidebar.gettingStarted.title": "Почетак",

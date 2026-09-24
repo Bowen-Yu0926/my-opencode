@@ -154,6 +154,7 @@ export const dict = {
   "ui.permission.deny": "거부",
   "ui.permission.allowAlways": "항상 허용",
   "ui.permission.allowOnce": "한 번만 허용",
+  "ui.permission.allowAll": "모두 허용하고 다시 묻지 않기",
 
   "ui.message.expand": "메시지 펼치기",
   "ui.message.collapse": "메시지 접기",

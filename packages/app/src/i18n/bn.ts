@@ -867,6 +867,7 @@ export const dict: Record<string, string> = {
   "sidebar.nav.projectsAndSessions": "প্রকল্প এবং সেশন",
   "sidebar.settings": "সেটিংস",
   "sidebar.help": "সাহায্য",
+  "sidebar.refresh": "রিফ্রেশ",
   "sidebar.workspaces.enable": "ওয়ার্কস্পেস সক্রিয় করুন",
   "sidebar.workspaces.disable": "ওয়ার্কস্পেস অক্ষম করুন",
   "sidebar.gettingStarted.title": "শুরু হচ্ছে",

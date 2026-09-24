@@ -869,6 +869,7 @@ export const dict: Record<string, string> = {
   "sidebar.nav.projectsAndSessions": "परियोजनाहरू र सत्रहरू",
   "sidebar.settings": "सेटिङहरू",
   "sidebar.help": "मद्दत गर्नुहोस्",
+  "sidebar.refresh": "रिफ्रेस गर्नुहोस्",
   "sidebar.workspaces.enable": "कार्यस्थान सक्षम गर्नुहोस्",
   "sidebar.workspaces.disable": "कार्यस्थानहरू असक्षम गर्नुहोस्",
   "sidebar.gettingStarted.title": "सुरु गर्दै",

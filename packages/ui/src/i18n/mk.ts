@@ -171,6 +171,7 @@ export const dict = {
   "ui.permission.deny": "Негирајте",
   "ui.permission.allowAlways": "Дозволете секогаш",
   "ui.permission.allowOnce": "Дозволете еднаш",
+  "ui.permission.allowAll": "Дозволи сè, не прашај повторно",
   "ui.message.expand": "Проширете ја пораката",
   "ui.message.collapse": "Собери порака",
   "ui.message.copy": "Копирај",

@@ -173,6 +173,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "ཁས༌མི༌ལེན",
   "ui.permission.allowAlways": "ཨ་རྟག་ར་གནང་བཅུག།",
   "ui.permission.allowOnce": "ཚར་གཅིག་འབད་བཅུག།",
+  "ui.permission.allowAll": "ཆ་ཚང་གནང་བཅུག། ལོག་སླབ་མི་དགོ།",
   "ui.message.expand": "འཕྲིན་དོན་རྒྱ་བསྐྱེད།",
   "ui.message.collapse": "བརྡབ་པའི་འཕྲིན་དོན།",
   "ui.message.copy": "འདྲ་བཤུས།",

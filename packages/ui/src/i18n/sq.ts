@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Moho",
   "ui.permission.allowAlways": "Lejo gjithmonë",
   "ui.permission.allowOnce": "Lejo një herë",
+  "ui.permission.allowAll": "Lejo gjithçka, mos pyet përsëri",
   "ui.message.expand": "Zgjero mesazhin",
   "ui.message.collapse": "Palos mesazhin",
   "ui.message.copy": "Kopjo",

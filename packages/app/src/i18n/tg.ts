@@ -871,6 +871,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Лоиҳаҳо ва ҷаласаҳо",
   "sidebar.settings": "Танзимотҳо",
   "sidebar.help": "Кӯмак",
+  "sidebar.refresh": "Навсозӣ",
   "sidebar.workspaces.enable": "Фазои кории фаъолро фаъол созед",
   "sidebar.workspaces.disable": "Ҷойҳои кории худро ғайрифаъол кунед",
   "sidebar.gettingStarted.title": "Сар кардани кор",

@@ -852,6 +852,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "ፕሮጀክቶች እና ክፍለ-ጊዜዎች",
   "sidebar.settings": "ቅንጅቶች",
   "sidebar.help": "እገዛ",
+  "sidebar.refresh": "አድስ",
   "sidebar.workspaces.enable": "Workspace-ዎችን አንቃ",
   "sidebar.workspaces.disable": "Workspace-ዎችን አሰናክል",
   "sidebar.gettingStarted.title": "መጀመር",

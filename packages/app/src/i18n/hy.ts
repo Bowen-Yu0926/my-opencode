@@ -874,6 +874,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Նախագծեր և նիստեր",
   "sidebar.settings": "Կարգավորումներ",
   "sidebar.help": "Օգնություն",
+  "sidebar.refresh": "Թարմացնել",
   "sidebar.workspaces.enable": "Միացնել աշխատանքային տարածքները",
   "sidebar.workspaces.disable": "Անջատել աշխատանքային տարածքները",
   "sidebar.gettingStarted.title": "Սկսում",

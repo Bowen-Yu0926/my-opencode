@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Rədd et",
   "ui.permission.allowAlways": "Həmişə icazə ver",
   "ui.permission.allowOnce": "Bir dəfə icazə ver",
+  "ui.permission.allowAll": "Hamısına icazə ver, yenidən soruşma",
   "ui.message.expand": "Mesajı genişlət",
   "ui.message.collapse": "Mesajı yığ",
   "ui.message.copy": "Kopyala",

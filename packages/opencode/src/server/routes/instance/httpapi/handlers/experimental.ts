@@ -15,7 +15,13 @@ import { Effect, Option } from "effect"
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
-import { ConsoleSwitchPayload, SessionListQuery, ToolListQuery, WorktreeApiError } from "../groups/experimental"
+import {
+  ConsoleSwitchPayload,
+  SandboxAddInput,
+  SessionListQuery,
+  ToolListQuery,
+  WorktreeApiError,
+} from "../groups/experimental"
 
 function mapWorktreeError<A, R>(self: Effect.Effect<A, Worktree.Error, R>) {
   return self.pipe(
@@ -128,6 +134,14 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       return true
     })
 
+    const sandboxAdd = Effect.fn("ExperimentalHttpApi.sandboxAdd")(function* (ctx: {
+      payload: typeof SandboxAddInput.Type
+    }) {
+      const instance = yield* InstanceState.context
+      yield* project.addSandbox(instance.project.id, ctx.payload.directory)
+      return true
+    })
+
     const worktreeReset = Effect.fn("ExperimentalHttpApi.worktreeReset")(function* (ctx: {
       payload: Worktree.ResetInput
     }) {
@@ -186,6 +200,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       .handle("worktreeCreate", worktreeCreate)
       .handle("worktreeRemove", worktreeRemove)
       .handle("worktreeReset", worktreeReset)
+      .handle("sandboxAdd", sandboxAdd)
       .handle("session", session)
       .handle("sessionBackground", sessionBackground)
       .handle("resource", resource)

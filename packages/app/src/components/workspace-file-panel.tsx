@@ -1,7 +1,11 @@
-import { createMemo, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
+import { useParams } from "@solidjs/router"
 import { getFilename } from "@opencode-ai/core/util/path"
+import { base64Encode } from "@opencode-ai/core/util/encode"
+import type { FileNode } from "@opencode-ai/sdk/v2"
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
+import { MenuV2 } from "@opencode-ai/ui/v2/menu-v2"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 import { ProjectAvatar } from "@opencode-ai/ui/v2/project-avatar-v2"
 import { useLanguage } from "@/context/language"
@@ -10,20 +14,24 @@ import { useTabs } from "@/context/tabs"
 import { useLayout, getProjectAvatarVariant } from "@/context/layout"
 import { usePlatform } from "@/context/platform"
 import { useCommand } from "@/context/command"
-import { SDKProvider } from "@/context/sdk"
-import { FileProvider } from "@/context/file"
+import { SDKProvider, useSDK } from "@/context/sdk"
+import { FileProvider, useFile } from "@/context/file"
 import { createHomeController } from "@/pages/home/home-controller"
+import { createHomeProjectsController } from "@/pages/home/home-projects-controller"
 import { ServerConnection } from "@/context/server"
 import { useSettingsCommand } from "@/components/settings-dialog"
 import { useServerSDK } from "@/context/server-sdk"
 import { useServerSync } from "@/context/server-sync"
+import { useDirectoryPicker } from "@/components/directory-picker"
 import {
   errorMessage,
   displayName,
   toggleHomeProjectSelection,
   getProjectAvatarSource,
 } from "@/pages/layout/helpers"
+import { fileManagerApp } from "@/utils/file-manager"
 import { pathKey } from "@/utils/path-key"
+import { SessionRouteKey, SessionStateKey } from "@/utils/server-scope"
 import { showToast } from "@/utils/toast"
 import FileTree from "@/components/file-tree"
 
@@ -37,6 +45,85 @@ const NAV_ROW =
 
 const SECTION_LABEL = "flex h-7 min-w-0 shrink-0 items-center px-1.5 text-[13px] leading-4 text-v2-text-text-faint [font-weight:530]"
 
+function FileTreeSection(props: { refreshTick: number }) {
+  const file = useFile()
+  const layout = useLayout()
+  const params = useParams()
+  const sdk = useSDK()
+  const serverSDK = useServerSDK()
+  const serverSync = useServerSync()
+  createEffect(
+    on(
+      () => props.refreshTick,
+      (tick) => {
+        if (tick > 0) void file.tree.refreshAll()
+      },
+      { defer: true },
+    ),
+  )
+
+  const sessionKey = createMemo(() => {
+    const id = params.id
+    if (!id) return
+    const session = serverSync().session.get(id)
+    if (!session) return
+    if (pathKey(session.directory) !== pathKey(sdk().directory)) return
+    return SessionStateKey.from(
+      serverSDK().scope,
+      SessionRouteKey.fromRoute(base64Encode(session.directory), id),
+    )
+  })
+
+  const normalizeTab = (tab: string) => {
+    if (!tab.startsWith("file://")) return tab
+    return file.tab(tab)
+  }
+
+  const reveal = (key: string, path: string, permanent: boolean) => {
+    const sessionTabs = layout.tabs(key)
+    const next = normalizeTab(file.tab(path))
+    if (permanent) void sessionTabs.open(next)
+    else sessionTabs.previewTab(next)
+    const view = layout.view(key)
+    if (!view.reviewPanel.opened()) view.reviewPanel.open()
+    if (layout.fileTree.tab() !== "all") layout.fileTree.setTab("all")
+    if (permanent) sessionTabs.setActive(next)
+    else queueMicrotask(() => sessionTabs.setActive(next))
+  }
+
+  const openFile = (node: FileNode) => {
+    const key = sessionKey()
+    if (!key) return
+    reveal(key, node.path, true)
+  }
+
+  const previewFile = (node: FileNode) => {
+    const key = sessionKey()
+    if (!key) return
+    reveal(key, node.path, false)
+  }
+
+  const activePath = createMemo(() => {
+    const key = sessionKey()
+    if (!key) return
+    const active = layout.tabs(key).active()
+    if (!active) return
+    return file.pathFromTab(active)
+  })
+
+  return (
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain -mx-0.5 px-0.5 pb-1">
+      <FileTree
+        path=""
+        class="pt-0.5"
+        active={activePath()}
+        onFileClick={previewFile}
+        onFileDoubleClick={openFile}
+      />
+    </div>
+  )
+}
+
 export function WorkspaceFilePanel() {
   const language = useLanguage()
   const server = useServer()
@@ -47,7 +134,12 @@ export function WorkspaceFilePanel() {
   const openSettings = useSettingsCommand()
   const serverSDK = useServerSDK()
   const serverSync = useServerSync()
+  const pickDirectory = useDirectoryPicker()
   const home = createHomeController()
+  const homeProjects = createHomeProjectsController(home)
+  const [refreshTick, setRefreshTick] = createSignal(0)
+  const [refreshing, setRefreshing] = createSignal(false)
+  const [projectMenu, setProjectMenu] = createSignal<string>()
 
   const selection = layout.home.selection
   const projects = home.project.list
@@ -64,7 +156,7 @@ export function WorkspaceFilePanel() {
 
   const activeDirectory = createMemo(() => {
     const selected = selection().directory
-    if (selected && isKnownDirectory(selected)) return selected
+    if (selected && (projects().length === 0 || isKnownDirectory(selected))) return selected
     return projects()[0]?.worktree
   })
 
@@ -81,27 +173,38 @@ export function WorkspaceFilePanel() {
       title: language.t("workspace.new"),
       category: language.t("command.category.workspace"),
       keybind: "mod+shift+w",
-      disabled: !currentProject() || currentProject()?.vcs !== "git",
+      disabled: !currentProject(),
       onSelect: () => {
         const project = currentProject()
         const conn = server.current
-        if (!project || project.vcs !== "git" || !conn) return
-        void serverSDK()
-          .client.worktree.create({ directory: project.worktree })
-          .then((result) => {
-            const created = result.data
-            if (!created?.directory) return
-            serverSync().child(created.directory)
-            layout.home.setSelection(
-              toggleHomeProjectSelection(selection(), ServerConnection.key(conn), created.directory),
-            )
-          })
-          .catch((err) => {
-            showToast({
-              title: language.t("workspace.create.failed.title"),
-              description: errorMessage(err, language.t("common.requestFailed")),
-            })
-          })
+        if (!project || !conn) return
+        pickDirectory({
+          server: conn,
+          title: language.t("workspace.new"),
+          onSelect: (result) => {
+            const directory = Array.isArray(result) ? result[0] : result
+            if (!directory) return
+            if (pathKey(directory) === pathKey(project.worktree)) {
+              serverSync().child(directory)
+              layout.home.setSelection(toggleHomeProjectSelection(selection(), ServerConnection.key(conn), directory))
+              return
+            }
+            void serverSDK()
+              .client.sandbox.add({ sandboxAddInput: { directory } })
+              .then(() => {
+                serverSync().child(directory)
+                layout.home.setSelection(
+                  toggleHomeProjectSelection(selection(), ServerConnection.key(conn), directory),
+                )
+              })
+              .catch((err) => {
+                showToast({
+                  title: language.t("workspace.create.failed.title"),
+                  description: errorMessage(err, language.t("common.requestFailed")),
+                })
+              })
+          },
+        })
       },
     },
   ])
@@ -122,8 +225,22 @@ export function WorkspaceFilePanel() {
     void tabs.newDraft({ server: key, directory: project.worktree }, "")
   }
 
+  async function refreshAll() {
+    if (refreshing()) return
+    setRefreshing(true)
+    try {
+      await serverSync().refreshBootstrap()
+      setRefreshTick((tick) => tick + 1)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
   const workspaceNewDisabled = () =>
     !command.options.some((option) => option.id === "workspace.new" && !(option.disabled ?? false))
+
+  const projectMenuID = (worktree: string) => `workspace-panel:${worktree}`
+  const focusedConn = () => home.server.focused() ?? server.current
 
   return (
     <aside
@@ -134,16 +251,29 @@ export function WorkspaceFilePanel() {
         <span class="min-w-0 truncate text-[13px] leading-4 text-v2-text-text-muted [font-weight:530]">
           {language.t("home.projects")}
         </span>
-        <TooltipV2 placement="bottom" value={language.t("command.session.new")}>
-          <IconButtonV2
-            data-action="workspace-panel-new-session"
-            variant="ghost-muted"
-            size="small"
-            icon={<IconV2 name="edit" />}
-            aria-label={language.t("command.session.new")}
-            onClick={createSession}
-          />
-        </TooltipV2>
+        <div class="flex shrink-0 items-center gap-0.5">
+          <TooltipV2 placement="bottom" value={language.t("sidebar.refresh")}>
+            <IconButtonV2
+              data-action="workspace-panel-refresh"
+              variant="ghost-muted"
+              size="small"
+              icon={<IconV2 name="refresh" />}
+              aria-label={language.t("sidebar.refresh")}
+              disabled={refreshing()}
+              onClick={refreshAll}
+            />
+          </TooltipV2>
+          <TooltipV2 placement="bottom" value={language.t("command.session.new")}>
+            <IconButtonV2
+              data-action="workspace-panel-new-session"
+              variant="ghost-muted"
+              size="small"
+              icon={<IconV2 name="edit" />}
+              aria-label={language.t("command.session.new")}
+              onClick={createSession}
+            />
+          </TooltipV2>
+        </div>
       </div>
       <div class="flex shrink-0 flex-col gap-0.5">
         <Show
@@ -157,32 +287,128 @@ export function WorkspaceFilePanel() {
           <For each={projects()}>
             {(project) => (
               <>
-                <button
-                  type="button"
-                  data-action="workspace-file-panel-project"
-                  data-worktree={project.worktree}
-                  class={NAV_ROW}
-                  classList={{
-                    "bg-v2-background-bg-layer-03 text-v2-text-text-base [font-weight:530]":
-                      pathKey(activeDirectory() ?? "") === pathKey(project.worktree),
-                    "hover:bg-v2-background-bg-layer-03":
-                      pathKey(activeDirectory() ?? "") === pathKey(project.worktree),
+                <div
+                  class="group/project relative flex h-7 min-w-0 items-center rounded-[6px]"
+                  onContextMenu={(event) => {
+                    event.preventDefault()
+                    setProjectMenu(projectMenuID(project.worktree))
                   }}
-                  aria-current={
-                    pathKey(activeDirectory() ?? "") === pathKey(project.worktree) ? "page" : undefined
-                  }
-                  onClick={() => selectProject(project.worktree)}
                 >
-                  <ProjectAvatar
-                    class="size-4 shrink-0"
-                    fallback={displayName(project)}
-                    src={getProjectAvatarSource(project.id, project.icon)}
-                    variant={getProjectAvatarVariant(project.icon?.color)}
-                  />
-                  <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">
-                    {displayName(project)}
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    data-action="workspace-file-panel-project"
+                    data-worktree={project.worktree}
+                    class={`${NAV_ROW} pr-16`}
+                    classList={{
+                      "bg-v2-background-bg-layer-03 text-v2-text-text-base [font-weight:530]":
+                        pathKey(activeDirectory() ?? "") === pathKey(project.worktree),
+                      "hover:bg-v2-background-bg-layer-03":
+                        pathKey(activeDirectory() ?? "") === pathKey(project.worktree),
+                    }}
+                    aria-current={
+                      pathKey(activeDirectory() ?? "") === pathKey(project.worktree) ? "page" : undefined
+                    }
+                    onClick={() => selectProject(project.worktree)}
+                  >
+                    <ProjectAvatar
+                      class="size-4 shrink-0"
+                      fallback={displayName(project)}
+                      src={getProjectAvatarSource(project.id, project.icon)}
+                      variant={getProjectAvatarVariant(project.icon?.color)}
+                    />
+                    <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">
+                      {displayName(project)}
+                    </span>
+                  </button>
+                  <div
+                    data-menu={projectMenu() === projectMenuID(project.worktree)}
+                    class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1 focus-within:opacity-100 data-[menu=true]:opacity-100"
+                  >
+                    <MenuV2
+                      gutter={6}
+                      modal={false}
+                      placement="bottom-end"
+                      open={projectMenu() === projectMenuID(project.worktree)}
+                      onOpenChange={(open) =>
+                        setProjectMenu(open ? projectMenuID(project.worktree) : undefined)
+                      }
+                    >
+                      <MenuV2.Trigger
+                        as={IconButtonV2}
+                        data-action="workspace-file-panel-project-menu"
+                        variant="ghost-muted"
+                        size="small"
+                        icon={<IconV2 name="outline-dots" />}
+                        aria-label={language.t("common.moreOptions")}
+                      />
+                      <MenuV2.Portal>
+                        <MenuV2.Content>
+                          <MenuV2.Item
+                            onSelect={() => {
+                              const conn = focusedConn()
+                              if (conn) homeProjects.project.openNewSession(conn, project.worktree)
+                            }}
+                          >
+                            {language.t("command.session.new")}
+                          </MenuV2.Item>
+                          <MenuV2.Item
+                            onSelect={() => {
+                              const conn = focusedConn()
+                              if (conn) homeProjects.project.edit(conn, project)
+                            }}
+                          >
+                            {language.t("dialog.project.edit.title")}
+                          </MenuV2.Item>
+                          <Show when={focusedConn() && homeProjects.project.canReveal(focusedConn()!)}>
+                            <MenuV2.Item
+                              onSelect={() => {
+                                const conn = focusedConn()
+                                if (conn) homeProjects.project.reveal(conn, project)
+                              }}
+                            >
+                              {language.t(
+                                fileManagerApp(
+                                  platform.platform === "desktop" ? (platform.os ?? "unknown") : "unknown",
+                                ).actionLabel,
+                              )}
+                            </MenuV2.Item>
+                          </Show>
+                          <MenuV2.Item
+                            disabled={
+                              !focusedConn() || homeProjects.project.unseenCount(focusedConn()!, project) === 0
+                            }
+                            onSelect={() => {
+                              const conn = focusedConn()
+                              if (conn) homeProjects.project.clearNotifications(conn, project)
+                            }}
+                          >
+                            {language.t("sidebar.project.clearNotifications")}
+                          </MenuV2.Item>
+                          <MenuV2.Separator />
+                          <MenuV2.Item
+                            onSelect={() => {
+                              const conn = focusedConn()
+                              if (conn) homeProjects.project.close(conn, project.worktree)
+                            }}
+                          >
+                            {language.t("common.close")}
+                          </MenuV2.Item>
+                        </MenuV2.Content>
+                      </MenuV2.Portal>
+                    </MenuV2>
+                    <IconButtonV2
+                      data-action="workspace-file-panel-project-new-session"
+                      variant="ghost-muted"
+                      size="small"
+                      icon={<IconV2 name="edit" />}
+                      aria-label={language.t("command.session.new")}
+                      onClick={() => {
+                        const conn = focusedConn()
+                        if (conn) homeProjects.project.openNewSession(conn, project.worktree)
+                      }}
+                    />
+                  </div>
+                </div>
                 <For each={project.sandboxes ?? []}>
                   {(sandbox) => (
                     <button
@@ -229,10 +455,8 @@ export function WorkspaceFilePanel() {
       <Show when={activeDirectory()}>
         {(directory) => (
           <SDKProvider directory={directory()}>
-            <FileProvider>
-              <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain -mx-0.5 px-0.5 pb-1">
-                <FileTree path="" class="pt-0.5" />
-              </div>
+            <FileProvider passive>
+              <FileTreeSection refreshTick={refreshTick()} />
             </FileProvider>
           </SDKProvider>
         )}

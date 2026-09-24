@@ -1,11 +1,11 @@
 import * as InstanceState from "@/effect/instance-state"
 import { FileSystem } from "@opencode-ai/core/filesystem"
-import { LocationServiceMap, locationServiceMapLayer } from "@opencode-ai/core/location-services"
+import { LocationServiceMap } from "@opencode-ai/core/location-services"
 import { Ripgrep } from "@opencode-ai/core/ripgrep"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Location } from "@opencode-ai/core/location"
 import { AbsolutePath, RelativePath } from "@opencode-ai/core/schema"
-import { Effect, Layer, Option } from "effect"
+import { Effect, Option } from "effect"
 import ignore from "ignore"
 import path from "path"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
@@ -64,22 +64,24 @@ export const fileHandlers = HttpApiBuilder.group(InstanceHttpApi, "file", (handl
     })
 
     const list = Effect.fn("FileHttpApi.list")(function* (ctx: { query: { path: string } }) {
-      const directory = (yield* InstanceState.context).directory
       return yield* filesystem(
         Effect.gen(function* () {
           const fs = yield* FileSystem.Service
           const raw = yield* FSUtil.Service
           const location = yield* Location.Service
+          const [gitignore, ignorefile, items] = yield* Effect.all([
+            raw
+              .readFileString(path.join(location.project.directory, ".gitignore"))
+              .pipe(Effect.catch(() => Effect.succeed(""))),
+            raw
+              .readFileString(path.join(location.project.directory, ".ignore"))
+              .pipe(Effect.catch(() => Effect.succeed(""))),
+            fs.list({ path: RelativePath.make(ctx.query.path) }),
+          ])
           const ignored = ignore()
-          const gitignore = yield* raw
-            .readFileString(path.join(location.project.directory, ".gitignore"))
-            .pipe(Effect.catch(() => Effect.succeed("")))
           if (gitignore) ignored.add(gitignore)
-          const ignorefile = yield* raw
-            .readFileString(path.join(location.project.directory, ".ignore"))
-            .pipe(Effect.catch(() => Effect.succeed("")))
           if (ignorefile) ignored.add(ignorefile)
-          return (yield* fs.list({ path: RelativePath.make(ctx.query.path) })).map((item) => ({
+          return items.map((item) => ({
             name: path.basename(item.path),
             path: item.path,
             absolute: path.resolve(location.directory, item.path),
@@ -136,4 +138,4 @@ export const fileHandlers = HttpApiBuilder.group(InstanceHttpApi, "file", (handl
       .handle("content", content)
       .handle("status", status)
   }),
-).pipe(Layer.provide(locationServiceMapLayer))
+)

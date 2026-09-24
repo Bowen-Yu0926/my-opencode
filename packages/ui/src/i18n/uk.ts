@@ -199,6 +199,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Заборонити",
   "ui.permission.allowAlways": "Дозволяти завжди",
   "ui.permission.allowOnce": "Дозволити один раз",
+  "ui.permission.allowAll": "Дозволити все, більше не запитувати",
 
   "ui.message.expand": "Розгорнути повідомлення",
   "ui.message.collapse": "Згорнути повідомлення",

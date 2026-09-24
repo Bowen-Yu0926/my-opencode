@@ -807,6 +807,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "プロジェクトとセッション",
   "sidebar.settings": "設定",
   "sidebar.help": "ヘルプ",
+  "sidebar.refresh": "更新",
   "sidebar.workspaces.enable": "ワークスペースを有効化",
   "sidebar.workspaces.disable": "ワークスペースを無効化",
   "sidebar.gettingStarted.title": "はじめに",

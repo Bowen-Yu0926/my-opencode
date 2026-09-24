@@ -387,14 +387,13 @@ const layer: Layer.Layer<
 
     const remove = Effect.fn("Worktree.remove")(function* (input: RemoveInput) {
       const ctx = yield* InstanceState.context
-      if (ctx.project.vcs !== "git") {
-        return yield* new NotGitError({ message: "Worktrees are only supported for git projects" })
-      }
-
       const directory = yield* canonical(input.directory)
 
       // Preserve the loaded path casing for the store cache; `directory` is lowercased on Windows.
       if (directory !== (yield* canonical(ctx.worktree))) yield* store.disposeDirectory(input.directory)
+
+      // Imported non-git sandboxes are unlinked by Project.removeSandbox; there is no worktree to remove.
+      if (ctx.project.vcs !== "git") return true
 
       const list = yield* git(["worktree", "list", "--porcelain"], { cwd: ctx.worktree })
       if (list.code !== 0) {
@@ -405,6 +404,9 @@ const layer: Layer.Layer<
       const entry = yield* locateWorktree(entries, directory)
 
       if (!entry?.path) {
+        const managedRoot = yield* canonical(pathSvc.join(Global.Path.data, "worktree", ctx.project.id))
+        const underManagedRoot = directory === managedRoot || directory.startsWith(`${managedRoot}${pathSvc.sep}`)
+        if (!underManagedRoot) return true
         const directoryExists = yield* fs.exists(directory).pipe(Effect.orDie)
         if (directoryExists) {
           yield* stopFsmonitor(directory)

@@ -171,6 +171,7 @@ export const dict = {
   "ui.permission.deny": "Инкор кардан",
   "ui.permission.allowAlways": "Ҳамеша иҷозат диҳед",
   "ui.permission.allowOnce": "Як бор иҷозат диҳед",
+  "ui.permission.allowAll": "Ҳамаро иҷозат диҳед, боз напурсед",
   "ui.message.expand": "Паёмро васеъ кунед",
   "ui.message.collapse": "Паёмро қатъ кунед",
   "ui.message.copy": "Нусхабардорӣ",

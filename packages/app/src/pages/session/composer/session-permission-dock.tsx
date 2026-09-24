@@ -1,9 +1,12 @@
 import { For, Show } from "solid-js"
 import type { PermissionRequest } from "@opencode-ai/sdk/v2"
 import { Button } from "@opencode-ai/ui/button"
+import { Checkbox } from "@opencode-ai/ui/checkbox"
 import { DockPrompt } from "@opencode-ai/session-ui/dock-prompt"
 import { Icon } from "@opencode-ai/ui/icon"
 import { useLanguage } from "@/context/language"
+import { usePermission } from "@/context/permission"
+import { useSDK } from "@/context/sdk"
 
 export function SessionPermissionDock(props: {
   request: PermissionRequest
@@ -11,6 +14,8 @@ export function SessionPermissionDock(props: {
   onDecide: (response: "once" | "always" | "reject") => void
 }) {
   const language = useLanguage()
+  const permission = usePermission()
+  const sdk = useSDK()
 
   const toolDescription = () => {
     const key = `settings.permissions.tool.${props.request.permission}.description`
@@ -32,7 +37,19 @@ export function SessionPermissionDock(props: {
       }
       footer={
         <>
-          <div />
+          <Checkbox
+            checked={permission.isAutoAccepting(props.request.sessionID, sdk().directory)}
+            disabled={props.responding}
+            onCheckedChange={(checked: boolean | "indeterminate") => {
+              if (checked === true) {
+                permission.enableAutoAccept(props.request.sessionID, sdk().directory)
+                return
+              }
+              if (checked === false) permission.disableAutoAccept(props.request.sessionID, sdk().directory)
+            }}
+          >
+            {language.t("ui.permission.allowAll")}
+          </Checkbox>
           <div data-slot="permission-footer-actions">
             <Button variant="ghost" size="normal" onClick={() => props.onDecide("reject")} disabled={props.responding}>
               {language.t("ui.permission.deny")}

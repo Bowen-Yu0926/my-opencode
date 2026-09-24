@@ -867,6 +867,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "پروژه ها و جلسات",
   "sidebar.settings": "تنظیمات",
   "sidebar.help": "کمک کنید",
+  "sidebar.refresh": "تازه کردن",
   "sidebar.workspaces.enable": "فضاهای کاری را فعال کنید",
   "sidebar.workspaces.disable": "غیرفعال کردن فضاهای کاری",
   "sidebar.gettingStarted.title": "شروع کردن",

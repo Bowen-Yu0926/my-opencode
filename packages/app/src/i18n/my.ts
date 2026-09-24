@@ -877,6 +877,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "ပရောဂျက်များနှင့် ဆက်ရှင်များ",
   "sidebar.settings": "ဆက်တင်များ",
   "sidebar.help": "အကူအညီ",
+  "sidebar.refresh": "ပြန်လည်စတင်ပါ။",
   "sidebar.workspaces.enable": "အလုပ်နေရာများကို ဖွင့်ပါ။",
   "sidebar.workspaces.disable": "အလုပ်နေရာများကို ပိတ်ပါ။",
   "sidebar.gettingStarted.title": "စတင်ခြင်း။",

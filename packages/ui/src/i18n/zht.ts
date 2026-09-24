@@ -180,6 +180,7 @@ export const dict = {
   "ui.permission.deny": "拒絕",
   "ui.permission.allowAlways": "永遠允許",
   "ui.permission.allowOnce": "允許一次",
+  "ui.permission.allowAll": "全部允許，不再詢問",
 
   "ui.message.expand": "展開訊息",
   "ui.message.collapse": "收合訊息",

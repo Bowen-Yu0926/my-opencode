@@ -173,6 +173,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "अस्वीकार गर्नुहोस्",
   "ui.permission.allowAlways": "सधैं अनुमति दिनुहोस्",
   "ui.permission.allowOnce": "एक पटक अनुमति दिनुहोस्",
+  "ui.permission.allowAll": "सबैलाई अनुमति दिनुहोस्, फेरि सोध्नुहुन्छ",
   "ui.message.expand": "सन्देश विस्तार गर्नुहोस्",
   "ui.message.collapse": "सन्देश संक्षिप्त गर्नुहोस्",
   "ui.message.copy": "प्रतिलिपि गर्नुहोस्",

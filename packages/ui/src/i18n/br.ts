@@ -182,6 +182,7 @@ export const dict = {
   "ui.permission.deny": "Negar",
   "ui.permission.allowAlways": "Permitir sempre",
   "ui.permission.allowOnce": "Permitir uma vez",
+  "ui.permission.allowAll": "Permitir de re, ne c\'hell ket goulenn adarre",
 
   "ui.message.expand": "Expandir mensagem",
   "ui.message.collapse": "Recolher mensagem",

@@ -182,6 +182,7 @@ export const dict = {
   "ui.permission.deny": "Denegar",
   "ui.permission.allowAlways": "Permitir siempre",
   "ui.permission.allowOnce": "Permitir una vez",
+  "ui.permission.allowAll": "Permitir todo, no volver a preguntar",
 
   "ui.message.expand": "Expandir mensaje",
   "ui.message.collapse": "Contraer mensaje",

@@ -873,6 +873,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projekty a relace",
   "sidebar.settings": "Nastavení",
   "sidebar.help": "Pomoc",
+  "sidebar.refresh": "Obnovit",
   "sidebar.workspaces.enable": "Povolit pracovní prostory",
   "sidebar.workspaces.disable": "Zakázat pracovní prostory",
   "sidebar.gettingStarted.title": "Začínáme",

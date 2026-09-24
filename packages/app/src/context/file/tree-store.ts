@@ -16,6 +16,39 @@ type TreeStoreOptions = {
   onError: (message: string) => void
 }
 
+type TreeStore = ReturnType<typeof createFileTreeStore>
+
+const sharedTrees = new Map<string, TreeStore>()
+const sharedTreeRefs = new Map<string, number>()
+
+export function acquireSharedFileTree(key: string, factory: () => TreeStore): TreeStore {
+  const hit = sharedTrees.get(key)
+  if (hit) {
+    sharedTreeRefs.set(key, (sharedTreeRefs.get(key) ?? 0) + 1)
+    return hit
+  }
+
+  const store = factory()
+  sharedTrees.set(key, store)
+  sharedTreeRefs.set(key, 1)
+  return store
+}
+
+export function peekSharedFileTree(key: string): TreeStore | undefined {
+  return sharedTrees.get(key)
+}
+
+export function releaseSharedFileTree(key: string) {
+  const refs = sharedTreeRefs.get(key)
+  if (refs === undefined) return
+  if (refs > 1) {
+    sharedTreeRefs.set(key, refs - 1)
+    return
+  }
+  sharedTreeRefs.delete(key)
+  sharedTrees.delete(key)
+}
+
 export function createFileTreeStore(options: TreeStoreOptions) {
   const [tree, setTree] = createStore<{
     node: Record<string, FileNode>
@@ -127,6 +160,12 @@ export function createFileTreeStore(options: TreeStoreOptions) {
     return promise
   }
 
+  const refreshAll = () => {
+    const dirs = new Set(Object.keys(tree.dir).filter((path) => tree.dir[path]?.loaded))
+    dirs.add("")
+    return Promise.all([...dirs].map((path) => listDir(path, { force: true })))
+  }
+
   // `list: false` marks a directory expanded without fetching its children, for
   // trees whose nodes are synthesized from a filter; listing directories that
   // only exist on a diff's base branch fails and surfaces error toasts.
@@ -163,6 +202,7 @@ export function createFileTreeStore(options: TreeStoreOptions) {
 
   return {
     listDir,
+    refreshAll,
     expandDir,
     collapseDir,
     dirState,

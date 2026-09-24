@@ -190,6 +190,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Tolak",
   "ui.permission.allowAlways": "Izinkan selalu",
   "ui.permission.allowOnce": "Izinkan sekali",
+  "ui.permission.allowAll": "Izinkan semua, jangan tanya lagi",
 
   "ui.message.expand": "Bentangkan pesan",
   "ui.message.collapse": "Ciutkan pesan",

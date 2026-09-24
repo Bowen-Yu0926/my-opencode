@@ -164,6 +164,7 @@ export const dict = {
   "ui.permission.deny": "Verweigern",
   "ui.permission.allowAlways": "Immer erlauben",
   "ui.permission.allowOnce": "Einmal erlauben",
+  "ui.permission.allowAll": "Alle erlauben, nicht mehr fragen",
 
   "ui.message.expand": "Nachricht ausklappen",
   "ui.message.collapse": "Nachricht einklappen",

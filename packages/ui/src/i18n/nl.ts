@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Weigeren",
   "ui.permission.allowAlways": "Altijd toestaan",
   "ui.permission.allowOnce": "Eén keer toestaan",
+  "ui.permission.allowAll": "Alles toestaan, niet opnieuw vragen",
   "ui.message.expand": "Bericht uitvouwen",
   "ui.message.collapse": "Bericht samenvouwen",
   "ui.message.copy": "Kopiëren",

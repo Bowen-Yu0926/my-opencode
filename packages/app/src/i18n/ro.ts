@@ -873,6 +873,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Proiecte și sesiuni",
   "sidebar.settings": "Setări",
   "sidebar.help": "Ajutor",
+  "sidebar.refresh": "Reîmprospătează",
   "sidebar.workspaces.enable": "Activează spațiile de lucru",
   "sidebar.workspaces.disable": "Dezactivează spațiile de lucru",
   "sidebar.gettingStarted.title": "Începe rapid",

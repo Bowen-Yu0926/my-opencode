@@ -87,6 +87,10 @@ export const SessionListQuery = Schema.Struct({
   archived: Schema.optional(QueryBoolean),
 })
 
+export const SandboxAddInput = Schema.Struct({
+  directory: Schema.String,
+}).annotate({ identifier: "SandboxAddInput" })
+
 export const ExperimentalPaths = {
   capabilities: "/experimental/capabilities",
   console: "/experimental/console",
@@ -96,6 +100,7 @@ export const ExperimentalPaths = {
   toolIDs: "/experimental/tool/ids",
   worktree: "/experimental/worktree",
   worktreeReset: "/experimental/worktree/reset",
+  sandbox: "/experimental/sandbox",
   session: "/experimental/session",
   sessionBackground: "/experimental/session/:sessionID/background",
   resource: "/experimental/resource",
@@ -219,6 +224,18 @@ export const ExperimentalApi = HttpApi.make("experimental")
             identifier: "worktree.reset",
             summary: "Reset worktree",
             description: "Reset a worktree branch to the primary default branch.",
+          }),
+        ),
+        HttpApiEndpoint.post("sandboxAdd", ExperimentalPaths.sandbox, {
+          query: WorkspaceRoutingQuery,
+          payload: SandboxAddInput,
+          success: described(Schema.Boolean, "Sandbox added"),
+          error: HttpApiError.BadRequest,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "sandbox.add",
+            summary: "Add sandbox",
+            description: "Add an existing directory as a sandbox workspace for the current project.",
           }),
         ),
         HttpApiEndpoint.get("session", ExperimentalPaths.session, {

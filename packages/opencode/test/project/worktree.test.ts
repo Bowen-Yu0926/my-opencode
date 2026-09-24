@@ -306,19 +306,15 @@ describe("Worktree", () => {
       { git: true },
     )
 
-    it.instance("fails with NotGitError for non-git directories", () =>
-      Effect.gen(function* () {
-        const test = yield* TestInstance
-        const svc = yield* Worktree.Service
-        const exit = yield* Effect.exit(svc.remove({ directory: path.join(test.directory, "fake") }))
-
-        expect(Exit.isFailure(exit)).toBe(true)
-        if (Exit.isFailure(exit)) {
-          const error = Cause.squash(exit.cause)
-          expect(error).toBeInstanceOf(Worktree.NotGitError)
-          if (error instanceof Worktree.NotGitError) expect(error._tag).toBe("WorktreeNotGitError")
-        }
-      }),
+    it.instance(
+      "succeeds for non-git directories so imported sandboxes can be unlinked",
+      () =>
+        Effect.gen(function* () {
+          const test = yield* TestInstance
+          const svc = yield* Worktree.Service
+          const ok = yield* svc.remove({ directory: path.join(test.directory, "fake") })
+          expect(ok).toBe(true)
+        }),
     )
   })
 })

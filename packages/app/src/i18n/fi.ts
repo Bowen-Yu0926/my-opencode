@@ -767,6 +767,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projektit ja istunnot",
   "sidebar.settings": "Asetukset",
   "sidebar.help": "Ohje",
+  "sidebar.refresh": "Päivitä",
   "sidebar.workspaces.enable": "Ota työtilat käyttöön",
   "sidebar.workspaces.disable": "Poista työtilat käytöstä",
   "sidebar.gettingStarted.title": "Aloittaminen",

@@ -179,6 +179,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Atmesti",
   "ui.permission.allowAlways": "Leiskite visada",
   "ui.permission.allowOnce": "Leisti vieną kartą",
+  "ui.permission.allowAll": "Leisti viską, daugiau neklausti",
   "ui.message.expand": "Išskleisti pranešimą",
   "ui.message.collapse": "Sutraukti pranešimą",
   "ui.message.copy": "Kopijuoti",

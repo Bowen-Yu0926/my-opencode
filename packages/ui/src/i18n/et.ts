@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Keela",
   "ui.permission.allowAlways": "Luba alati",
   "ui.permission.allowOnce": "Luba üks kord",
+  "ui.permission.allowAll": "Luba kõik, ära küsi uuesti",
   "ui.message.expand": "Laienda sõnumit",
   "ui.message.collapse": "Ahenda sõnum",
   "ui.message.copy": "Kopeeri",

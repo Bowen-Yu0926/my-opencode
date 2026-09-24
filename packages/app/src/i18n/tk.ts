@@ -868,6 +868,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Taslamalar we sessiýalar",
   "sidebar.settings": "Sazlamalar",
   "sidebar.help": "Kömek",
+  "sidebar.refresh": "Täzele",
   "sidebar.workspaces.enable": "Workspace-lary açyň",
   "sidebar.workspaces.disable": "Workspace-lary öçüriň",
   "sidebar.gettingStarted.title": "Başlamak",

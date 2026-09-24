@@ -865,6 +865,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "គម្រោង និងសម័យ",
   "sidebar.settings": "ការកំណត់",
   "sidebar.help": "ជំនួយ",
+  "sidebar.refresh": "ធ្វើឱ្យស្រស់",
   "sidebar.workspaces.enable": "បើកកន្លែងធ្វើការ",
   "sidebar.workspaces.disable": "បិទកន្លែងធ្វើការ",
   "sidebar.gettingStarted.title": "ការចាប់ផ្តើម",

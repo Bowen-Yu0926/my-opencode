@@ -171,6 +171,7 @@ export const dict: Record<string, string> = {
   "ui.permission.deny": "Απόρριψη",
   "ui.permission.allowAlways": "Να επιτρέπεται πάντα",
   "ui.permission.allowOnce": "Να επιτρέπεται μία φορά",
+  "ui.permission.allowAll": "Να επιτρέπεται τα πάντα, να μην ξαναρωτά",
   "ui.message.expand": "Ανάπτυξη μηνύματος",
   "ui.message.collapse": "Σύμπτυξη μηνύματος",
   "ui.message.copy": "Αντιγραφή",

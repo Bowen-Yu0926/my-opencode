@@ -863,6 +863,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "ໂຄງການ ແລະກອງປະຊຸມ",
   "sidebar.settings": "ການຕັ້ງຄ່າ",
   "sidebar.help": "ຊ່ວຍ",
+  "sidebar.refresh": "ໂຫຼດຂໍ້ມູນຄືນໃໝ່",
   "sidebar.workspaces.enable": "ເປີດໃຊ້ພື້ນທີ່ເຮັດວຽກ",
   "sidebar.workspaces.disable": "ປິດການໃຊ້ງານພື້ນທີ່ເຮັດວຽກ",
   "sidebar.gettingStarted.title": "ການເລີ່ມຕົ້ນ",

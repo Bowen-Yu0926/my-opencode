@@ -877,6 +877,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projecten en sessies",
   "sidebar.settings": "Instellingen",
   "sidebar.help": "Hulp",
+  "sidebar.refresh": "Vernieuwen",
   "sidebar.workspaces.enable": "Schakel werkruimten in",
   "sidebar.workspaces.disable": "Schakel werkruimten uit",
   "sidebar.gettingStarted.title": "Aan de slag",

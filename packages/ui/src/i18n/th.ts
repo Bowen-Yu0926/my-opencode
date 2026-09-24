@@ -178,6 +178,7 @@ export const dict = {
   "ui.permission.deny": "ปฏิเสธ",
   "ui.permission.allowAlways": "อนุญาตเสมอ",
   "ui.permission.allowOnce": "อนุญาตครั้งเดียว",
+  "ui.permission.allowAll": "อนุญาตทั้งหมด ไม่ต้องถามอีก",
 
   "ui.message.expand": "ขยายข้อความ",
   "ui.message.collapse": "ย่อข้อความ",

@@ -864,6 +864,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projektid ja istungid",
   "sidebar.settings": "Seaded",
   "sidebar.help": "Abi",
+  "sidebar.refresh": "Värskenda",
   "sidebar.workspaces.enable": "Luba tööruumid",
   "sidebar.workspaces.disable": "Keela tööruumid",
   "sidebar.gettingStarted.title": "Alustamine",

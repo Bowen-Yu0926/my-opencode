@@ -873,6 +873,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projekti un sesijas",
   "sidebar.settings": "Iestatījumi",
   "sidebar.help": "Palīdzība",
+  "sidebar.refresh": "Atsvaidzināt",
   "sidebar.workspaces.enable": "Ieslēgt darba telpas",
   "sidebar.workspaces.disable": "Izslēgt darba telpas",
   "sidebar.gettingStarted.title": "Darba sākšana",

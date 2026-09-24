@@ -712,6 +712,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projekte und Sitzungen",
   "sidebar.settings": "Einstellungen",
   "sidebar.help": "Hilfe",
+  "sidebar.refresh": "Aktualisieren",
   "sidebar.workspaces.enable": "Arbeitsbereiche aktivieren",
   "sidebar.workspaces.disable": "Arbeitsbereiche deaktivieren",
   "sidebar.gettingStarted.title": "Erste Schritte",

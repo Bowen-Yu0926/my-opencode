@@ -881,6 +881,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Projektai ir užsiėmimai",
   "sidebar.settings": "Nustatymai",
   "sidebar.help": "Pagalba",
+  "sidebar.refresh": "Atnaujinti",
   "sidebar.workspaces.enable": "Įgalinti darbo sritis",
   "sidebar.workspaces.disable": "Išjungti darbo sritis",
   "sidebar.gettingStarted.title": "Darbo pradžia",

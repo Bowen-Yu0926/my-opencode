@@ -2189,6 +2189,10 @@ export type WorktreeResetInput = {
   directory: string
 }
 
+export type SandboxAddInput = {
+  directory: string
+}
+
 export type ProjectSummary = {
   id: string
   name?: string
@@ -7794,6 +7798,34 @@ export type WorktreeResetResponses = {
 }
 
 export type WorktreeResetResponse = WorktreeResetResponses[keyof WorktreeResetResponses]
+
+export type SandboxAddData = {
+  body?: SandboxAddInput
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/experimental/sandbox"
+}
+
+export type SandboxAddErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+}
+
+export type SandboxAddError = SandboxAddErrors[keyof SandboxAddErrors]
+
+export type SandboxAddResponses = {
+  /**
+   * Sandbox added
+   */
+  200: boolean
+}
+
+export type SandboxAddResponse = SandboxAddResponses[keyof SandboxAddResponses]
 
 export type ExperimentalSessionListData = {
   body?: never

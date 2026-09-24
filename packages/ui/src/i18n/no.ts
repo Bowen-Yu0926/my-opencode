@@ -157,6 +157,7 @@ export const dict: Record<Keys, string> = {
   "ui.permission.deny": "Avslå",
   "ui.permission.allowAlways": "Tillat alltid",
   "ui.permission.allowOnce": "Tillat én gang",
+  "ui.permission.allowAll": "Tillat alt, spør ikke igjen",
 
   "ui.message.expand": "Utvid melding",
   "ui.message.collapse": "Skjul melding",

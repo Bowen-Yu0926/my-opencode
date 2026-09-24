@@ -882,6 +882,7 @@ export const dict: Record<string, string> = {
   "sidebar.nav.projectsAndSessions": "ལས་གཞི་དང་ཚོགས་ཚན།",
   "sidebar.settings": "སྒྲིག་སྟངས་ཚུ།",
   "sidebar.help": "ཆ་རོགས་འབད་ནི",
+  "sidebar.refresh": "གསརཔ་བཟོ།",
   "sidebar.workspaces.enable": "ལཱ་གི་ས་སྒོ་ཚུ་ལྕོགས་ཅན་བཟོ།",
   "sidebar.workspaces.disable": "ལཱ་གི་ས་སྒོ་ཚུ་ལྕོགས་མིན་བཟོ།",
   "sidebar.gettingStarted.title": "འགོ་བཙུགས་དོ།",

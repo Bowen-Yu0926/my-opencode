@@ -871,6 +871,7 @@ export const dict = {
   "sidebar.nav.projectsAndSessions": "Verkefni og setur",
   "sidebar.settings": "Stillingar",
   "sidebar.help": "Hjálp",
+  "sidebar.refresh": "Endurnýja",
   "sidebar.workspaces.enable": "Virkjaðu vinnusvæði",
   "sidebar.workspaces.disable": "Slökktu á vinnusvæðum",
   "sidebar.gettingStarted.title": "Að byrja",
