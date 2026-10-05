@@ -461,9 +461,12 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 
     const roots = createMemo(() => {
       const map = new Map<string, string>()
+      const worktrees = new Set(serverSync().data.project.map((project) => pathKey(project.worktree)))
       for (const project of serverSync().data.project) {
         const sandboxes = project.sandboxes ?? []
         for (const sandbox of sandboxes) {
+          // A path that is itself a project worktree is not a child sandbox.
+          if (worktrees.has(pathKey(sandbox))) continue
           map.set(sandbox, project.worktree)
         }
       }
