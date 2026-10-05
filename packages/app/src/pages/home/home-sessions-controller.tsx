@@ -183,11 +183,11 @@ export function createHomeSessionsController(home: HomeController) {
         const project =
           home.project
             .list()
-            .find(
-              (item) =>
-                pathKey(item.worktree) === directoryKey ||
-                item.sandboxes?.some((sandbox) => pathKey(sandbox) === directoryKey),
-            ) ?? projectForSession(session, home.project.list(), projectByID())
+            .find((item) => pathKey(item.worktree) === directoryKey) ??
+          home.project
+            .list()
+            .find((item) => item.sandboxes?.some((sandbox) => pathKey(sandbox) === directoryKey)) ??
+          projectForSession(session, home.project.list(), projectByID())
         const conn = home.server.focused()
         if (!conn) return
         const directory = project?.worktree ?? session.directory
@@ -262,10 +262,11 @@ function buildHomeSessionRecords(input: {
       const project =
         input
           .projects()
-          .find(
-            (item) =>
-              pathKey(item.worktree) === directory || item.sandboxes?.some((sandbox) => pathKey(sandbox) === directory),
-          ) ?? projectForSession(session, input.projects(), input.projectByID())
+          .find((item) => pathKey(item.worktree) === directory) ??
+        input
+          .projects()
+          .find((item) => item.sandboxes?.some((sandbox) => pathKey(sandbox) === directory)) ??
+        projectForSession(session, input.projects(), input.projectByID())
       if (!project) return []
       return { session, project, projectName: displayName(project) }
     })

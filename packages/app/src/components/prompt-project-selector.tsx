@@ -58,13 +58,13 @@ export function createPromptProjectController(input: {
 
   const current = () => {
     const key = pathKey(input.controls().directory)
-    return input
+    const scoped = input
       .controls()
-      .available.find(
-        (project) =>
-          (!project.server || project.server.key === input.controls().server) &&
-          (pathKey(project.worktree) === key || project.sandboxes?.some((sandbox) => pathKey(sandbox) === key)),
-      )
+      .available.filter((project) => !project.server || project.server.key === input.controls().server)
+    return (
+      scoped.find((project) => pathKey(project.worktree) === key) ??
+      scoped.find((project) => project.sandboxes?.some((sandbox) => pathKey(sandbox) === key))
+    )
   }
   const selected = () => current() ?? input.controls().available[0]
   const projects = () => {

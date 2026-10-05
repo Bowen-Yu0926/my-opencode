@@ -183,7 +183,10 @@ function groupBySession<T extends { id: string; sessionID: string }>(input: T[])
 }
 
 function projectID(directory: string, projects: Project[]) {
-  return projects.find((project) => project.worktree === directory || project.sandboxes?.includes(directory))?.id
+  return (
+    projects.find((project) => project.worktree === directory)?.id ??
+    projects.find((project) => project.sandboxes?.includes(directory))?.id
+  )
 }
 
 function mergeSession(setStore: SetStoreFunction<State>, session: Session) {

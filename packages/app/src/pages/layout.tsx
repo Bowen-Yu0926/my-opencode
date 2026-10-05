@@ -519,11 +519,11 @@ export default function LegacyLayout(props: ParentProps) {
 
     const projects = layout.projects.list()
 
-    const sandbox = projects.find((p) => p.sandboxes?.some((item) => pathKey(item) === key))
-    if (sandbox) return sandbox
-
     const direct = projects.find((p) => pathKey(p.worktree) === key)
     if (direct) return direct
+
+    const sandbox = projects.find((p) => p.sandboxes?.some((item) => pathKey(item) === key))
+    if (sandbox) return sandbox
 
     const [child] = serverSync().child(directory, { bootstrap: false })
     const id = child.project
@@ -604,9 +604,9 @@ export default function LegacyLayout(props: ParentProps) {
     for (const [directory, expanded] of Object.entries(store.workspaceExpanded)) {
       if (!expanded) continue
       const key = pathKey(directory)
-      const project = projects.find(
-        (item) => pathKey(item.worktree) === key || item.sandboxes?.some((sandbox) => pathKey(sandbox) === key),
-      )
+      const project =
+        projects.find((item) => pathKey(item.worktree) === key) ??
+        projects.find((item) => item.sandboxes?.some((sandbox) => pathKey(sandbox) === key))
       if (!project) continue
       if (project.vcs === "git" && layout.sidebar.workspaces(project.worktree)()) continue
       setStore("workspaceExpanded", directory, false)
@@ -1112,9 +1112,10 @@ export default function LegacyLayout(props: ParentProps) {
 
   function projectRoot(directory: string) {
     const key = pathKey(directory)
-    const project = layout.projects
-      .list()
-      .find((item) => pathKey(item.worktree) === key || item.sandboxes?.some((sandbox) => pathKey(sandbox) === key))
+    const projects = layout.projects.list()
+    const project =
+      projects.find((item) => pathKey(item.worktree) === key) ??
+      projects.find((item) => item.sandboxes?.some((sandbox) => pathKey(sandbox) === key))
     if (project) return project.worktree
 
     const known = Object.entries(store.workspaceOrder).find(
@@ -1846,7 +1847,7 @@ export default function LegacyLayout(props: ParentProps) {
     }
 
     const added = await serverSDK()
-      .client.sandbox.add({ sandboxAddInput: { directory } })
+      .client.sandbox.add({ directory: project.worktree, sandboxAddInput: { directory } })
       .then((x) => x.data)
       .catch((err) => {
         showToast({

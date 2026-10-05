@@ -67,12 +67,10 @@ export function SessionFileBrowserTab(props: {
   const loading = createMemo(() => query().length > 0 && search.isPending)
   const project = createMemo(() => {
     const directory = pathKey(sdk().directory)
-    return layout.projects
-      .list()
-      .find(
-        (item) =>
-          pathKey(item.worktree) === directory || item.sandboxes?.some((sandbox) => pathKey(sandbox) === directory),
-      )
+    return (
+      layout.projects.list().find((item) => pathKey(item.worktree) === directory) ??
+      layout.projects.list().find((item) => item.sandboxes?.some((sandbox) => pathKey(sandbox) === directory))
+    )
   })
   const title = createMemo(() => displayName(project() ?? { worktree: sdk().directory }))
   const optionID = (path: string) => `${resultsID}-option-${files().indexOf(path)}`
