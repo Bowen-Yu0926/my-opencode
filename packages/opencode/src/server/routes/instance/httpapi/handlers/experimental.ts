@@ -18,6 +18,7 @@ import { InstanceHttpApi } from "../api"
 import {
   ConsoleSwitchPayload,
   SandboxAddInput,
+  SandboxRemoveInput,
   SessionListQuery,
   ToolListQuery,
   WorktreeApiError,
@@ -142,6 +143,14 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       return true
     })
 
+    const sandboxRemove = Effect.fn("ExperimentalHttpApi.sandboxRemove")(function* (ctx: {
+      payload: typeof SandboxRemoveInput.Type
+    }) {
+      const instance = yield* InstanceState.context
+      yield* project.removeSandbox(instance.project.id, ctx.payload.directory)
+      return true
+    })
+
     const worktreeReset = Effect.fn("ExperimentalHttpApi.worktreeReset")(function* (ctx: {
       payload: Worktree.ResetInput
     }) {
@@ -201,6 +210,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       .handle("worktreeRemove", worktreeRemove)
       .handle("worktreeReset", worktreeReset)
       .handle("sandboxAdd", sandboxAdd)
+      .handle("sandboxRemove", sandboxRemove)
       .handle("session", session)
       .handle("sessionBackground", sessionBackground)
       .handle("resource", resource)

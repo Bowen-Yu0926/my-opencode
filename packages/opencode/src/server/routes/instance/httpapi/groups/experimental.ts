@@ -91,6 +91,10 @@ export const SandboxAddInput = Schema.Struct({
   directory: Schema.String,
 }).annotate({ identifier: "SandboxAddInput" })
 
+export const SandboxRemoveInput = Schema.Struct({
+  directory: Schema.String,
+}).annotate({ identifier: "SandboxRemoveInput" })
+
 export const ExperimentalPaths = {
   capabilities: "/experimental/capabilities",
   console: "/experimental/console",
@@ -236,6 +240,18 @@ export const ExperimentalApi = HttpApi.make("experimental")
             identifier: "sandbox.add",
             summary: "Add sandbox",
             description: "Add an existing directory as a sandbox workspace for the current project.",
+          }),
+        ),
+        HttpApiEndpoint.delete("sandboxRemove", ExperimentalPaths.sandbox, {
+          query: WorkspaceRoutingQuery,
+          payload: SandboxRemoveInput,
+          success: described(Schema.Boolean, "Sandbox removed"),
+          error: HttpApiError.BadRequest,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "sandbox.remove",
+            summary: "Remove sandbox",
+            description: "Remove a sandbox workspace link from the current project without deleting files on disk.",
           }),
         ),
         HttpApiEndpoint.get("session", ExperimentalPaths.session, {

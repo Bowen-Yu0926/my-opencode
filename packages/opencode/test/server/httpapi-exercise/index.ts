@@ -586,6 +586,17 @@ const scenarios: Scenario[] = [
       check(body === true, "sandbox add should return true")
     }),
   http.protected
+    .delete("/experimental/sandbox", "sandbox.remove")
+    .mutating()
+    .at((ctx) => ({
+      path: "/experimental/sandbox",
+      headers: ctx.headers(),
+      body: { directory: ctx.directory },
+    }))
+    .json(200, (body) => {
+      check(body === true, "sandbox remove should return true")
+    }),
+  http.protected
     .get("/experimental/session", "experimental.session.list")
     .at((ctx) => ({ path: "/experimental/session?roots=false&archived=false", headers: ctx.headers() }))
     .json(200, array),

@@ -32,6 +32,18 @@ export const Event = {
 
 type Row = typeof ProjectTable.$inferSelect
 
+// AbsolutePath.make only brands; it does not normalize separators or trailing
+// slashes. Windows reads backslash paths while some callers send forward
+// slashes, so compare sandboxes with a path-key transform.
+function pathKey(value: string) {
+  const windows = value[1] === ":" || value.startsWith("\\\\")
+  const normalized = windows ? value.replaceAll("\\", "/") : value
+  const trimmed = normalized.replace(/\/+$/, "")
+  if (!trimmed && normalized.startsWith("/")) return "/"
+  if (/^[A-Za-z]:$/.test(trimmed)) return `${trimmed}/`
+  return trimmed
+}
+
 export function fromRow(row: Row): Info {
   const icon =
     row.icon_url || row.icon_url_override || row.icon_color
@@ -418,8 +430,9 @@ const layer = Layer.effect(
       const row = yield* db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get().pipe(Effect.orDie)
       if (!row) throw new Error(`Project not found: ${id}`)
       const sandbox = AbsolutePath.make(directory)
+      const key = pathKey(sandbox)
       const sboxes = [...row.sandboxes]
-      if (!sboxes.includes(sandbox)) sboxes.push(sandbox)
+      if (!sboxes.some((item) => pathKey(item) === key)) sboxes.push(sandbox)
       const result = yield* db
         .update(ProjectTable)
         .set({ sandboxes: sboxes, time_updated: Date.now() })
@@ -434,8 +447,8 @@ const layer = Layer.effect(
     const removeSandbox = Effect.fn("Project.removeSandbox")(function* (id: ProjectV2.ID, directory: string) {
       const row = yield* db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get().pipe(Effect.orDie)
       if (!row) throw new Error(`Project not found: ${id}`)
-      const sandbox = AbsolutePath.make(directory)
-      const sboxes = row.sandboxes.filter((s) => s !== sandbox)
+      const key = pathKey(AbsolutePath.make(directory))
+      const sboxes = row.sandboxes.filter((s) => pathKey(s) !== key)
       const result = yield* db
         .update(ProjectTable)
         .set({ sandboxes: sboxes, time_updated: Date.now() })

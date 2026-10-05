@@ -178,6 +178,9 @@ import type {
   SandboxAddErrors,
   SandboxAddInput,
   SandboxAddResponses,
+  SandboxRemoveErrors,
+  SandboxRemoveInput,
+  SandboxRemoveResponses,
   SessionAbortErrors,
   SessionAbortResponses,
   SessionChildrenErrors,
@@ -1726,6 +1729,43 @@ export class Worktree extends HeyApiClient {
 }
 
 export class Sandbox extends HeyApiClient {
+  /**
+   * Remove sandbox
+   *
+   * Remove a sandbox workspace link from the current project without deleting files on disk.
+   */
+  public remove<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      sandboxRemoveInput?: SandboxRemoveInput
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { key: "sandboxRemoveInput", map: "body" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<SandboxRemoveResponses, SandboxRemoveErrors, ThrowOnError>({
+      url: "/experimental/sandbox",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
   /**
    * Add sandbox
    *
