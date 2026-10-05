@@ -80,6 +80,9 @@ export async function mockOpenCodeServer(page: Page, config: MockServerConfig) {
     if (path === "/provider")
       return json(route, typeof config.provider === "function" ? config.provider() : config.provider)
     if (path === "/provider/auth") return json(route, config.integrationMethods ?? {})
+    if (path === "/api/provider") return json(route, { data: [] })
+    if (path === "/api/model") return json(route, { data: [] })
+    if (path === "/api/model/default") return json(route, { data: null })
     const legacyAuth = path.match(/^\/auth\/([^/]+)$/)?.[1]
     if (legacyAuth && route.request().method() === "PUT") {
       config.onConnectKey?.({ integrationID: legacyAuth, body: route.request().postDataJSON() })

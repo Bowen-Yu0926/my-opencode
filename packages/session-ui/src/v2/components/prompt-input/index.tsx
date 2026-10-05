@@ -109,6 +109,7 @@ export function PromptInputV2(props: PromptInputV2Props) {
       </Show>
       <form
         data-component="prompt-input-v2"
+        data-answer-pending={view.answerPending?.() ? "true" : "false"}
         data-dock-border-underlay={props.borderUnderlay ? "v2" : undefined}
         class="group/prompt-input relative min-h-[96px] w-full overflow-clip rounded-xl bg-v2-background-bg-base"
         classList={{

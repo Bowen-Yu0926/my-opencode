@@ -40,7 +40,7 @@ export function SessionPermissionDock(props: {
           <Checkbox
             checked={permission.isAutoAccepting(props.request.sessionID, sdk().directory)}
             disabled={props.responding}
-            onCheckedChange={(checked: boolean | "indeterminate") => {
+            onChange={(checked) => {
               if (checked === true) {
                 permission.enableAutoAccept(props.request.sessionID, sdk().directory)
                 return

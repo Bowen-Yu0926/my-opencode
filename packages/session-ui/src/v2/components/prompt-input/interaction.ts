@@ -28,6 +28,7 @@ export type PromptInputV2SelectControl = {
 
 export type PromptInputV2ViewConfig = {
   placeholder?: Accessor<string>
+  answerPending?: Accessor<boolean>
   add?: {
     onAttach: () => void
   }

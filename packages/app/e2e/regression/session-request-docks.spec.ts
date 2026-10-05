@@ -32,44 +32,19 @@ test("shows a pending question dock", async ({ page }) => {
   await page.goto(`/${base64Encode(directory)}/session/${sessionID}`)
   await expectSessionTitle(page, title)
 
-  const question = page.locator('[data-component="dock-prompt"][data-kind="question"]')
-  await expect(question).toBeVisible()
-  await expect(question.getByText("Which implementation should be used?")).toBeVisible()
-  await expect(question.getByRole("radio", { name: /Minimal/ })).toBeVisible()
-  await expect(question.getByRole("radio", { name: /Extended/ })).toBeVisible()
-  await expect(page.locator('[data-component="session-composer"]')).toHaveCount(0)
+  const editor = page.locator('[data-component="prompt-input"][contenteditable="true"]')
+  const composer = page.locator('[data-component="prompt-input-v2"]')
+  await expect(editor).toBeVisible()
+  await expect(composer).toHaveAttribute("data-answer-pending", "true")
+  await expect(editor.locator("xpath=following-sibling::div[1]")).toHaveText("输入你的答案...")
 
-  const rejectRequests: string[] = []
-  page.on("request", (request) => {
-    if (request.method() !== "POST") return
-    if (new URL(request.url()).pathname === `/api/session/${sessionID}/question/question-request/reject`)
-      rejectRequests.push(request.url())
-  })
-
-  await question.locator('[data-component="icon-button"][data-icon="chevron-down"]').click()
-  await expect(question).toBeVisible()
-  await expect(question.getByText("Which implementation should be used?")).toBeVisible()
-  await expect(question.getByText("Select one answer")).toBeHidden()
-  await expect(question.getByRole("radio", { name: /Minimal/ })).toBeHidden()
-  await expect(question.getByRole("radio", { name: /Extended/ })).toBeHidden()
-  await expect(question.getByRole("button", { name: "Dismiss" })).toBeVisible()
-  await expect(question.getByRole("button", { name: "Submit" })).toBeVisible()
-  await expect(page.locator('[data-component="question-minimized-dock"]')).toHaveCount(0)
-  expect(rejectRequests).toEqual([])
-
-  await question.locator('[data-component="icon-button"][data-icon="chevron-down"]').click()
-  await expect(question).toBeVisible()
-  await expect(question.getByText("Which implementation should be used?")).toBeVisible()
-  await expect(question.getByRole("radio", { name: /Minimal/ })).toBeVisible()
-  expect(rejectRequests).toEqual([])
-
-  await question.getByRole("radio", { name: /Minimal/ }).click()
   const reply = page.waitForRequest(
     (request) =>
       request.method() === "POST" &&
       new URL(request.url()).pathname === `/api/session/${sessionID}/question/question-request/reply`,
   )
-  await question.getByRole("button", { name: "Submit" }).click()
+  await editor.fill("Minimal")
+  await editor.press("Enter")
   expect((await reply).postDataJSON()).toEqual({ answers: [["Minimal"]] })
 })
 
@@ -97,14 +72,46 @@ test("shows a pending permission dock", async ({ page }) => {
   await expect(permission.locator('[data-slot="permission-footer-actions"] button')).toHaveCount(3)
   await expect(page.locator('[data-component="session-composer"]')).toHaveCount(0)
 
-  const reply = page.waitForRequest((request) => request.method() === "POST")
-  await permission.getByRole("button", { name: "Allow once" }).click()
-  const request = await reply
-  expect(new URL(request.url()).pathname).toBe(`/api/session/${sessionID}/permission/permission-request/reply`)
-  expect(request.postDataJSON()).toEqual({ reply: "once" })
+  const reply = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      new URL(request.url()).pathname === `/api/session/${sessionID}/permission/permission-request/reply`,
+  )
+  await permission.locator('[data-slot="permission-footer-actions"] button[data-variant="primary"]').click()
+  expect((await reply).postDataJSON()).toEqual({ reply: "once" })
 })
 
-test("restores the draft caret before typing after a request dock closes", async ({ page }) => {
+test("enables allow-all from the permission dock", async ({ page }) => {
+  await mockServer(page, {
+    permissions: [
+      {
+        id: "permission-request",
+        sessionID,
+        permission: "bash",
+        patterns: ["git status"],
+        metadata: {},
+        always: [],
+      },
+    ],
+  })
+
+  await page.goto(`/${base64Encode(directory)}/session/${sessionID}`)
+  await expectSessionTitle(page, title)
+
+  const permission = page.locator('[data-component="dock-prompt"][data-kind="permission"]')
+  await expect(permission).toBeVisible()
+
+  const reply = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      new URL(request.url()).pathname === `/api/session/${sessionID}/permission/permission-request/reply`,
+  )
+  await permission.locator('[data-slot="checkbox-checkbox-control"]').click()
+  expect((await reply).postDataJSON()).toEqual({ reply: "once" })
+  await expect(permission).toHaveCount(0)
+})
+
+test("keeps the draft caret when a question arrives and is rejected", async ({ page }) => {
   const transport = await installSseTransport(page, {
     server: `http://${process.env.PLAYWRIGHT_SERVER_HOST ?? "127.0.0.1"}:${process.env.PLAYWRIGHT_SERVER_PORT ?? "4096"}`,
     retry: 20,
@@ -115,9 +122,9 @@ test("restores the draft caret before typing after a request dock closes", async
   await expectSessionTitle(page, title)
 
   const editor = page.locator('[data-component="prompt-input"][contenteditable="true"]')
+  const composer = page.locator('[data-component="prompt-input-v2"]')
   const draft = "keep the caret at the end"
   await editor.fill(draft)
-  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
   for (let index = 0; index < 4; index++) await page.keyboard.press("ArrowLeft")
   const cursor = draft.length - 4
   await expect
@@ -150,16 +157,25 @@ test("restores the draft caret before typing after a request dock closes", async
       },
     },
   })
-  const question = page.locator('[data-component="dock-prompt"][data-kind="question"]')
-  await expect(question).toBeVisible()
-  await expect(editor).toHaveCount(0)
+  await expect(composer).toHaveAttribute("data-answer-pending", "true")
+  await expect
+    .poll(() =>
+      editor.evaluate((element) => {
+        const selection = window.getSelection()
+        if (!selection?.rangeCount || !element.contains(selection.anchorNode)) return -1
+        const range = selection.getRangeAt(0).cloneRange()
+        range.selectNodeContents(element)
+        range.setEnd(selection.anchorNode!, selection.anchorOffset)
+        return range.toString().length
+      }),
+    )
+    .toBe(cursor)
 
   await transport.send({
     directory,
     payload: { type: "question.rejected", properties: { sessionID, requestID: "question-caret" } },
   })
-  await expect(question).toHaveCount(0)
-  await expect(editor).toBeVisible()
+  await expect(composer).toHaveAttribute("data-answer-pending", "false")
   await page.keyboard.press("x")
 
   await expect(editor).toHaveText(`${draft.slice(0, cursor)}x${draft.slice(cursor)}`)
@@ -214,8 +230,12 @@ async function mockServer(
     pageMessages: () => ({ items: [] }),
     permissions: requests.permissions,
     questions: requests.questions,
+    fileList: () => [],
   })
   await page.addInitScript(() => {
-    localStorage.setItem("settings.v3", JSON.stringify({ general: { newLayoutDesigns: true } }))
+    localStorage.setItem(
+      "settings.v3",
+      JSON.stringify({ general: { newLayoutDesigns: true, shouldDisplayTabsToast: false } }),
+    )
   })
 }

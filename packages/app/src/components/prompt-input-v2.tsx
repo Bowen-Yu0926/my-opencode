@@ -396,6 +396,7 @@ export function usePromptInputV2Controller(props: PromptInputV2ControllerProps):
     },
     view: {
       placeholder: designPlaceholder,
+      answerPending,
       get agent() {
         return props.controls.agents.visible && props.controls.agents.options.length > 0
           ? {
