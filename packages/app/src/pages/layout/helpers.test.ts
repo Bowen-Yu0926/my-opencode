@@ -19,6 +19,7 @@ import {
   homeProjectDirectories,
   homeSessionServerStatus,
   latestRootSession,
+  sessionsForActiveProject,
   sortedRootSessions,
   toggleHomeProjectSelection,
 } from "./helpers"
@@ -343,5 +344,48 @@ describe("layout workspace helpers", () => {
     expect(errorMessage({ data: { message: "boom" } }, "fallback")).toBe("boom")
     expect(errorMessage(new Error("broken"), "fallback")).toBe("broken")
     expect(errorMessage("unknown", "fallback")).toBe("fallback")
+  })
+})
+
+describe("sessionsForActiveProject", () => {
+  const projects = [
+    { worktree: "/repo/alpha", sandboxes: ["/repo/alpha-sandbox"] },
+    { worktree: "C:\\repo\\beta" },
+  ]
+  const sessions = [
+    session({ id: "alpha", directory: "/repo/alpha" }),
+    session({ id: "alpha-sandbox", directory: "/repo/alpha-sandbox" }),
+    session({ id: "beta", directory: "C:\\repo\\beta" }),
+    session({ id: "other", directory: "/repo/other" }),
+  ]
+
+  test("keeps only the selected project's worktree and sandbox sessions", () => {
+    const result = sessionsForActiveProject(sessions, projects, "/repo/alpha")
+    expect(result.map((item) => item.id)).toEqual(["alpha", "alpha-sandbox"])
+  })
+
+  test("normalizes separators and trailing slashes in the selection", () => {
+    const result = sessionsForActiveProject(sessions, projects, "C:/repo/beta/")
+    expect(result.map((item) => item.id)).toEqual(["beta"])
+  })
+
+  test("resolves a selected sandbox directory to its parent project", () => {
+    const result = sessionsForActiveProject(sessions, projects, "/repo/alpha-sandbox")
+    expect(result.map((item) => item.id)).toEqual(["alpha", "alpha-sandbox"])
+  })
+
+  test("falls back to the first project when nothing is selected", () => {
+    const result = sessionsForActiveProject(sessions, projects, undefined)
+    expect(result.map((item) => item.id)).toEqual(["alpha", "alpha-sandbox"])
+  })
+
+  test("falls back to the first project when the selection is unknown", () => {
+    const result = sessionsForActiveProject(sessions, projects, "/repo/missing")
+    expect(result.map((item) => item.id)).toEqual(["alpha", "alpha-sandbox"])
+  })
+
+  test("keeps all sessions when there are no projects", () => {
+    const result = sessionsForActiveProject(sessions, [], "/repo/alpha")
+    expect(result.map((item) => item.id)).toEqual(["alpha", "alpha-sandbox", "beta", "other"])
   })
 })

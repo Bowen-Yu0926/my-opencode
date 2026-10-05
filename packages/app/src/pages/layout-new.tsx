@@ -11,17 +11,11 @@ import { WorkspaceFilePanel } from "@/components/workspace-file-panel"
 import { SessionHistoryList } from "@/components/session-history-panel"
 import { usePlatform } from "@/context/platform"
 import { useLanguage } from "@/context/language"
-import { useServer, ServerConnection } from "@/context/server"
-import { useGlobal } from "@/context/global"
-import { useTabs } from "@/context/tabs"
 import { setV2Toast, ToastRegion } from "@/utils/toast"
 
 export default function NewLayout(props: ParentProps) {
   const platform = usePlatform()
   const language = useLanguage()
-  const server = useServer()
-  const global = useGlobal()
-  const tabs = useTabs()
   const rightMount = useTitlebarRightMount()
   const [state, setState] = createStore({ debugTools: true, historyOpen: false })
 
@@ -35,23 +29,6 @@ export default function NewLayout(props: ParentProps) {
     },
     installing: () => platform.updater?.state().status === "installing",
     install: () => void platform.updater?.install(),
-  }
-
-  const createSession = () => {
-    const conn = server.current
-    if (!conn) return
-    const key = ServerConnection.key(conn)
-    const project = global.ensureServerCtx(conn).projects.list()[0]
-    if (project) {
-      void tabs.newDraft({ server: key, directory: project.worktree }, "")
-      return
-    }
-    const fallback = global.servers.list().flatMap((item) => {
-      const next = global.ensureServerCtx(item).projects.list()[0]
-      return next ? [{ server: ServerConnection.key(item), project: next }] : []
-    })[0]
-    if (!fallback) return
-    void tabs.newDraft({ server: fallback.server, directory: fallback.project.worktree }, "")
   }
 
   return (
@@ -74,17 +51,6 @@ export default function NewLayout(props: ParentProps) {
         {(mount) => (
           <Portal mount={mount()}>
             <div class="flex items-center gap-1 shrink-0" data-slot="layout-new-actions">
-              <TooltipV2 placement="bottom" value={language.t("command.session.new")}>
-                <IconButtonV2
-                  type="button"
-                  variant="ghost-muted"
-                  size="normal"
-                  icon={<IconV2 name="plus" />}
-                  aria-label={language.t("command.session.new")}
-                  data-action="layout-new-session"
-                  onClick={createSession}
-                />
-              </TooltipV2>
               <TooltipV2 placement="bottom" value={language.t("sidebar.project.recentSessions")}>
                 <IconButtonV2
                   type="button"

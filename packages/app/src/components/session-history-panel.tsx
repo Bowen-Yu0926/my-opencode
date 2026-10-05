@@ -6,10 +6,12 @@ import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 import { useGlobal } from "@/context/global"
+import { useLayout } from "@/context/layout"
 import { ServerConnection, useServer } from "@/context/server"
 import { useLanguage } from "@/context/language"
 import { sessionHasOpenTab, useTabs } from "@/context/tabs"
 import { loadHomeSessionIndex, retainHomeSessions, type HomeSessionEvents } from "@/context/global-sync/home-session-index"
+import { sessionsForActiveProject } from "@/pages/layout/helpers"
 import { sessionTitle } from "@/utils/session-title"
 import { showToast } from "@/utils/toast"
 
@@ -40,8 +42,15 @@ export function SessionHistoryList() {
   const server = useServer()
   const global = useGlobal()
   const tabs = useTabs()
+  const layout = useLayout()
 
   const ctx = createMemo(() => (server.current ? global.ensureServerCtx(server.current) : undefined))
+
+  const projects = createMemo(() => {
+    const key = layout.home.selection().server
+    const conn = global.servers.list().find((item) => ServerConnection.key(item) === key) ?? server.current
+    return conn ? global.ensureServerCtx(conn).projects.list() : []
+  })
 
   const events = useQuery(() => ({
     queryKey: ctx()?.sync.homeSessions.eventsKey ?? ["home-sessions-events"],
@@ -77,7 +86,8 @@ export function SessionHistoryList() {
     if (!active) return []
     const cache = active.sync.homeSessions
     const list = cache.sessions(sessionLoad.data, events.data)
-    return retainHomeSessions(list, LIMIT, Date.now()).slice(0, LIMIT)
+    const scoped = sessionsForActiveProject(list, projects(), layout.home.selection().directory)
+    return retainHomeSessions(scoped, LIMIT, Date.now()).slice(0, LIMIT)
   })
 
   const groups = createMemo(() => groupByDay(records(), language))

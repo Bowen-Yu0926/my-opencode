@@ -101,10 +101,29 @@ export function projectForSession<T extends { id?: string; worktree: string; san
   const direct = byID.get(session.projectID)
   if (direct) return direct
   const directory = pathKey(session.directory)
-  return projects.find(
-    (project) =>
-      pathKey(project.worktree) === directory || project.sandboxes?.some((sandbox) => pathKey(sandbox) === directory),
+  return (
+    projects.find((project) => pathKey(project.worktree) === directory) ??
+    projects.find((project) => project.sandboxes?.some((sandbox) => pathKey(sandbox) === directory))
   )
+}
+
+// Resolves the active project the same way the workspace panel highlights it:
+// a known selection wins, otherwise the first project, otherwise no filtering.
+export function sessionsForActiveProject<T extends { directory: string }>(
+  sessions: readonly T[],
+  projects: readonly { worktree: string; sandboxes?: string[] }[],
+  selectedDirectory: string | undefined,
+) {
+  if (projects.length === 0) return [...sessions]
+  const key = selectedDirectory ? pathKey(selectedDirectory) : undefined
+  const project =
+    (key
+      ? projects.find(
+          (item) => pathKey(item.worktree) === key || item.sandboxes?.some((sandbox) => pathKey(sandbox) === key),
+        )
+      : undefined) ?? projects[0]
+  const directories = new Set([project.worktree, ...(project.sandboxes ?? [])].map(pathKey))
+  return sessions.filter((session) => directories.has(pathKey(session.directory)))
 }
 
 export const errorMessage = (err: unknown, fallback: string) => {
