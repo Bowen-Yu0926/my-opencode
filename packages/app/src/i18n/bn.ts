@@ -687,6 +687,7 @@ export const dict: Record<string, string> = {
   "home.title": "বাড়ি",
   "home.projects": "প্রকল্প",
   "home.project.add": "প্রকল্প যোগ করুন",
+  "home.project.remove": "প্রকল্প সরান",
   "home.recentlyClosed": "সম্প্রতি বন্ধ",
   "home.server.collapse": "সার্ভার প্রকল্প সঙ্কুচিত করুন",
   "home.server.expand": "সার্ভার প্রকল্প প্রসারিত",

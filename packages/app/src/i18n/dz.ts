@@ -699,6 +699,7 @@ export const dict: Record<string, string> = {
   "home.title": "ཁྱིམ",
   "home.projects": "ལས་གཞི།",
   "home.project.add": "ལས་འགུལ་ཁ་སྐོང་རྐྱབས།",
+  "home.project.remove": "ལས་འགུལ་ སྤང་",
   "home.recentlyClosed": "འཕྲལ་ཁམས་ཅིག་ཁར་ སྒོ་བསྡམས་ཡོདཔ།",
   "home.server.collapse": "སར་བར་ལས་འགུལ་ཚུ་ བརྡབ་གཏང་།",
   "home.server.expand": "སར་བར་ལས་འགུལ་ཚུ་རྒྱ་བསྐྱེད་འབད།",

@@ -750,6 +750,7 @@ export const dict = {
   "home.title": "Beranda",
   "home.projects": "Proyek",
   "home.project.add": "Tambah proyek",
+  "home.project.remove": "Hapus proyek",
   "home.recentlyClosed": "Baru saja ditutup",
   "home.server.collapse": "Ciutkan proyek server",
   "home.server.expand": "Bentangkan proyek server",

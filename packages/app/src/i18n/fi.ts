@@ -585,6 +585,7 @@ export const dict = {
   "home.title": "Etusivu",
   "home.projects": "Projektit",
   "home.project.add": "Lisää projekti",
+  "home.project.remove": "Poista projekti",
   "home.recentlyClosed": "Äskettäin suljettu",
   "home.server.collapse": "Kutista palvelimen projektit",
   "home.server.expand": "Laajenna palvelimen projektit",

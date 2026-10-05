@@ -686,6 +686,7 @@ export const dict = {
   "home.title": "خانه",
   "home.projects": "پروژه ها",
   "home.project.add": "اضافه کردن پروژه",
+  "home.project.remove": "حذف پروژه",
   "home.recentlyClosed": "اخیرا بسته شده است",
   "home.server.collapse": "پروژه های سرور را جمع کنید",
   "home.server.expand": "گسترش پروژه های سرور",

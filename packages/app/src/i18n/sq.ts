@@ -690,6 +690,7 @@ export const dict = {
   "home.title": "Kreu",
   "home.projects": "Projektet",
   "home.project.add": "Shto projekt",
+  "home.project.remove": "Hiq projektin",
   "home.recentlyClosed": "Mbyllur së fundmi",
   "home.server.collapse": "Palos projektet e serverit",
   "home.server.expand": "Zgjeroni projektet e serverëve",

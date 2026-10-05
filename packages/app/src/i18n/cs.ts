@@ -687,6 +687,7 @@ export const dict = {
   "home.title": "Domů",
   "home.projects": "Projekty",
   "home.project.add": "Přidat projekt",
+  "home.project.remove": "Odebrat projekt",
   "home.recentlyClosed": "Nedávno zavřeno",
   "home.server.collapse": "Sbalit projekty serveru",
   "home.server.expand": "Rozbalte projekty serveru",

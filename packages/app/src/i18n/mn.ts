@@ -692,6 +692,7 @@ export const dict = {
   "home.title": "Гэр",
   "home.projects": "Төслүүд",
   "home.project.add": "Төсөл нэмэх",
+  "home.project.remove": "Төсөл устгах",
   "home.recentlyClosed": "Саяхан хаагдсан",
   "home.server.collapse": "Серверийн төслүүдийг нураах",
   "home.server.expand": "Серверийн төслүүдийг өргөжүүлэх",

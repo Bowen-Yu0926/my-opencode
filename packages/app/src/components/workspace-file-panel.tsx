@@ -31,6 +31,7 @@ import {
 } from "@/pages/layout/helpers"
 import { fileManagerApp } from "@/utils/file-manager"
 import { pathKey } from "@/utils/path-key"
+import { authTokenFromCredentials } from "@/utils/server"
 import { SessionRouteKey, SessionStateKey } from "@/utils/server-scope"
 import { showToast } from "@/utils/toast"
 import FileTree from "@/components/file-tree"
@@ -190,7 +191,7 @@ export function WorkspaceFilePanel() {
               return
             }
             void serverSDK()
-              .client.sandbox.add({ sandboxAddInput: { directory } })
+              .client.sandbox.add({ directory: project.worktree, sandboxAddInput: { directory } })
               .then(() => {
                 serverSync().child(directory)
                 layout.home.setSelection(
@@ -233,6 +234,57 @@ export function WorkspaceFilePanel() {
       setRefreshTick((tick) => tick + 1)
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  async function removeSandbox(directory: string, parentWorktree: string) {
+    const conn = focusedConn()
+    if (!conn) return
+    try {
+      // Prefer the generated SDK when available; fall back to a direct request so
+      // environments still running a pre-regen SDK bundle can remove sandboxes.
+      // Pass the parent worktree as the routing directory so WorkspaceRoutingMiddleware
+      // resolves the owning project instead of falling back to process.cwd().
+      const client = serverSDK().client.sandbox as { remove?: (input: unknown) => Promise<unknown> }
+      if (typeof client.remove === "function") {
+        await client.remove({ directory: parentWorktree, sandboxRemoveInput: { directory } })
+      } else {
+        const http = conn.http
+        const response = await (platform.fetch ?? fetch)(
+          new URL(`/experimental/sandbox?directory=${encodeURIComponent(parentWorktree)}`, http.url),
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              ...(http.password
+                ? {
+                    Authorization: `Basic ${authTokenFromCredentials({
+                      username: http.username,
+                      password: http.password,
+                    })}`,
+                  }
+                : {}),
+            },
+            body: JSON.stringify({ directory }),
+          },
+        )
+        if (!response.ok) {
+          const body = (await response.json().catch(() => undefined)) as
+            | { data?: { message?: unknown } }
+            | undefined
+          const message = typeof body?.data?.message === "string" ? body.data.message : undefined
+          throw new Error(message ?? `HTTP ${response.status}`)
+        }
+      }
+      if (pathKey(selection().directory ?? "") === pathKey(directory)) {
+        layout.home.setSelection({ server: ServerConnection.key(conn) })
+      }
+      await serverSync().refreshBootstrap()
+    } catch (err) {
+      showToast({
+        title: language.t("common.requestFailed"),
+        description: errorMessage(err, language.t("common.requestFailed")),
+      })
     }
   }
 
@@ -391,7 +443,7 @@ export function WorkspaceFilePanel() {
                               if (conn) homeProjects.project.close(conn, project.worktree)
                             }}
                           >
-                            {language.t("common.close")}
+                            {language.t("home.project.remove")}
                           </MenuV2.Item>
                         </MenuV2.Content>
                       </MenuV2.Portal>
@@ -411,29 +463,89 @@ export function WorkspaceFilePanel() {
                 </div>
                 <For each={project.sandboxes ?? []}>
                   {(sandbox) => (
-                    <button
-                      type="button"
-                      data-action="workspace-file-panel-workspace"
-                      data-worktree={sandbox}
-                      class={`${NAV_ROW} pl-4`}
-                      classList={{
-                        "bg-v2-background-bg-layer-03 text-v2-text-text-base [font-weight:530]":
-                          pathKey(activeDirectory() ?? "") === pathKey(sandbox),
-                        "hover:bg-v2-background-bg-layer-03":
-                          pathKey(activeDirectory() ?? "") === pathKey(sandbox),
+                    <div
+                      class="group/project relative flex h-7 min-w-0 items-center rounded-[6px]"
+                      onContextMenu={(event) => {
+                        event.preventDefault()
+                        setProjectMenu(projectMenuID(sandbox))
                       }}
-                      aria-current={pathKey(activeDirectory() ?? "") === pathKey(sandbox) ? "page" : undefined}
-                      onClick={() => selectProject(sandbox)}
                     >
-                      <IconV2
-                        name="branch"
-                        size="small"
-                        class="shrink-0 text-v2-icon-icon-muted"
-                      />
-                      <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">
-                        {getFilename(sandbox)}
-                      </span>
-                    </button>
+                      <button
+                        type="button"
+                        data-action="workspace-file-panel-workspace"
+                        data-worktree={sandbox}
+                        class={`${NAV_ROW} pr-16`}
+                        classList={{
+                          "bg-v2-background-bg-layer-03 text-v2-text-text-base [font-weight:530]":
+                            pathKey(activeDirectory() ?? "") === pathKey(sandbox),
+                          "hover:bg-v2-background-bg-layer-03":
+                            pathKey(activeDirectory() ?? "") === pathKey(sandbox),
+                        }}
+                        aria-current={pathKey(activeDirectory() ?? "") === pathKey(sandbox) ? "page" : undefined}
+                        onClick={() => selectProject(sandbox)}
+                      >
+                        <ProjectAvatar
+                          class="size-4 shrink-0"
+                          fallback={getFilename(sandbox)}
+                          variant={getProjectAvatarVariant(undefined)}
+                        />
+                        <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">
+                          {getFilename(sandbox)}
+                        </span>
+                      </button>
+                      <div
+                        data-menu={projectMenu() === projectMenuID(sandbox)}
+                        class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1 focus-within:opacity-100 data-[menu=true]:opacity-100"
+                      >
+                        <MenuV2
+                          gutter={6}
+                          modal={false}
+                          placement="bottom-end"
+                          open={projectMenu() === projectMenuID(sandbox)}
+                          onOpenChange={(open) => setProjectMenu(open ? projectMenuID(sandbox) : undefined)}
+                        >
+                          <MenuV2.Trigger
+                            as={IconButtonV2}
+                            data-action="workspace-file-panel-workspace-menu"
+                            variant="ghost-muted"
+                            size="small"
+                            icon={<IconV2 name="outline-dots" />}
+                            aria-label={language.t("common.moreOptions")}
+                          />
+                          <MenuV2.Portal>
+                            <MenuV2.Content>
+                              <MenuV2.Item
+                                onSelect={() => {
+                                  const conn = focusedConn()
+                                  if (conn) homeProjects.project.openNewSession(conn, sandbox)
+                                }}
+                              >
+                                {language.t("command.session.new")}
+                              </MenuV2.Item>
+                              <MenuV2.Separator />
+                              <MenuV2.Item
+                                onSelect={() => {
+                                  void removeSandbox(sandbox, project.worktree)
+                                }}
+                              >
+                                {language.t("home.project.remove")}
+                              </MenuV2.Item>
+                            </MenuV2.Content>
+                          </MenuV2.Portal>
+                        </MenuV2>
+                        <IconButtonV2
+                          data-action="workspace-file-panel-workspace-new-session"
+                          variant="ghost-muted"
+                          size="small"
+                          icon={<IconV2 name="edit" />}
+                          aria-label={language.t("command.session.new")}
+                          onClick={() => {
+                            const conn = focusedConn()
+                            if (conn) homeProjects.project.openNewSession(conn, sandbox)
+                          }}
+                        />
+                      </div>
+                    </div>
                   )}
                 </For>
               </>

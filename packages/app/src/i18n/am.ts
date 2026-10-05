@@ -675,6 +675,7 @@ export const dict = {
   "home.title": "ቤት",
   "home.projects": "ፕሮጀክቶች",
   "home.project.add": "ፕሮጀክት አክል",
+  "home.project.remove": "ፕሮጀክት አስወግድ",
   "home.recentlyClosed": "በቅርቡ የተዘጋ",
   "home.server.collapse": "የአገልጋይ ፕሮጀክቶችን ሰብስብ",
   "home.server.expand": "የአገልጋይ ፕሮጀክቶችን ዘርጋ",

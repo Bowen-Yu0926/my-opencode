@@ -725,6 +725,7 @@ export const dict = {
   "home.title": "หน้าหลัก",
   "home.projects": "โปรเจกต์",
   "home.project.add": "เพิ่มโปรเจกต์",
+  "home.project.remove": "ลบโปรเจกต์",
   "home.recentlyClosed": "ที่ปิดไปล่าสุด",
   "home.server.collapse": "ย่อโปรเจกต์ของเซิร์ฟเวอร์",
   "home.server.expand": "ขยายโปรเจกต์ของเซิร์ฟเวอร์",

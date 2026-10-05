@@ -687,6 +687,7 @@ export const dict = {
   "home.title": "Heim",
   "home.projects": "Verkætlanir",
   "home.project.add": "Legg verkætlan til",
+  "home.project.remove": "Strika verkætlan",
   "home.recentlyClosed": "Nýliga stongt",
   "home.server.collapse": "Kollaps ambætaraverkætlanir",
   "home.server.expand": "Víðka ambætaraverkætlanir",

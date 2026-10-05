@@ -692,6 +692,7 @@ export const dict = {
   "home.title": "Kezdőlap",
   "home.projects": "Projektek",
   "home.project.add": "Projekt hozzáadása",
+  "home.project.remove": "Projekt eltávolítása",
   "home.recentlyClosed": "Nemrég zárva",
   "home.server.collapse": "Szerverprojektek összecsukása",
   "home.server.expand": "Bővítse ki a szerverprojekteket",

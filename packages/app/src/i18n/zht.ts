@@ -721,6 +721,7 @@ export const dict = {
   "home.title": "首頁",
   "home.projects": "專案",
   "home.project.add": "新增專案",
+  "home.project.remove": "移除專案",
   "home.recentlyClosed": "最近關閉",
   "home.server.collapse": "收合伺服器專案",
   "home.server.expand": "展開伺服器專案",
