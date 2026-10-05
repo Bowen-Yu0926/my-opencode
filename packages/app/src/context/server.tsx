@@ -91,23 +91,38 @@ export function createServerProjects<T extends ServerProjectState>(input: {
       current().filter((project) => project.worktree !== directory),
     )
   }
+  const open = (directory: string) => {
+    const scope = input.scope()
+    const key = pathKey(directory)
+    const closed = currentClosed()
+    if (closed.some((worktree) => pathKey(worktree) === key)) {
+      setStore(
+        "recentlyClosed",
+        scope,
+        closed.filter((worktree) => pathKey(worktree) !== key),
+      )
+    }
+    if (current().some((project) => project.worktree === directory)) return
+    setStore("projects", scope, [{ worktree: directory, expanded: true }, ...current()])
+  }
   return {
     list: current,
     recentlyClosed: currentClosed,
     remove,
-    open(directory: string) {
-      const scope = input.scope()
-      const key = pathKey(directory)
-      const closed = currentClosed()
-      if (closed.some((worktree) => pathKey(worktree) === key)) {
-        setStore(
-          "recentlyClosed",
-          scope,
-          closed.filter((worktree) => pathKey(worktree) !== key),
-        )
+    open,
+    // Restore lastProject when an internal remove() dropped it without recording recentlyClosed.
+    recoverLast(knownWorktrees: Iterable<string>) {
+      const last = input.store.lastProject[input.scope()]
+      if (!last) return undefined
+      const key = pathKey(last)
+      if (current().some((project) => pathKey(project.worktree) === key)) return undefined
+      if (currentClosed().some((worktree) => pathKey(worktree) === key)) return undefined
+      for (const worktree of knownWorktrees) {
+        if (pathKey(worktree) !== key) continue
+        open(last)
+        return last
       }
-      if (current().some((project) => project.worktree === directory)) return
-      setStore("projects", scope, [{ worktree: directory, expanded: true }, ...current()])
+      return undefined
     },
     // User-initiated close: removes the project and records it in recently closed.
     // Internal, non-user removals (e.g. sandbox/worktree normalization) should use remove().

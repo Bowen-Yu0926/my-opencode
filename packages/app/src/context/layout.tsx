@@ -516,6 +516,14 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
       })
     })
 
+    createEffect(() => {
+      const directory = server.projects.recoverLast(
+        serverSync().data.project.map((project) => project.worktree),
+      )
+      if (!directory) return
+      void serverSync().project.loadSessions(directory)
+    })
+
     const enriched = createMemo(() => server.projects.list().map(enrich))
     const list = createMemo(() => {
       const projects = enriched()

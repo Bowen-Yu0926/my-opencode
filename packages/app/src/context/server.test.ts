@@ -197,6 +197,46 @@ describe("createServerProjects", () => {
       dispose()
     })
   })
+
+  test("recoverLast restores a known lastProject dropped without recentlyClosed", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("E:/soft/AIproject/Desktidy")
+      projects.touch("E:/soft/AIproject/Desktidy")
+      projects.remove("E:/soft/AIproject/Desktidy")
+      expect(projects.list()).toEqual([])
+      expect(projects.recentlyClosed()).toEqual([])
+
+      expect(projects.recoverLast(["E:/soft/AIproject/Desktidy"])).toBe("E:/soft/AIproject/Desktidy")
+      expect(projects.list()).toEqual([{ worktree: "E:/soft/AIproject/Desktidy", expanded: true }])
+      dispose()
+    })
+  })
+
+  test("recoverLast skips open, recently closed, unknown, and missing lastProject", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      expect(projects.recoverLast(["/repo"])).toBeUndefined()
+
+      projects.open("/repo")
+      projects.touch("/repo")
+      expect(projects.recoverLast(["/repo"])).toBeUndefined()
+
+      projects.close("/repo")
+      expect(projects.recoverLast(["/repo"])).toBeUndefined()
+
+      projects.touch("/gone")
+      expect(projects.recoverLast(["/repo"])).toBeUndefined()
+      expect(projects.list()).toEqual([])
+      dispose()
+    })
+  })
 })
 
 describe("migrateCanonicalLocalServerState", () => {
