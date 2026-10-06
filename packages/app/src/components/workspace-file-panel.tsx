@@ -218,12 +218,10 @@ export function WorkspaceFilePanel() {
   }
 
   function createSession() {
-    const conn = server.current
-    if (!conn) return
-    const key = ServerConnection.key(conn)
-    const project = projects()[0]
-    if (!project) return
-    void tabs.newDraft({ server: key, directory: project.worktree }, "")
+    const conn = focusedConn()
+    const directory = activeDirectory()
+    if (!conn || !directory) return
+    void tabs.newDraft({ server: ServerConnection.key(conn), directory }, "")
   }
 
   async function refreshAll() {

@@ -282,19 +282,14 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                 return
               }
 
-              if (route.type === "home") {
-                const selection = layout.home.selection()
-                const conn = global.servers.list().find((item) => ServerConnection.key(item) === selection.server)
-                const project = conn
-                  ? global
-                      .ensureServerCtx(conn)
-                      .projects.list()
-                      .find((item) => item.worktree === selection.directory)
-                  : undefined
-                if (conn && project) {
-                  tabs.newDraft({ server: ServerConnection.key(conn), directory: project.worktree }, "")
-                  return
-                }
+              const selection = layout.home.selection()
+              const selectionConn = global.servers.list().find((item) => ServerConnection.key(item) === selection.server)
+              const selectionProject = selectionConn
+                ? global.ensureServerCtx(selectionConn).projects.list().find((item) => item.worktree === selection.directory)
+                : undefined
+              if (selectionConn && selectionProject) {
+                tabs.newDraft({ server: ServerConnection.key(selectionConn), directory: selectionProject.worktree }, "")
+                return
               }
 
               const current = layout.projects.list()[0]
