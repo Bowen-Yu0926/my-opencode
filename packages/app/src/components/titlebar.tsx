@@ -52,13 +52,17 @@ export type TitlebarUpdate = {
   install: () => void
 }
 
+const titlebarRightMount = createSignal<HTMLElement | null>(null)
+
 export function useTitlebarRightMount() {
-  const language = useLanguage()
-  const [mount, setMount] = createSignal<HTMLElement | null>(null)
-  const sync = () => setMount(document.getElementById("opencode-titlebar-right"))
-  onMount(sync)
-  createEffect(on(language.direction, sync, { defer: true }))
-  return mount
+  return titlebarRightMount[0]
+}
+
+export function registerTitlebarRightMount(element: HTMLElement | null) {
+  const current = titlebarRightMount[0]()
+  if (element === current) return
+  if (!element && current?.isConnected) return
+  titlebarRightMount[1](element)
 }
 
 export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visible: boolean; toggle: () => void } }) {
@@ -367,29 +371,6 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                 <Show when={windows() || linux()}>
                   <WindowsAppMenu command={command} platform={platform} variant="v2" />
                 </Show>
-                <TooltipV2
-                  placement="bottom"
-                  value={
-                    <>
-                      {language.t("home.title")}
-                      <KeybindV2 keys={command.keybindParts("home.toggle")} variant="neutral" />
-                    </>
-                  }
-                  class="shrink-0"
-                >
-                  <IconButtonV2
-                    type="button"
-                    variant="ghost-muted"
-                    size="large"
-                    class="!w-9 shrink-0"
-                    icon={<IconV2 name="grid-plus" />}
-                    state={layout.route().type === "home" ? "pressed" : undefined}
-                    onClick={toggleHome}
-                    aria-label={language.t("home.title")}
-                    aria-pressed={layout.route().type === "home"}
-                  />
-                </TooltipV2>
-
                 <TitlebarTabStrip
                   tabs={tabsStore}
                   currentTab={currentTab}
@@ -575,7 +556,7 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
               }}
               data-tauri-drag-region
             >
-              <div id="opencode-titlebar-right" class="flex items-center gap-1 shrink-0 justify-end" />
+              <div id="opencode-titlebar-right" ref={registerTitlebarRightMount} class="flex items-center gap-1 shrink-0 justify-end" />
               <Show when={windows()}>
                 <div class="shrink-0" style={{ width: windowsControlsWidth() }} />
               </Show>
@@ -606,7 +587,7 @@ function TitlebarV2Right(props: { state: TitlebarV2RightState }) {
       <Show when={props.state.update.visible}>
         <TitlebarUpdateIconButton state={props.state.update} />
       </Show>
-      <div id="opencode-titlebar-right" class="flex shrink-0 items-center justify-end gap-0" />
+      <div id="opencode-titlebar-right" ref={registerTitlebarRightMount} class="flex shrink-0 items-center justify-end gap-0" />
     </div>
   )
 }
