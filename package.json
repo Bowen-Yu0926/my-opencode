@@ -11,12 +11,10 @@
     "dev:web": "bun --cwd packages/app dev",
     "lint": "oxlint",
     "typecheck": "bun turbo typecheck",
-    "upgrade-opentui": "bun run script/upgrade-opentui.ts",
     "postinstall": "bun run --cwd packages/core fix-node-pty",
     "prepare": "husky",
     "random": "echo 'Random script'",
     "sso": "aws sso login --sso-session=opencode --no-browser",
-    "translate:app": "bun run script/translate-app.ts",
     "test": "echo 'do not run tests from root' && exit 1"
   },
   "workspaces": {
@@ -100,11 +98,9 @@
     "oxlint-tsgolint": "0.21.0",
     "prettier": "3.6.2",
     "semver": "^7.6.0",
-    "sst": "catalog:",
     "turbo": "2.10.2"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.933.0",
     "@opencode-ai/plugin": "workspace:*",
     "@opencode-ai/script": "workspace:*",
     "@opencode-ai/sdk": "workspace:*",

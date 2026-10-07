@@ -28,7 +28,6 @@
     "src/components/file-icons/sprite.svg",
     "src/components/provider-icons/sprite.svg",
     "src/assets/icons/app/*",
-    "src/assets/fonts/*",
     "src/assets/audio/*",
     "LICENSE"
   ],
@@ -49,7 +48,6 @@
     "./icons/provider": "./src/components/provider-icons/types.ts",
     "./icons/file-type": "./src/components/file-icons/types.ts",
     "./icons/app": "./src/components/app-icons/types.ts",
-    "./fonts/*": "./src/assets/fonts/*",
     "./audio/*": "./src/assets/audio/*",
     "./v2/*.css": "./src/v2/components/*.css",
     "./v2/*": "./src/v2/components/*.tsx",
