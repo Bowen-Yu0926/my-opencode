@@ -4,8 +4,6 @@ import {
   createResource,
   createSignal,
   Match,
-  on,
-  onMount,
   Show,
   Switch,
   untrack,
