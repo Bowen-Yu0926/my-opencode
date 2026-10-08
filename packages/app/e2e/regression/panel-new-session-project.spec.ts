@@ -11,7 +11,7 @@ const sessionID = "ses_panel_new_session_project"
 
 test.use({ viewport: { width: 1440, height: 900 } })
 
-test("workspace panel new session targets the selected project", async ({ page }) => {
+async function setup(page: import("@playwright/test").Page) {
   await mockOpenCodeServer(page, {
     directory: openProject,
     project: {
@@ -68,10 +68,7 @@ test("workspace panel new session targets the selected project", async ({ page }
           lastProject: { local: openProject },
         }),
       )
-      localStorage.setItem(
-        "opencode.global.dat:layout",
-        JSON.stringify({ home: { selection } }),
-      )
+      localStorage.setItem("opencode.global.dat:layout", JSON.stringify({ home: { selection } }))
       localStorage.setItem(
         "opencode.window.browser.dat:tabs",
         JSON.stringify([{ type: "session", server: selection.server, sessionId: sessionID }]),
@@ -81,14 +78,23 @@ test("workspace panel new session targets the selected project", async ({ page }
   )
 
   await page.goto(`/server/${base64Encode(server)}/session/${sessionID}`)
+}
+
+const draftDirectory = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => {
+    const tabs = JSON.parse(localStorage.getItem("opencode.window.browser.dat:tabs") ?? "[]")
+    const drafts = tabs.filter((tab) => tab.type === "draft")
+    return drafts.at(-1)?.directory
+  })
+
+test("workspace panel new session targets the selected project", async ({ page }) => {
+  await setup(page)
 
   const newSessionButton = page.locator('[data-action="workspace-panel-new-session"]')
   await expectAppVisible(newSessionButton)
 
   const openRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${openProject}"]`)
-  const selectedRow = page.locator(
-    `[data-action="workspace-file-panel-project"][data-worktree="${selectedProject}"]`,
-  )
+  const selectedRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${selectedProject}"]`)
   await expect(openRow).toBeVisible()
   await expect(selectedRow).toHaveAttribute("aria-current", "page")
   await expect(openRow).not.toHaveAttribute("aria-current", "page")
@@ -96,13 +102,21 @@ test("workspace panel new session targets the selected project", async ({ page }
   await newSessionButton.click()
   await page.waitForURL(/\/new-session\?draftId=/)
 
-  const draftDirectory = () =>
-    page.evaluate(() => {
-      const tabs = JSON.parse(localStorage.getItem("opencode.window.browser.dat:tabs") ?? "[]")
-      const drafts = tabs.filter((tab) => tab.type === "draft")
-      return drafts.at(-1)?.directory
-    })
-
-  await expect.poll(draftDirectory).toBe(selectedProject)
+  await expect.poll(() => draftDirectory(page)).toBe(selectedProject)
   await expect(selectedRow).toHaveAttribute("aria-current", "page")
+})
+
+test("titlebar new session follows the selected project while a different session is active", async ({ page }) => {
+  await setup(page)
+
+  const titlebarButton = page.locator('[data-action="titlebar-new-session"]')
+  await expectAppVisible(titlebarButton)
+
+  const selectedRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${selectedProject}"]`)
+  await expect(selectedRow).toHaveAttribute("aria-current", "page")
+
+  await titlebarButton.click()
+  await page.waitForURL(/\/new-session\?draftId=/)
+
+  await expect.poll(() => draftDirectory(page)).toBe(selectedProject)
 })

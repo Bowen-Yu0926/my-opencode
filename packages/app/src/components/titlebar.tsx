@@ -1,13 +1,4 @@
-import {
-  createEffect,
-  createMemo,
-  createResource,
-  createSignal,
-  Match,
-  Show,
-  Switch,
-  untrack,
-} from "solid-js"
+import { createEffect, createMemo, createResource, createSignal, Match, Show, Switch, untrack } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useLocation, useNavigate, useParams } from "@solidjs/router"
 import { IconButton } from "@opencode-ai/ui/icon-button"
@@ -264,6 +255,27 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
             })
 
             const openNewTab = () => {
+              const selection = layout.home.selection()
+              const selectionDirectory = selection.directory
+              const selectionConn = global.servers
+                .list()
+                .find((item) => ServerConnection.key(item) === selection.server)
+              const selectionProject =
+                selectionConn && selectionDirectory
+                  ? global
+                      .ensureServerCtx(selectionConn)
+                      .projects.list()
+                      .find(
+                        (item) =>
+                          item.worktree === selectionDirectory ||
+                          item.sandboxes?.some((sandbox) => sandbox === selectionDirectory),
+                      )
+                  : undefined
+              if (selectionConn && selectionDirectory && selectionProject) {
+                tabs.newDraft({ server: ServerConnection.key(selectionConn), directory: selectionDirectory }, "")
+                return
+              }
+
               const route = layout.route()
               const activeSession = session()
               if (route.type === "session" && activeSession) {
@@ -281,16 +293,6 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
               if (activeTab?.type === "draft") {
                 const model = tabs.stateValue<PromptSession>(activeTab, "prompt")?.model.current()
                 tabs.newDraft({ server: activeTab.server, directory: activeTab.directory }, "", model)
-                return
-              }
-
-              const selection = layout.home.selection()
-              const selectionConn = global.servers.list().find((item) => ServerConnection.key(item) === selection.server)
-              const selectionProject = selectionConn
-                ? global.ensureServerCtx(selectionConn).projects.list().find((item) => item.worktree === selection.directory)
-                : undefined
-              if (selectionConn && selectionProject) {
-                tabs.newDraft({ server: ServerConnection.key(selectionConn), directory: selectionProject.worktree }, "")
                 return
               }
 
@@ -401,6 +403,7 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                     icon={<IconV2 name="plus" />}
                     onClick={openNewTab}
                     aria-label={language.t("command.session.new")}
+                    data-action="titlebar-new-session"
                   />
                 </TooltipV2>
                 <div class="flex-1" />
@@ -554,7 +557,11 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
               }}
               data-tauri-drag-region
             >
-              <div id="opencode-titlebar-right" ref={registerTitlebarRightMount} class="flex items-center gap-1 shrink-0 justify-end" />
+              <div
+                id="opencode-titlebar-right"
+                ref={registerTitlebarRightMount}
+                class="flex items-center gap-1 shrink-0 justify-end"
+              />
               <Show when={windows()}>
                 <div class="shrink-0" style={{ width: windowsControlsWidth() }} />
               </Show>
@@ -585,7 +592,11 @@ function TitlebarV2Right(props: { state: TitlebarV2RightState }) {
       <Show when={props.state.update.visible}>
         <TitlebarUpdateIconButton state={props.state.update} />
       </Show>
-      <div id="opencode-titlebar-right" ref={registerTitlebarRightMount} class="flex shrink-0 items-center justify-end gap-0" />
+      <div
+        id="opencode-titlebar-right"
+        ref={registerTitlebarRightMount}
+        class="flex shrink-0 items-center justify-end gap-0"
+      />
     </div>
   )
 }
