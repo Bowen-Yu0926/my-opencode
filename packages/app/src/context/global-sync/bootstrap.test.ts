@@ -164,6 +164,9 @@ describe("bootstrapDirectory", () => {
             throw new Error("legacy directory config should not be called")
           },
         },
+        session: {
+          status: async () => ({}),
+        },
       } as unknown as OpencodeClient,
       api,
       store,

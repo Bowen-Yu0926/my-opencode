@@ -8,6 +8,7 @@ import type {
   QuestionRequest,
   ReferenceInfo,
   Session,
+  SessionStatus,
 } from "@opencode-ai/sdk/v2/client"
 import type {
   AgentListInput,
@@ -389,13 +390,15 @@ export async function bootstrapDirectory(input: {
       () =>
         retry(() =>
           (async () => {
-            if ((await input.protocol) !== "v1") return
-            const x = await input.sdk.session.status()
+            const raw = await input.sdk.session.status()
+            const statuses =
+              raw && typeof raw === "object" && "data" in raw
+                ? ((raw as { data?: Record<string, SessionStatus> }).data ?? {})
+                : ((raw as Record<string, SessionStatus> | undefined) ?? {})
             if (!input.session) {
-              input.setStore("session_status", x.data!)
+              input.setStore("session_status", statuses)
               return
             }
-            const statuses = x.data ?? {}
             input.session.set(
               "session_status",
               produce((draft) => {
