@@ -28,6 +28,7 @@ import type { PromptSession } from "@/context/prompt"
 import "./titlebar.css"
 import { newTabTooltipKeybind } from "./command-tooltip-keybind"
 import { normalizeSessionInfo } from "@/utils/session"
+import { pathKey } from "@/utils/path-key"
 
 const legacyTitlebarHeight = 40
 const v2TitlebarHeight = 36
@@ -257,21 +258,22 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
             const openNewTab = () => {
               const selection = layout.home.selection()
               const selectionDirectory = selection.directory
+              const selectionKey = selectionDirectory ? pathKey(selectionDirectory) : undefined
               const selectionConn = global.servers
                 .list()
                 .find((item) => ServerConnection.key(item) === selection.server)
               const selectionProject =
-                selectionConn && selectionDirectory
+                selectionConn && selectionKey
                   ? global
                       .ensureServerCtx(selectionConn)
                       .projects.list()
                       .find(
                         (item) =>
-                          item.worktree === selectionDirectory ||
-                          item.sandboxes?.some((sandbox) => sandbox === selectionDirectory),
+                          pathKey(item.worktree) === selectionKey ||
+                          item.sandboxes?.some((sandbox) => pathKey(sandbox) === selectionKey),
                       )
                   : undefined
-              if (selectionConn && selectionDirectory && selectionProject) {
+              if (selectionDirectory && selectionConn && selectionProject) {
                 tabs.newDraft({ server: ServerConnection.key(selectionConn), directory: selectionDirectory }, "")
                 return
               }

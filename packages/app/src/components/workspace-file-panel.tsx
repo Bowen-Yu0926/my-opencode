@@ -286,9 +286,6 @@ export function WorkspaceFilePanel() {
     }
   }
 
-  const workspaceNewDisabled = () =>
-    !command.options.some((option) => option.id === "workspace.new" && !(option.disabled ?? false))
-
   const projectMenuID = (worktree: string) => `workspace-panel:${worktree}`
   const focusedConn = () => home.server.focused() ?? server.current
 
@@ -552,13 +549,18 @@ export function WorkspaceFilePanel() {
         </Show>
         <button
           type="button"
-          data-action="workspace-panel-new-workspace"
+          data-action="workspace-panel-new-project"
           class={NAV_ROW}
-          disabled={workspaceNewDisabled()}
-          onClick={() => command.trigger("workspace.new")}
+          disabled={!focusedConn()}
+          onClick={() => {
+            const conn = focusedConn()
+            if (conn) homeProjects.project.choose(conn)
+          }}
         >
           <IconV2 name="plus-small" size="small" class="shrink-0 text-v2-icon-icon-muted" />
-          <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">{language.t("workspace.new")}</span>
+          <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">
+            {language.t("session.new.project.new")}
+          </span>
         </button>
       </div>
       <div class={`${SECTION_LABEL} mt-1`}>{language.t("session.files.all")}</div>

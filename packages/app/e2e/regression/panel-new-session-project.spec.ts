@@ -6,6 +6,8 @@ import { expectAppVisible } from "../utils/waits"
 const server = `http://${process.env.PLAYWRIGHT_SERVER_HOST ?? "127.0.0.1"}:${process.env.PLAYWRIGHT_SERVER_PORT ?? "4096"}`
 const openProject = "C:/OpenCode/OpenProject"
 const selectedProject = "C:/OpenCode/SelectedProject"
+const pickedDirectory = String.raw`C:\OpenCode\brandnew`
+const pickedSelector = pickedDirectory.replaceAll("\\", "\\\\")
 const projectID = "proj_panel_new_session_project"
 const sessionID = "ses_panel_new_session_project"
 
@@ -47,6 +49,8 @@ async function setup(page: import("@playwright/test").Page) {
       },
     ],
     pageMessages: () => ({ items: [] }),
+    fileList: () => [],
+    findFiles: ({ query }) => (query === "brandnew" ? ["brandnew"] : []),
   })
 
   await page.addInitScript(
@@ -119,4 +123,32 @@ test("titlebar new session follows the selected project while a different sessio
   await page.waitForURL(/\/new-session\?draftId=/)
 
   await expect.poll(() => draftDirectory(page)).toBe(selectedProject)
+})
+
+test("workspace panel new project button registers the picked directory as a project", async ({ page }) => {
+  await setup(page)
+
+  const newProjectButton = page.locator('[data-action="workspace-panel-new-project"]')
+  await expectAppVisible(newProjectButton)
+  await expect(newProjectButton).toContainText("新建项目")
+
+  await newProjectButton.click()
+
+  const dialog = page.getByRole("dialog")
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("textbox").fill("brandnew")
+
+  const pickedRow = page.locator(`[data-directory-path="${pickedSelector}"]`)
+  await expect(pickedRow).toBeVisible()
+  await pickedRow.click()
+
+  const projectRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${pickedSelector}"]`)
+  await expect(projectRow).toBeVisible()
+  await expect(projectRow).toHaveAttribute("aria-current", "page")
+
+  const titlebarButton = page.locator('[data-action="titlebar-new-session"]')
+  await titlebarButton.click()
+  await page.waitForURL(/\/new-session\?draftId=/)
+
+  await expect.poll(() => draftDirectory(page)).toBe(pickedDirectory)
 })
