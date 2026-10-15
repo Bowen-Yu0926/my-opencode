@@ -41,7 +41,7 @@ export default function NewLayout(props: ParentProps) {
       <Show when={rightMount()}>
         {(mount) => (
           <Portal mount={mount()}>
-            <div class="flex items-center gap-1 shrink-0" data-slot="layout-new-actions">
+            <div class="flex items-center gap-1.5 shrink-0" data-slot="layout-new-actions">
               <TooltipV2 placement="bottom" value={language.t("sidebar.project.recentSessions")}>
                 <IconButtonV2
                   type="button"
@@ -67,7 +67,7 @@ export default function NewLayout(props: ParentProps) {
         <Show when={state.historyOpen}>
           <aside
             aria-label={language.t("sidebar.project.recentSessions")}
-            class="w-[280px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-base m-2 mt-0 gap-0.5 p-1.5"
+            class="w-[280px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-[8px] border border-v2-border-border-muted bg-v2-background-bg-base m-2 mt-0 gap-1 p-2"
           >
             <div class="flex h-7 shrink-0 items-center justify-between gap-2 pl-1.5 pr-1">
               <span class="min-w-0 truncate text-[13px] leading-4 text-v2-text-text-muted [font-weight:530]">

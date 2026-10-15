@@ -35,8 +35,8 @@ import FileTree from "@/components/file-tree"
 const NAV_ROW =
   "flex h-7 min-w-0 w-full shrink-0 items-center gap-2 rounded-[6px] border-0 bg-transparent px-1.5 text-left\n" +
   "text-v2-text-text-muted [font-weight:440] transition-[background-color,color,box-shadow] duration-[120ms] ease-in-out\n" +
-  "hover:bg-v2-background-bg-layer-01 hover:text-v2-text-text-base\n" +
-  "focus-visible:bg-v2-background-bg-layer-01 focus-visible:text-v2-text-text-base focus-visible:outline-none\n" +
+  "hover:bg-v2-background-bg-layer-02 hover:text-v2-text-text-base\n" +
+  "focus-visible:bg-v2-background-bg-layer-02 focus-visible:text-v2-text-text-base focus-visible:outline-none\n" +
   "focus-visible:[box-shadow:inset_0_0_0_0.5px_var(--v2-border-border-muted)]\n" +
   "disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-v2-text-text-muted"
 
@@ -208,13 +208,13 @@ export function WorkspaceFilePanel() {
   return (
     <aside
       aria-label={language.t("sidebar.nav.projectsAndSessions")}
-      class="w-[280px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-base m-2 mt-0 gap-0.5 p-1.5"
+      class="w-[280px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-[8px] border border-v2-border-border-muted bg-v2-background-bg-base m-2 mt-0 gap-1 p-2"
     >
       <div class="flex h-7 shrink-0 items-center justify-between gap-2 pl-1.5 pr-1">
         <span class="min-w-0 truncate text-[13px] leading-4 text-v2-text-text-muted [font-weight:530]">
           {language.t("home.projects")}
         </span>
-        <div class="flex shrink-0 items-center gap-0.5">
+        <div class="flex shrink-0 items-center gap-1">
           <TooltipV2 placement="bottom" value={language.t("sidebar.refresh")}>
             <IconButtonV2
               data-action="workspace-panel-refresh"
@@ -238,7 +238,7 @@ export function WorkspaceFilePanel() {
           </TooltipV2>
         </div>
       </div>
-      <div class="flex shrink-0 flex-col gap-0.5">
+      <div class="flex shrink-0 flex-col gap-1">
         <Show
           when={projects().length > 0}
           fallback={

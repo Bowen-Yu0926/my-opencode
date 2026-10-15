@@ -250,12 +250,12 @@ function SessionRow(props: {
           type="button"
           class="flex h-9 w-full min-w-0 items-center gap-2 rounded-[6px] border-0 bg-transparent pl-1.5 pr-9 text-left
             text-v2-text-text-muted [font-weight:530] transition-[background-color,color] duration-[120ms] ease-in-out
-            hover:bg-v2-background-bg-layer-01 hover:text-v2-text-text-base
-            focus-visible:bg-v2-background-bg-layer-01 focus-visible:text-v2-text-text-base focus-visible:outline-none
+            hover:bg-v2-background-bg-layer-02 hover:text-v2-text-text-base
+            focus-visible:bg-v2-background-bg-layer-02 focus-visible:text-v2-text-text-base focus-visible:outline-none
             focus-visible:[box-shadow:inset_0_0_0_0.5px_var(--v2-border-border-muted)]"
           classList={{
             "bg-v2-background-bg-layer-03 text-v2-text-text-base": props.open,
-            "hover:bg-v2-background-bg-layer-01": props.open,
+            "hover:bg-v2-background-bg-layer-02": props.open,
           }}
           onClick={props.onOpen}
         >

@@ -27,6 +27,13 @@
   --tab-overlay: var(--v2-overlay-simple-overlay-pressed);
 }
 
+/* The titlebar is as light as the active tab's hover step, so the current tab needs a
+   stronger fill plus a hairline ring to stay recognizable at a glance. */
+[data-titlebar-tab][data-active="true"] {
+  --tab-base: var(--v2-background-bg-layer-03);
+  box-shadow: var(--v2-elevation-raised);
+}
+
 [data-titlebar-tab]:is(:hover, [data-state="pressed"]) [data-slot="tab-close"] {
   background: linear-gradient(var(--tab-overlay), var(--tab-overlay)), var(--tab-base);
 }
@@ -40,12 +47,8 @@
 }
 
 [data-titlebar-tab-slot] {
-  --tab-separator: var(--v2-background-bg-layer-03);
+  --tab-separator: var(--v2-border-border-base);
   position: relative;
-}
-
-[data-color-scheme="dark"] [data-titlebar-tab-slot] {
-  --tab-separator: var(--v2-background-bg-layer-02);
 }
 
 [data-titlebar-tab-slot]:not(:first-child):not([data-active="true"])::before {

@@ -128,19 +128,19 @@
     --v2-cyan-1200: #00353fff;
 
     /* ── Blue ── */
-    /* Muted professional blue (Harness-like), less saturated than stock indigo. */
-    --v2-blue-100: #eef3faff;
-    --v2-blue-200: #d9e4f5ff;
-    --v2-blue-300: #b8cceaff;
-    --v2-blue-400: #8aade0ff;
-    --v2-blue-500: #5b8ad4ff;
-    --v2-blue-600: #3d6eb8ff;
-    --v2-blue-700: #335c9cff;
-    --v2-blue-800: #2a4d84ff;
-    --v2-blue-900: #234070ff;
-    --v2-blue-1000: #1d365cff;
-    --v2-blue-1100: #182c4aff;
-    --v2-blue-1200: #122238ff;
+    /* Vivid professional blue: same lightness ladder, higher chroma so accents read clearly. */
+    --v2-blue-100: #e8f1feff;
+    --v2-blue-200: #cfe3fdff;
+    --v2-blue-300: #a8cbfbff;
+    --v2-blue-400: #7fb0f5ff;
+    --v2-blue-500: #4a86e8ff;
+    --v2-blue-600: #2b6ad0ff;
+    --v2-blue-700: #2459b0ff;
+    --v2-blue-800: #1d4c96ff;
+    --v2-blue-900: #173e7cff;
+    --v2-blue-1000: #123263ff;
+    --v2-blue-1100: #0d274fff;
+    --v2-blue-1200: #081c3aff;
 
     /* ── Purple ── */
     --v2-purple-100: #ebecfeff;
