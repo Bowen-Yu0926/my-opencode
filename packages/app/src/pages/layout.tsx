@@ -52,7 +52,6 @@ import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme/context"
 import { useCommand, type CommandOption } from "@/context/command"
 import { ConstrainDragXAxis, getDraggableId } from "@/utils/solid-dnd"
-import { DebugBar } from "@/components/debug-bar"
 import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
 import { useDirectoryPicker } from "@/components/directory-picker"
 import { ServerConnection, useServer } from "@/context/server"
@@ -151,7 +150,6 @@ export default function LegacyLayout(props: ParentProps) {
     sizing: false,
     peek: undefined as string | undefined,
     peeked: false,
-    debugTools: true,
   })
 
   const updateVersion = () => {
@@ -1058,12 +1056,13 @@ export default function LegacyLayout(props: ParentProps) {
 
   function openSettings() {
     const run = ++dialogRun
+    const sessionID = params.id
     const module = settings.general.newLayoutDesigns()
       ? import("@/components/settings-v2")
       : import("@/components/dialog-settings")
     void module.then((x) => {
       if (dialogDead || dialogRun !== run) return
-      dialog.show(() => <x.DialogSettings />)
+      dialog.show(() => <x.DialogSettings sessionID={sessionID} />)
     })
   }
 
@@ -2165,14 +2164,7 @@ export default function LegacyLayout(props: ParentProps) {
   return (
     <div class="relative bg-background-base flex-1 min-h-0 min-w-0 flex flex-col select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
       {autoselecting() ?? ""}
-      <Titlebar
-        update={titlebarUpdate}
-        debugTools={
-          import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEBUG_BAR !== "1"
-            ? { visible: state.debugTools, toggle: () => setState("debugTools", (value) => !value) }
-            : undefined
-        }
-      />
+      <Titlebar update={titlebarUpdate} />
       <Show when={updateVersion() !== undefined}>
         <UpdateAvailableToast version={updateVersion() ?? ""} install={installUpdate} language={language} />
       </Show>
@@ -2318,7 +2310,6 @@ export default function LegacyLayout(props: ParentProps) {
             </div>
           </div>
         </div>
-        {import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEBUG_BAR !== "1" && state.debugTools && <DebugBar />}
       </div>
       <ToastRegion v2={false} />
     </div>

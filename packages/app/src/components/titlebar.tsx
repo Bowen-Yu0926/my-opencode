@@ -55,7 +55,7 @@ export function registerTitlebarRightMount(element: HTMLElement | null) {
   titlebarRightMount[1](element)
 }
 
-export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visible: boolean; toggle: () => void } }) {
+export function Titlebar(props: { update?: TitlebarUpdate }) {
   const layout = useLayout()
   const platform = usePlatform()
   const command = useCommand()
@@ -369,7 +369,7 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                   "md:pl-3": !macTrafficLights(),
                 }}
               >
-                <ChannelIndicator debugTools={props.debugTools} />
+                <ChannelIndicator />
                 <Show when={windows() || linux()}>
                   <WindowsAppMenu command={command} platform={platform} variant="v2" />
                 </Show>
@@ -541,7 +541,7 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                     <div id="opencode-titlebar-left" class="flex items-center gap-3 min-w-0 px-2" />
                   </div>
                 </div>
-                <ChannelIndicator debugTools={props.debugTools} />
+                <ChannelIndicator />
               </div>
             </div>
 
@@ -632,29 +632,13 @@ function TitlebarUpdateIconButton(props: { state: TitlebarUpdatePillState }) {
   )
 }
 
-function ChannelIndicator(props: { debugTools?: { visible: boolean; toggle: () => void } }) {
+function ChannelIndicator() {
   const channel = import.meta.env.VITE_OPENCODE_CHANNEL
-  if (channel === "dev" && props.debugTools) {
-    return (
-      <button
-        type="button"
-        class="shrink-0 rounded-[4px] bg-v2-background-bg-accent px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-wide text-white cursor-pointer"
-        onClick={props.debugTools.toggle}
-        aria-label="Toggle debug tools"
-        aria-pressed={props.debugTools.visible}
-      >
-        DEV
-      </button>
-    )
-  }
-
+  // Dev builds no longer show a channel badge; beta keeps a static marker.
+  if (channel !== "beta") return null
   return (
-    <>
-      {["beta", "dev"].includes(channel) && (
-        <div class="shrink-0 rounded-[4px] bg-v2-background-bg-accent px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-wide text-white">
-          {channel.toUpperCase()}
-        </div>
-      )}
-    </>
+    <div class="shrink-0 rounded-[4px] bg-v2-background-bg-accent px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase leading-none tracking-wide text-white">
+      BETA
+    </div>
   )
 }

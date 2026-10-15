@@ -4,7 +4,6 @@ import { Portal } from "solid-js/web"
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
-import { DebugBar } from "@/components/debug-bar"
 import { Titlebar, useTitlebarRightMount, type TitlebarUpdate } from "@/components/titlebar"
 import { WorkspaceFilePanel } from "@/components/workspace-file-panel"
 import { SessionHistoryList } from "@/components/session-history-panel"
@@ -16,7 +15,7 @@ export default function NewLayout(props: ParentProps) {
   const platform = usePlatform()
   const language = useLanguage()
   const rightMount = useTitlebarRightMount()
-  const [state, setState] = createStore({ debugTools: true, historyOpen: false })
+  const [state, setState] = createStore({ historyOpen: false })
 
   createEffect(() => setV2Toast(true))
 
@@ -38,14 +37,7 @@ export default function NewLayout(props: ParentProps) {
         "padding-bottom": "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <Titlebar
-        update={update}
-        debugTools={
-          import.meta.env.DEV
-            ? { visible: state.debugTools, toggle: () => setState("debugTools", (value) => !value) }
-            : undefined
-        }
-      />
+      <Titlebar update={update} />
       <Show when={rightMount()}>
         {(mount) => (
           <Portal mount={mount()}>
@@ -99,7 +91,6 @@ export default function NewLayout(props: ParentProps) {
           </aside>
         </Show>
       </main>
-      {import.meta.env.DEV && state.debugTools && <DebugBar inline />}
       <ToastRegion v2 />
     </div>
   )
