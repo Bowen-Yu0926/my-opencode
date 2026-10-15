@@ -1334,10 +1334,10 @@ export function MessageTimeline(props: {
           <button
             type="button"
             aria-label={language.t("session.messages.jumpToLatest")}
-            class="pointer-events-auto flex items-center justify-center w-8 h-7 px-2 py-1.5 rounded-lg border-none cursor-pointer text-v2-text-text-base backdrop-blur-[2px]"
+            class="pointer-events-auto flex items-center justify-center w-8 h-7 px-2 py-1.5 rounded-[6px] border border-v2-border-border-muted cursor-pointer text-v2-text-text-base backdrop-blur-[2px]"
             style={{
               background: "color-mix(in srgb, var(--v2-background-bg-base) 92%, transparent)",
-              "box-shadow": "var(--v2-elevation-raised), 0px 2px 8px var(--v2-background-bg-base)",
+              "box-shadow": "0px 2px 8px var(--v2-background-bg-base)",
             }}
             onClick={props.onResumeScroll}
           >
@@ -1648,7 +1648,7 @@ export function MessageTimeline(props: {
                           <KobaltePopover.Content
                             data-component="popover-content"
                             classList={{
-                              "flex w-80 max-w-none flex-col items-start gap-3 rounded-[10px] border-0 bg-v2-background-bg-layer-01 p-3 shadow-[var(--v2-elevation-floating)]":
+                              "flex w-80 max-w-none flex-col items-start gap-3 rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-layer-01 p-3 shadow-[var(--v2-elevation-floating)]":
                                 settings.general.newLayoutDesigns(),
                             }}
                             style={{ "min-width": "320px" }}

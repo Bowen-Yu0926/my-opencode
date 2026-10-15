@@ -103,7 +103,7 @@ export function DialogEditProjectV2(props: { project: LocalProject; server: Serv
                       type="button"
                       aria-label={language.t("dialog.project.edit.color.select", { color })}
                       aria-pressed={getProjectAvatarVariant(model.store.color) === color}
-                      class="flex size-8 items-center justify-center rounded-[10px] p-1 outline outline-1 outline-transparent transition-[background-color,outline-color] hover:bg-v2-overlay-simple-overlay-hover focus-visible:outline-v2-border-border-focus"
+                      class="flex size-8 items-center justify-center rounded-[6px] p-1 outline outline-1 outline-transparent transition-[background-color,outline-color] hover:bg-v2-overlay-simple-overlay-hover focus-visible:outline-v2-border-border-focus"
                       classList={{
                         "bg-v2-overlay-simple-overlay-hover [box-shadow:inset_0_0_0_2px_var(--v2-border-border-focus)]":
                           getProjectAvatarVariant(model.store.color) === color,

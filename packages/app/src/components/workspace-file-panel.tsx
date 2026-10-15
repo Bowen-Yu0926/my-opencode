@@ -196,7 +196,7 @@ export function WorkspaceFilePanel() {
   return (
     <aside
       aria-label={language.t("sidebar.nav.projectsAndSessions")}
-      class="w-[280px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-[10px] bg-v2-background-bg-base shadow-[var(--v2-elevation-raised)] m-2 mt-0 gap-0.5 p-1.5"
+      class="w-[280px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-base m-2 mt-0 gap-0.5 p-1.5"
     >
       <div class="flex h-7 shrink-0 items-center justify-between gap-2 pl-1.5 pr-1">
         <span class="min-w-0 truncate text-[13px] leading-4 text-v2-text-text-muted [font-weight:530]">

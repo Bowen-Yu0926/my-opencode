@@ -23,6 +23,7 @@
     width: 480px;
     height: 368px;
     background: var(--v2-background-bg-layer-01);
+    border: 1px solid var(--v2-border-border-muted);
     box-shadow: var(--v2-elevation-overlay);
     border-radius: 6px;
     overflow: hidden;

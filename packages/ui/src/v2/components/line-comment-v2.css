@@ -21,8 +21,8 @@
 
 [data-component="line-comment-v2"] [data-slot="line-comment-v2-shell"] {
   background: var(--v2-background-bg-layer-01);
+  border: 1px solid var(--v2-border-border-muted);
   border-radius: 6px;
-  box-shadow: var(--v2-elevation-raised);
 }
 
 /* --- Display (read) --- */

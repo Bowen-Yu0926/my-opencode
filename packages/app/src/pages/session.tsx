@@ -341,8 +341,8 @@ function SessionPanelFrame(props: ParentProps<{ newLayout: boolean; raised?: boo
         "flex-1 min-h-0 flex flex-col": true,
         "bg-v2-background-bg-base": props.newLayout,
         "bg-background-stronger": !props.newLayout,
-        "rounded-[10px] overflow-hidden": props.newLayout,
-        "shadow-[var(--v2-elevation-raised)]": props.newLayout && props.raised,
+        "rounded-[6px] overflow-hidden": props.newLayout,
+        "border border-v2-border-border-muted": props.newLayout && props.raised,
       }}
     >
       {props.children}
