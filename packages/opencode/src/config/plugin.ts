@@ -37,6 +37,23 @@ export function pluginOptions(plugin: ConfigPluginV1.Spec): ConfigPluginV1.Optio
   return Array.isArray(plugin) ? plugin[1] : undefined
 }
 
+/** Stable identity used for disable matching (npm package name or file URL). */
+export function pluginIdentity(plugin: ConfigPluginV1.Spec | string): string {
+  const spec = typeof plugin === "string" ? plugin : pluginSpecifier(plugin)
+  if (spec.startsWith("file://") || spec.startsWith(".") || spec.startsWith("/") || /^[A-Za-z]:[\\/]/.test(spec)) {
+    return spec
+  }
+  return parsePluginSpecifier(spec).pkg || spec
+}
+
+export function isPluginDisabled(plugin: ConfigPluginV1.Spec | string, disabled: Iterable<string>): boolean {
+  const set = disabled instanceof Set ? disabled : new Set(disabled)
+  if (set.size === 0) return false
+  const spec = typeof plugin === "string" ? plugin : pluginSpecifier(plugin)
+  if (set.has(spec)) return true
+  return set.has(pluginIdentity(spec))
+}
+
 // Path-like specs are resolved relative to the config file that declared them so merges later on do not
 // accidentally reinterpret `./plugin.ts` relative to some other directory.
 export async function resolvePluginSpec(

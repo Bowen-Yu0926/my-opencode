@@ -16,6 +16,7 @@ const keys = new Set([
   "plugin",
   "autoshare",
   "disabled_providers",
+  "disabled_plugins",
   "enabled_providers",
   "small_model",
   "mode",

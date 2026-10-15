@@ -290,10 +290,34 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
 
   const queryClient = useQueryClient()
   const homeSessions = createHomeSessionIndexCache(queryClient, ServerConnection.key(serverSDK.server))
+  const providerQueryPredicate = (query: { queryKey: readonly unknown[] }) =>
+    query.queryKey[0] === serverSDK.scope && query.queryKey[2] === "providers"
+
   const refreshProviders = () =>
     queryClient.refetchQueries({
-      predicate: (query) => query.queryKey[0] === serverSDK.scope && query.queryKey[2] === "providers",
+      predicate: providerQueryPredicate,
     })
+
+  /** Optimistic UI: drop a provider from every cached catalog so settings/session update immediately. */
+  const dropConnectedProvider = (providerID: string) => {
+    queryClient.setQueriesData<NormalizedProviderListResponse>(
+      { predicate: providerQueryPredicate },
+      (current) => {
+        if (!current) return current
+        if (!current.connected.includes(providerID) && !current.all.has(providerID)) return current
+        const all = new Map(current.all)
+        all.delete(providerID)
+        const nextDefault = { ...current.default }
+        delete nextDefault[providerID]
+        return {
+          ...current,
+          all,
+          connected: current.connected.filter((id) => id !== providerID),
+          default: nextDefault,
+        }
+      },
+    )
+  }
 
   let bootedAt = 0
   let bootingRoot = false
@@ -336,10 +360,28 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
     },
   }))
 
+  const configQueryKey = [serverSDK.scope, "config"] as const
+
   const set = ((...input: unknown[]) => {
     if (input[0] === "project" && (Array.isArray(input[1]) || typeof input[1] === "function")) {
       setProjects(input[1] as Project[] | ((draft: Project[]) => Project[]))
       return input[1]
+    }
+    // `config` is a query-backed getter on the store — mutate the query cache instead.
+    if (input[0] === "config") {
+      if (input.length === 2 && typeof input[1] === "object" && input[1] !== null) {
+        queryClient.setQueryData<Config>(configQueryKey, input[1] as Config)
+        return input[1]
+      }
+      if (input.length >= 3 && typeof input[1] === "string") {
+        const key = input[1] as keyof Config
+        const value = input[2]
+        queryClient.setQueryData<Config>(configQueryKey, (current) => ({
+          ...(current ?? {}),
+          [key]: value,
+        }))
+        return value
+      }
     }
     return (setGlobalStore as (...args: unknown[]) => unknown)(...input)
   }) as typeof setGlobalStore
@@ -542,6 +584,9 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
     }
     homeSessions.refresh(event.type)
     if (eventType === "integration.connection.updated") void refreshProviders()
+    // Auth disconnect calls global.dispose; refresh all provider catalogs so session
+    // model pickers drop disconnected providers (not only active directory bootstraps).
+    if (eventType === "global.disposed") void refreshProviders()
 
     if (directory === "global") {
       if (eventType === "server.connected" && activeSessionsQuery.data === undefined && !activeSessionsQuery.isFetching)
@@ -684,6 +729,7 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
     disableMcp: children.disableMcp,
     queryOptions: queryOptionsApi,
     refreshProviders,
+    dropConnectedProvider,
     refreshBootstrap: () => bootstrap.refetch(),
     // bootstrap,
     updateConfig: updateConfigMutation.mutateAsync,

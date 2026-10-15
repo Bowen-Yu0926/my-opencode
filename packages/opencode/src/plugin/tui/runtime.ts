@@ -1086,7 +1086,13 @@ async function load(input: {
       }).pipe(Effect.provide(AppNodeBuilder.build(RuntimeFlags.node))),
     )
     const pluginOrigins = config.plugin_origins ?? (await TuiConfig.pluginOrigins())
-    const records = Flag.OPENCODE_PURE ? [] : pluginOrigins
+    // Prefer TUI plugin_enabled for runtime toggles; disabled_plugins keeps npm plugins out of load entirely.
+    const disabledPlugins = new Set(
+      ((config as { disabled_plugins?: string[] }).disabled_plugins ?? []).filter((item) => typeof item === "string"),
+    )
+    const records = (Flag.OPENCODE_PURE ? [] : pluginOrigins).filter(
+      (origin) => !ConfigPlugin.isPluginDisabled(origin.spec, disabledPlugins),
+    )
     if (Flag.OPENCODE_PURE && pluginOrigins.length) {
     }
 

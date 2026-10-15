@@ -91,52 +91,61 @@ const SettingsProvidersContent: Component<{ onBack?: () => void }> = (props) => 
     return true
   }
 
+  const disconnectedToast = (name: string) =>
+    showToast({
+      variant: "success",
+      icon: "circle-check",
+      title: language.t("provider.disconnect.toast.disconnected.title", { provider: name }),
+      description: language.t("provider.disconnect.toast.disconnected.description", { provider: name }),
+    })
+
   const disableProvider = async (providerID: string, name: string) => {
-    if (protocol() !== "v1") return
+    if (protocol() !== "v1") return false
     const before = serverSync().data.config.disabled_providers ?? []
     const next = before.includes(providerID) ? before : [...before, providerID]
     serverSync().set("config", "disabled_providers", next)
 
-    await serverSync()
-      .updateConfig({ disabled_providers: next })
-      .then(() => {
-        showToast({
-          variant: "success",
-          icon: "circle-check",
-          title: language.t("provider.disconnect.toast.disconnected.title", { provider: name }),
-          description: language.t("provider.disconnect.toast.disconnected.description", { provider: name }),
-        })
-      })
-      .catch((err: unknown) => {
-        serverSync().set("config", "disabled_providers", before)
-        const message = err instanceof Error ? err.message : String(err)
-        showToast({ title: language.t("common.requestFailed"), description: message })
-      })
+    try {
+      await serverSync().updateConfig({ disabled_providers: next })
+      return true
+    } catch (err: unknown) {
+      serverSync().set("config", "disabled_providers", before)
+      const message = err instanceof Error ? err.message : String(err)
+      showToast({ title: language.t("common.requestFailed"), description: message })
+      return false
+    }
   }
 
   const disconnect = async (providerID: string, name: string) => {
-    if (isConfigCustom(providerID)) {
+    const item = connected().find((entry) => entry.id === providerID)
+    // Config-backed providers stay loaded after auth.remove unless disabled.
+    const needsDisable = isConfigCustom(providerID) || (item ? source(item) === "config" : false)
+
+    try {
       await serverSDK()
         .client.auth.remove({ providerID })
         .catch(() => undefined)
-      await disableProvider(providerID, name)
-      return
-    }
-    await serverSDK()
-      .client.auth.remove({ providerID })
-      .then(async () => {
+
+      serverSync().dropConnectedProvider(providerID)
+
+      if (needsDisable) {
+        const ok = await disableProvider(providerID, name)
+        if (!ok) {
+          // Config providers reappear unless disabled; restore list on failure.
+          await serverSync().refreshProviders().catch(() => undefined)
+          return
+        }
+      } else {
         await serverSDK().client.global.dispose()
-        showToast({
-          variant: "success",
-          icon: "circle-check",
-          title: language.t("provider.disconnect.toast.disconnected.title", { provider: name }),
-          description: language.t("provider.disconnect.toast.disconnected.description", { provider: name }),
-        })
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : String(err)
-        showToast({ title: language.t("common.requestFailed"), description: message })
-      })
+      }
+
+      await serverSync().refreshProviders().catch(() => undefined)
+      disconnectedToast(name)
+    } catch (err: unknown) {
+      await serverSync().refreshProviders().catch(() => undefined)
+      const message = err instanceof Error ? err.message : String(err)
+      showToast({ title: language.t("common.requestFailed"), description: message })
+    }
   }
 
   return (

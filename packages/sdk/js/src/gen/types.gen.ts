@@ -1242,6 +1242,10 @@ export type Config = {
    */
   disabled_providers?: Array<string>
   /**
+   * Disable configured plugins without removing them from the plugin list
+   */
+  disabled_plugins?: Array<string>
+  /**
    * When set, ONLY these providers will be enabled. All other providers will be ignored
    */
   enabled_providers?: Array<string>

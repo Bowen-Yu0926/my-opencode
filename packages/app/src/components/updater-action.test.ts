@@ -2,8 +2,15 @@ import { describe, expect, test } from "bun:test"
 import { updaterAction } from "./updater-action"
 
 describe("updaterAction", () => {
-  test("disables update actions when the platform has no updater", () => {
-    expect(updaterAction(undefined)).toEqual({ label: "settings.updates.action.checkNow" })
+  test("keeps check clickable when updater is unavailable", () => {
+    expect(updaterAction(undefined)).toEqual({
+      label: "settings.updates.action.checkNow",
+      run: "unavailable",
+    })
+    expect(updaterAction({ status: "disabled" })).toEqual({
+      label: "settings.updates.action.checkNow",
+      run: "unavailable",
+    })
   })
 
   test("projects updater transitions into one settings action", () => {

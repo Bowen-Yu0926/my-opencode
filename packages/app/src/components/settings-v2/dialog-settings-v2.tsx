@@ -8,6 +8,7 @@ import { SettingsGeneralV2 } from "./general"
 import { SettingsKeybinds } from "../settings-keybinds"
 import { SettingsProvidersV2 } from "./providers"
 import { SettingsModelsV2 } from "./models"
+import { SettingsPluginsV2 } from "./plugins"
 import "./settings-v2.css"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
@@ -25,6 +26,13 @@ export const DialogSettings: Component<{
   const tabs = useTabs()
   const serverSync = useServerSync()
   const [tab, setTab] = createSignal(props.defaultValue ?? "general")
+  const sessionID = createMemo(() => {
+    if (props.sessionID) return props.sessionID
+    const route = layout.route()
+    if (route.type === "session") return route.sessionId
+    return undefined
+  })
+
   const directory = createMemo(() => {
     const route = layout.route()
     if (route.type === "dir-new-sesssion") return route.dir
@@ -32,12 +40,18 @@ export const DialogSettings: Component<{
       const draft = tabs.store.find((item) => item.type === "draft" && item.draftID === route.draftID)
       return draft?.type === "draft" ? draft.directory : undefined
     }
-    if (route.type === "session") return serverSync().session.get(route.sessionId)?.directory
+    if (route.type === "session") {
+      return (
+        serverSync().session.get(route.sessionId)?.directory ??
+        (props.sessionID ? serverSync().session.get(props.sessionID)?.directory : undefined)
+      )
+    }
+    if (props.sessionID) return serverSync().session.get(props.sessionID)?.directory
     return undefined
   })
 
   const showProviders = () => {
-    void dialog.show(() => <DialogSettings sessionID={props.sessionID} defaultValue="providers" />)
+    void dialog.show(() => <DialogSettings sessionID={sessionID()} defaultValue="providers" />)
   }
 
   return (
@@ -78,6 +92,10 @@ export const DialogSettings: Component<{
                       <Icon name="models" />
                       {language.t("settings.models.title")}
                     </TabsV2.Trigger>
+                    <TabsV2.Trigger value="plugins">
+                      <Icon name="code" />
+                      {language.t("settings.plugins.title")}
+                    </TabsV2.Trigger>
                   </div>
                 </div>
               </div>
@@ -89,7 +107,7 @@ export const DialogSettings: Component<{
           </div>
         </TabsV2.List>
         <TabsV2.Content value="general" class="settings-v2-panel">
-          <SettingsGeneralV2 sessionID={props.sessionID} />
+          <SettingsGeneralV2 sessionID={sessionID()} directory={directory} />
         </TabsV2.Content>
         <TabsV2.Content value="shortcuts" class="settings-v2-panel">
           <SettingsKeybinds v2 />
@@ -99,6 +117,9 @@ export const DialogSettings: Component<{
         </TabsV2.Content>
         <TabsV2.Content value="models" class="settings-v2-panel">
           <SettingsModelsV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="plugins" class="settings-v2-panel">
+          <SettingsPluginsV2 />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

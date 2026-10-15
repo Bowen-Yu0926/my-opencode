@@ -1,4 +1,4 @@
-import { Component, Show, createMemo, createResource } from "solid-js"
+import { Component, Show, createMemo, createResource, type Accessor } from "solid-js"
 import { createMediaQuery } from "@solid-primitives/media"
 import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 import { SelectV2 } from "@opencode-ai/ui/v2/select-v2"
@@ -264,6 +264,7 @@ const LanguageSetting = () => {
 
 export const SettingsGeneralV2: Component<{
   sessionID?: string
+  directory?: Accessor<string | undefined>
 }> = (props) => {
   const language = useLanguage()
   const platform = usePlatform()
@@ -271,7 +272,10 @@ export const SettingsGeneralV2: Component<{
   const settings = useSettings()
   const mobile = createMediaQuery("(max-width: 767px)")
   const updater = useUpdaterAction()
-  const permissionScope = createPermissionScopeController(() => props.sessionID)
+  const permissionScope = createPermissionScopeController({
+    sessionID: () => props.sessionID,
+    directory: () => props.directory?.() ?? undefined,
+  })
   const shell = createShellSettingsController()
   const appearance = createAppearanceSettingsController()
   const sounds = createSoundSettingsController()
@@ -461,7 +465,12 @@ export const SettingsGeneralV2: Component<{
           title={language.t("settings.updates.row.check.title")}
           description={language.t("settings.updates.row.check.description")}
         >
-          <ButtonV2 size="normal" variant="neutral" disabled={!updater.action().run} onClick={() => updater.run()}>
+          <ButtonV2
+            size="normal"
+            variant="neutral"
+            disabled={!updater.action().run}
+            onClick={() => void updater.run()}
+          >
             {language.t(updater.action().label)}
           </ButtonV2>
         </SettingsRowV2>

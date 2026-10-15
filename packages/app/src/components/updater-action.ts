@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/language"
 import { showToast } from "@/utils/toast"
 
 export function updaterAction(state: UpdaterState | undefined) {
-  if (!state) return { label: "settings.updates.action.checkNow" as const }
+  if (!state) return { label: "settings.updates.action.checkNow" as const, run: "unavailable" as const }
   switch (state.status) {
     case "checking":
       return { label: "settings.updates.action.checking" as const }
@@ -16,7 +16,8 @@ export function updaterAction(state: UpdaterState | undefined) {
     case "installing":
       return { label: "settings.updates.action.installing" as const }
     case "disabled":
-      return { label: "settings.updates.action.checkNow" as const }
+      // Still clickable: explain that auto-update is off (dev / unpackaged builds).
+      return { label: "settings.updates.action.checkNow" as const, run: "unavailable" as const }
     default:
       return { label: "settings.updates.action.checkNow" as const, run: "check" as const }
   }
@@ -32,6 +33,13 @@ export function useUpdaterAction() {
     async run() {
       const run = action().run
       if (run === "install") return platform.updater?.install()
+      if (run === "unavailable") {
+        showToast({
+          title: language.t("settings.updates.toast.unavailable.title"),
+          description: language.t("settings.updates.toast.unavailable.description"),
+        })
+        return
+      }
       if (run !== "check") return
 
       const state = await platform.updater?.check()
@@ -41,6 +49,12 @@ export function useUpdaterAction() {
           icon: "circle-check",
           title: language.t("settings.updates.toast.latest.title"),
           description: language.t("settings.updates.toast.latest.description", { version: platform.version ?? "" }),
+        })
+      }
+      if (state?.status === "disabled") {
+        showToast({
+          title: language.t("settings.updates.toast.unavailable.title"),
+          description: language.t("settings.updates.toast.unavailable.description"),
         })
       }
       if (state?.status === "error") {
