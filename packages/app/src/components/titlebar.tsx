@@ -337,6 +337,15 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                   hidden: true,
                   onSelect: openNewTab,
                 },
+                // The desktop File menu binds "New Session" to this command id, so it must be
+                // registered on every route (home and drafts included), not only under a session page.
+                {
+                  id: "session.new",
+                  category: language.t("command.category.session"),
+                  title: language.t("command.session.new"),
+                  keybind: "mod+shift+s",
+                  onSelect: openNewTab,
+                },
                 current && {
                   id: "tab.close",
                   category: "tab",

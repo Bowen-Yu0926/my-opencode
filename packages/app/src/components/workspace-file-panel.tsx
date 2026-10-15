@@ -162,8 +162,20 @@ export function WorkspaceFilePanel() {
     return projects().find((project) => workspacesOf(project).some((item) => pathKey(item) === key))
   })
 
-  // Local personal build: workspace / sandbox creation disabled.
-  command.register("workspace", () => [])
+  // Local personal build: workspace / sandbox creation disabled. The desktop File menu still
+  // binds "Open project…" to this id, which the new layout has no other registration for.
+  command.register("workspace", () => [
+    {
+      id: "project.open",
+      title: language.t("command.project.open"),
+      category: language.t("command.category.project"),
+      keybind: "mod+o",
+      onSelect: () => {
+        const conn = home.server.focused() ?? server.current
+        if (conn) homeProjects.project.choose(conn)
+      },
+    },
+  ])
 
   function selectProject(worktree: string) {
     const conn = server.current
