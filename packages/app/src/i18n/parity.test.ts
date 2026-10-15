@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { desktopNativePluralCategories } from "./desktop-native"
 
-const appLocales = ["zh", "zht"] as const
+const appLocales = ["zh"] as const
 const desktopLocales = appLocales
 const pluralCategories = new Map(
   appLocales.map(

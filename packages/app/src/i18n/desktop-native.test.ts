@@ -17,7 +17,6 @@ describe("desktop native translations", () => {
     expect(DESKTOP_NATIVE_LOCALES.map((locale) => DESKTOP_NATIVE_LABELS[locale])).toEqual([
       "English",
       "简体中文",
-      "繁體中文",
     ])
   })
 
@@ -60,7 +59,7 @@ describe("desktop native locale detection", () => {
   })
 
   test("uses Unicode likely subtags for script-sensitive bundles", () => {
-    expect(detectDesktopNativeLocale(["zh-TW"])).toBe("zht")
+    expect(detectDesktopNativeLocale(["zh-TW"])).toBe("zh")
     expect(detectDesktopNativeLocale(["zh-SG"])).toBe("zh")
   })
 })

@@ -6,7 +6,6 @@ import {
 
 import { dict as desktopEn } from "./en"
 import { dict as desktopZh } from "./zh"
-import { dict as desktopZht } from "./zht"
 
 export type Locale = DesktopNativeLocale
 
@@ -51,7 +50,6 @@ const base = i18n.flatten(desktopEn)
 function build(locale: Locale): Dictionary {
   if (locale === "en") return base
   if (locale === "zh") return { ...base, ...i18n.flatten(desktopZh) }
-  if (locale === "zht") return { ...base, ...i18n.flatten(desktopZht) }
   return base
 }
 

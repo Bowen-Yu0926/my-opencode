@@ -48,7 +48,6 @@ const merge = (app: Promise<Source>, ui: Promise<Source>) =>
 
 const loaders: Record<Exclude<Locale, "en">, () => Promise<Dictionary>> = {
   zh: () => merge(import("@/i18n/zh"), import("@opencode-ai/ui/i18n/zh")),
-  zht: () => merge(import("@/i18n/zht"), import("@opencode-ai/ui/i18n/zht")),
 }
 
 function loadDict(locale: Locale) {

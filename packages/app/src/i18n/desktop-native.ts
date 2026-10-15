@@ -1,17 +1,15 @@
-export const DESKTOP_NATIVE_LOCALES = ["en", "zh", "zht"] as const
+export const DESKTOP_NATIVE_LOCALES = ["en", "zh"] as const
 
 export type DesktopNativeLocale = (typeof DESKTOP_NATIVE_LOCALES)[number]
 
 export const DESKTOP_NATIVE_LABELS: Record<DesktopNativeLocale, string> = {
   en: "English",
   zh: "简体中文",
-  zht: "繁體中文",
 }
 
 export const DESKTOP_NATIVE_LOCALE_TAGS: Record<DesktopNativeLocale, string> = {
   en: "en",
   zh: "zh-Hans",
-  zht: "zh-Hant",
 }
 
 export function detectDesktopNativeLocale(languages: readonly string[]): DesktopNativeLocale {
@@ -23,6 +21,8 @@ export function detectDesktopNativeLocale(languages: readonly string[]): Desktop
       return target?.language === source.language && target.script === source.script
     })
     if (match) return match
+    // Traditional Chinese and other zh variants fall back to Simplified.
+    if (source.language === "zh") return "zh"
   }
   return "zh"
 }
