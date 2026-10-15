@@ -32,7 +32,7 @@ describe("applyProviderFieldReplace", () => {
       },
     }
 
-    const merged = applyProviderFieldReplace(mergeDeep(existing, patch), patch) as typeof existing
+    const merged = applyProviderFieldReplace(mergeDeep(existing, patch), patch) as typeof patch
 
     expect(merged.provider.workbudy.models).toEqual({
       "cn:keep": { name: "Keep" },
