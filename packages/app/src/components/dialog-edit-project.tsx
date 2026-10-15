@@ -144,16 +144,6 @@ export function DialogEditProject(props: { project: LocalProject; server: Server
             </div>
           </Show>
 
-          <TextField
-            multiline
-            label={language.t("dialog.project.edit.worktree.startup")}
-            description={language.t("dialog.project.edit.worktree.startup.description")}
-            placeholder={language.t("dialog.project.edit.worktree.startup.placeholder")}
-            value={model.store.startup}
-            onChange={(v) => model.setStore("startup", v)}
-            spellcheck={false}
-            class="max-h-14 w-full overflow-y-auto font-mono text-xs"
-          />
         </div>
 
         <div class="flex justify-end gap-2">

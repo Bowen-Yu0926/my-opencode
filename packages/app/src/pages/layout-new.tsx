@@ -5,7 +5,6 @@ import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 import { DebugBar } from "@/components/debug-bar"
-import { TabsInfoPopup } from "@/components/help-button"
 import { Titlebar, useTitlebarRightMount, type TitlebarUpdate } from "@/components/titlebar"
 import { WorkspaceFilePanel } from "@/components/workspace-file-panel"
 import { SessionHistoryList } from "@/components/session-history-panel"
@@ -101,7 +100,6 @@ export default function NewLayout(props: ParentProps) {
         </Show>
       </main>
       {import.meta.env.DEV && state.debugTools && <DebugBar inline />}
-      <TabsInfoPopup />
       <ToastRegion v2 />
     </div>
   )

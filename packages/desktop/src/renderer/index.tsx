@@ -12,11 +12,9 @@ import {
   createDraftStore,
   ServerConnection,
   useCommand,
-  useWslServers,
   useLanguage,
 } from "@opencode-ai/app"
 import type { UpdaterState } from "@opencode-ai/app/updater"
-import * as Sentry from "@sentry/solid"
 import type { AsyncStorage } from "@solid-primitives/storage"
 import { createMemoryHistory, MemoryRouter, type BaseRouterProps } from "@solidjs/router"
 import { createEffect, createMemo, createResource, createSignal, onCleanup, Show } from "solid-js"
@@ -27,7 +25,6 @@ import { initializationData } from "./initialization"
 import { DesktopFirstLaunchOnboarding } from "./onboarding"
 import { resetZoom, setPinchZoomEnabled, webviewZoom, zoomIn, zoomOut } from "./webview-zoom"
 import { windowFullscreen } from "./window-fullscreen"
-import { availableStartupServer, readyWslConnections } from "./wsl/connections"
 import "./styles.css"
 import { Splash } from "@opencode-ai/ui/logo"
 import { useTheme } from "@opencode-ai/ui/theme/context"
@@ -37,28 +34,7 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(t("desktop.error.dev.rootNotFound"))
 }
 
-if (import.meta.env.VITE_SENTRY_DSN) {
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
-    release: import.meta.env.VITE_SENTRY_RELEASE ?? `desktop@${pkg.version}`,
-    initialScope: {
-      tags: {
-        platform: "desktop",
-      },
-    },
-    integrations: (integrations) => {
-      return integrations.filter(
-        (i) =>
-          i.name !== "Breadcrumbs" &&
-          !(
-            import.meta.env.OPENCODE_CHANNEL === "prod" &&
-            (i.name === "GlobalHandlers" || i.name === "BrowserApiErrors")
-          ),
-      )
-    },
-  })
-}
+// Local personal build: Sentry crash reporting disabled.
 
 const [updaterState, setUpdaterState] = createSignal<UpdaterState>({ status: "disabled" })
 void window.api.updater.subscribe(setUpdaterState)
@@ -162,8 +138,6 @@ const createPlatform = (windowState: DesktopWindowState): Platform => {
       return api
     }
   })()
-
-  const wslServersApi = os === "windows" ? window.api.wslServers : undefined
 
   return {
     platform: "desktop",
@@ -282,8 +256,6 @@ const createPlatform = (windowState: DesktopWindowState): Platform => {
       await window.api.setDefaultServerUrl(url)
     },
 
-    wslServers: wslServersApi,
-
     getDisplayBackend: async () => {
       return window.api.getDisplayBackend().catch(() => null)
     },
@@ -374,11 +346,8 @@ function DesktopRoot(props: { windowState: DesktopWindowState }) {
   }
 
   function App() {
-    const wslServers = useWslServers()
     const language = useLanguage()
-    const ready = createMemo(
-      () => !defaultServer.loading && !sidecar.loading && !locale.loading && !wslServers.isLoading,
-    )
+    const ready = createMemo(() => !defaultServer.loading && !sidecar.loading && !locale.loading)
     const servers = createMemo(() => {
       const data = initializationData(sidecar)
       const list: ServerConnection.Any[] = []
@@ -394,11 +363,10 @@ function DesktopRoot(props: { windowState: DesktopWindowState }) {
           },
         })
       }
-      list.push(...readyWslConnections(wslServers.data, language.t("wsl.server.label")))
       return list
     })
     const effectiveDefaultServer = createMemo(() =>
-      ServerConnection.Key.make(availableStartupServer(defaultServer.latest, wslServers.data)),
+      ServerConnection.Key.make(defaultServer.latest ?? servers()[0]?.http.url),
     )
     return (
       <Show when={ready()} fallback={<LoadingSplash />}>

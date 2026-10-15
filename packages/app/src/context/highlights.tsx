@@ -1,13 +1,10 @@
-import { createEffect, onCleanup } from "solid-js"
+import { createEffect } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createSimpleContext } from "@opencode-ai/ui/context"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { usePlatform } from "@/context/platform"
 import { useSettings } from "@/context/settings"
 import { persisted } from "@/utils/persist"
-import { DialogReleaseNotes, type Highlight } from "@/components/dialog-release-notes"
-
-const CHANGELOG_URL = "https://opencode.ai/changelog.json"
+import { type Highlight } from "@/components/dialog-release-notes"
 
 type Store = {
   version?: string
@@ -142,7 +139,6 @@ export const { use: useHighlights, provider: HighlightsProvider } = createSimple
   gate: false,
   init: () => {
     const platform = usePlatform()
-    const dialog = useDialog()
     const settings = useSettings()
     const [store, setStore, _, ready] = persisted("highlights.v1", createStore<Store>({ version: undefined }))
 
@@ -151,54 +147,10 @@ export const { use: useHighlights, provider: HighlightsProvider } = createSimple
       to: undefined as string | undefined,
     })
     const state = { started: false }
-    let timer: ReturnType<typeof setTimeout> | undefined
-
-    const clearTimer = () => {
-      if (timer === undefined) return
-      clearTimeout(timer)
-      timer = undefined
-    }
 
     const markSeen = () => {
       if (!platform.version) return
       setStore("version", platform.version)
-    }
-
-    const start = (previous: string) => {
-      if (!settings.general.releaseNotes()) {
-        markSeen()
-        return
-      }
-
-      const fetcher = platform.fetch ?? fetch
-      const controller = new AbortController()
-      onCleanup(() => {
-        controller.abort()
-        clearTimer()
-      })
-
-      fetcher(CHANGELOG_URL, {
-        signal: controller.signal,
-        headers: { Accept: "application/json" },
-      })
-        .then((response) => (response.ok ? (response.json() as Promise<unknown>) : undefined))
-        .then((json) => {
-          if (!json) return
-          const highlights = loadReleaseHighlights(json, platform.version, previous)
-          if (controller.signal.aborted) return
-
-          if (highlights.length === 0) {
-            markSeen()
-            return
-          }
-
-          timer = setTimeout(() => {
-            timer = undefined
-            markSeen()
-            dialog.show(() => <DialogReleaseNotes highlights={highlights} />)
-          }, 500)
-        })
-        .catch(() => undefined)
     }
 
     createEffect(() => {
@@ -216,8 +168,9 @@ export const { use: useHighlights, provider: HighlightsProvider } = createSimple
 
       if (previous === platform.version) return
 
+      // Local personal build: skip remote changelog / release-notes fetch.
       setRange({ from: previous, to: platform.version })
-      start(previous)
+      markSeen()
     })
 
     return {

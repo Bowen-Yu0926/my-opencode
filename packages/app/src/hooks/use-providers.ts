@@ -6,8 +6,6 @@ import { createEffect, createMemo, type Accessor } from "solid-js"
 import { selectProviderCatalog } from "./provider-catalog"
 
 export const popularProviders = [
-  "opencode",
-  "opencode-go",
   "anthropic",
   "github-copilot",
   "openai",
@@ -16,6 +14,11 @@ export const popularProviders = [
   "vercel",
 ]
 const popularProviderSet = new Set(popularProviders)
+
+/** Local personal build: hide OpenCode Zen / Go hosted providers. */
+export function isHostedOpencodeProvider(id: string) {
+  return id === "opencode" || id === "opencode-go"
+}
 
 export function useProviders(directory: Accessor<string | undefined>) {
   const serverSync = useServerSync()
@@ -46,7 +49,7 @@ export function useProviders(directory: Accessor<string | undefined>) {
       pipe(
         providers().all,
         Iterable.map(([, p]) => p),
-        Iterable.filter((p) => popularProviderSet.has(p.id)),
+        Iterable.filter((p) => popularProviderSet.has(p.id) && !isHostedOpencodeProvider(p.id)),
         (v) => Array.from(v),
       ),
     connected: () => {
@@ -54,7 +57,7 @@ export function useProviders(directory: Accessor<string | undefined>) {
       return pipe(
         providers().all,
         Iterable.map(([, p]) => p),
-        Iterable.filter((p) => connected.has(p.id)),
+        Iterable.filter((p) => connected.has(p.id) && !isHostedOpencodeProvider(p.id)),
         (v) => Array.from(v),
       )
     },
@@ -63,9 +66,7 @@ export function useProviders(directory: Accessor<string | undefined>) {
       const paid = [
         ...Iterable.filter(
           providers().all,
-          ([id]) =>
-            connected.has(id) &&
-            (id !== "opencode" || Object.values(providers().all.get(id)?.models ?? {}).some((m) => m.cost?.input)),
+          ([id]) => connected.has(id) && !isHostedOpencodeProvider(id),
         ),
       ]
       return paid

@@ -58,6 +58,7 @@ const ModelList: Component<{
     model
       .list()
       .filter((m) => model.visible({ modelID: m.id, providerID: m.provider.id }))
+      .filter((m) => m.provider.id !== "opencode" && m.provider.id !== "opencode-go")
       .filter((m) => (props.provider ? m.provider.id === props.provider : true)),
   )
 
@@ -262,6 +263,7 @@ function createModelSelectorController(input: {
     model
       .list()
       .filter((item) => model.visible({ modelID: item.id, providerID: item.provider.id }))
+      .filter((item) => item.provider.id !== "opencode" && item.provider.id !== "opencode-go")
       .filter((item) => (input.provider() ? item.provider.id === input.provider() : true)),
   )
 

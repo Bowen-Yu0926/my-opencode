@@ -289,6 +289,8 @@ export const dict = {
   "provider.connect.toast.connected.description": "现在可以使用 {{provider}} 模型了。",
 
   "provider.custom.title": "自定义提供商",
+  "provider.custom.edit.title": "编辑提供商",
+  "provider.custom.edit": "编辑 {{provider}}",
   "provider.custom.unavailable": "此服务器上无法使用自定义提供商",
   "provider.custom.description.prefix": "配置与 OpenAI 兼容的提供商。请查看",
   "provider.custom.description.link": "提供商配置文档",
@@ -303,6 +305,9 @@ export const dict = {
   "provider.custom.field.apiKey.label": "API 密钥",
   "provider.custom.field.apiKey.placeholder": "API 密钥",
   "provider.custom.field.apiKey.description": "可选。如果你通过请求头管理认证，可留空。",
+  "provider.custom.field.apiKey.description.edit": "可选。留空则保留现有 API 密钥。",
+  "provider.custom.toast.updated.title": "{{provider}} 已更新",
+  "provider.custom.toast.updated.description": "现在可以使用 {{provider}} 模型了。",
   "provider.custom.models.label": "模型",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "model-id",

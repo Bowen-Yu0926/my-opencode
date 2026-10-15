@@ -6,20 +6,29 @@ import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import { useMutation } from "@tanstack/solid-query"
 import { TextField } from "@opencode-ai/ui/text-field"
 import { showToast } from "@/utils/toast"
-import { batch, For } from "solid-js"
+import { batch, For, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
-import { ExternalLink } from "@/components/external-link"
 import { useServerSDK } from "@/context/server-sdk"
 import { useServerSync } from "@/context/server-sync"
 import { useLanguage } from "@/context/language"
-import { type FormState, headerRow, modelRow, validateCustomProvider } from "./dialog-custom-provider-form"
+import {
+  type FormState,
+  formStateFromCustomProvider,
+  headerRow,
+  isCustomProviderConfig,
+  modelRow,
+  validateCustomProvider,
+} from "./dialog-custom-provider-form"
 
 type Props = {
   onBack: () => void
+  mode?: "create" | "edit"
+  providerID?: string
 }
 
 export function DialogCustomProvider(props: Props) {
   const language = useLanguage()
+  const mode = () => props.mode ?? "create"
 
   return (
     <Dialog
@@ -35,26 +44,53 @@ export function DialogCustomProvider(props: Props) {
       }
       transition
     >
-      <CustomProviderForm />
+      <CustomProviderForm mode={mode()} providerID={props.providerID} />
     </Dialog>
   )
 }
 
-export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
+export function CustomProviderForm(
+  props: {
+    autofocus?: boolean
+    mode?: "create" | "edit"
+    providerID?: string
+  } = {},
+) {
   const dialog = useDialog()
   const serverSync = useServerSync()
   const serverSDK = useServerSDK()
   const language = useLanguage()
+  const mode = () => props.mode ?? "create"
+  const editing = () => mode() === "edit"
 
-  const [form, setForm] = createStore<FormState>({
-    providerID: "",
-    name: "",
-    baseURL: "",
-    apiKey: "",
-    models: [modelRow()],
-    headers: [headerRow()],
-    err: {},
-  })
+  const initial = (): FormState => {
+    if (!editing() || !props.providerID) {
+      return {
+        providerID: "",
+        name: "",
+        baseURL: "",
+        apiKey: "",
+        models: [modelRow()],
+        headers: [headerRow()],
+        err: {},
+      }
+    }
+    const config = serverSync().data.config.provider?.[props.providerID]
+    if (!config || !isCustomProviderConfig(config)) {
+      return {
+        providerID: props.providerID,
+        name: props.providerID,
+        baseURL: "",
+        apiKey: "",
+        models: [modelRow()],
+        headers: [headerRow()],
+        err: {},
+      }
+    }
+    return formStateFromCustomProvider(props.providerID, config)
+  }
+
+  const [form, setForm] = createStore<FormState>(initial())
 
   const addModel = () => {
     setForm(
@@ -118,6 +154,7 @@ export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
     const output = validateCustomProvider({
       form,
       t: language.t,
+      mode: mode(),
       disabledProviders: serverSync().data.config.disabled_providers ?? [],
       existingProviderIDs: new Set(serverSync().data.provider.all.keys()),
     })
@@ -145,8 +182,19 @@ export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
         })
       }
 
+      const config = editing()
+        ? {
+            ...result.config,
+            env: result.config.env ?? [],
+            options: {
+              baseURL: result.config.options.baseURL,
+              headers: result.config.options.headers ?? {},
+            },
+          }
+        : result.config
+
       await serverSync().updateConfig({
-        provider: { [result.providerID]: result.config },
+        provider: { [result.providerID]: config },
         disabled_providers: nextDisabled,
       })
       return result
@@ -156,8 +204,12 @@ export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
       showToast({
         variant: "success",
         icon: "circle-check",
-        title: language.t("provider.connect.toast.connected.title", { provider: result.name }),
-        description: language.t("provider.connect.toast.connected.description", { provider: result.name }),
+        title: editing()
+          ? language.t("provider.custom.toast.updated.title", { provider: result.name })
+          : language.t("provider.connect.toast.connected.title", { provider: result.name }),
+        description: editing()
+          ? language.t("provider.custom.toast.updated.description", { provider: result.name })
+          : language.t("provider.connect.toast.connected.description", { provider: result.name }),
       })
     },
     onError: (err) => {
@@ -179,30 +231,32 @@ export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
     <div class="flex flex-col gap-6 px-2.5 pb-3 overflow-y-auto max-h-[60vh]">
       <div class="px-2.5 flex gap-4 items-center">
         <ProviderIcon id="synthetic" class="size-5 shrink-0 icon-strong-base" />
-        <div class="text-16-medium text-text-strong">{language.t("provider.custom.title")}</div>
+        <div class="text-16-medium text-text-strong">
+          {editing() ? language.t("provider.custom.edit.title") : language.t("provider.custom.title")}
+        </div>
       </div>
 
       <form onSubmit={save} class="px-2.5 pb-6 flex flex-col gap-6">
         <p class="text-14-regular text-text-base">
           {language.t("provider.custom.description.prefix")}
-          <ExternalLink href="https://opencode.ai/docs/providers/#custom-provider" tabIndex={-1}>
-            {language.t("provider.custom.description.link")}
-          </ExternalLink>
+          {language.t("provider.custom.description.link")}
           {language.t("provider.custom.description.suffix")}
         </p>
 
         <div class="flex flex-col gap-4">
           <TextField
-            autofocus={props.autofocus ?? true}
+            autofocus={props.autofocus ?? !editing()}
             label={language.t("provider.custom.field.providerID.label")}
             placeholder={language.t("provider.custom.field.providerID.placeholder")}
             description={language.t("provider.custom.field.providerID.description")}
             value={form.providerID}
             onChange={(v) => setField("providerID", v)}
+            readOnly={editing()}
             validationState={form.err.providerID ? "invalid" : undefined}
             error={form.err.providerID}
           />
           <TextField
+            autofocus={editing()}
             label={language.t("provider.custom.field.name.label")}
             placeholder={language.t("provider.custom.field.name.placeholder")}
             value={form.name}
@@ -221,7 +275,11 @@ export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
           <TextField
             label={language.t("provider.custom.field.apiKey.label")}
             placeholder={language.t("provider.custom.field.apiKey.placeholder")}
-            description={language.t("provider.custom.field.apiKey.description")}
+            description={
+              editing()
+                ? language.t("provider.custom.field.apiKey.description.edit")
+                : language.t("provider.custom.field.apiKey.description")
+            }
             value={form.apiKey}
             onChange={(v) => setField("apiKey", v)}
           />
@@ -322,7 +380,12 @@ export function CustomProviderForm(props: { autofocus?: boolean } = {}) {
           variant="primary"
           disabled={saveMutation.isPending}
         >
-          {saveMutation.isPending ? language.t("common.saving") : language.t("common.submit")}
+          <Show
+            when={saveMutation.isPending}
+            fallback={editing() ? language.t("common.save") : language.t("common.submit")}
+          >
+            {language.t("common.saving")}
+          </Show>
         </Button>
       </form>
     </div>

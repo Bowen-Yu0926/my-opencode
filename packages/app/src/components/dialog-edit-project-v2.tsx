@@ -4,7 +4,6 @@ import { DividerV2 } from "@opencode-ai/ui/v2/divider-v2"
 import { Field } from "@opencode-ai/ui/v2/field-v2"
 import { Icon } from "@opencode-ai/ui/v2/icon"
 import { ProjectAvatar, PROJECT_AVATAR_VARIANTS } from "@opencode-ai/ui/v2/project-avatar-v2"
-import { TextareaV2 } from "@opencode-ai/ui/v2/textarea-v2"
 import { TextInputV2 } from "@opencode-ai/ui/v2/text-input-v2"
 import { For, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
@@ -129,18 +128,6 @@ export function DialogEditProjectV2(props: { project: LocalProject; server: Serv
             </div>
           </Show>
 
-          <Field>
-            <Field.Label>{language.t("dialog.project.edit.worktree.startup")}</Field.Label>
-            <Field.Prefix>{language.t("dialog.project.edit.worktree.startup.description")}</Field.Prefix>
-            <TextareaV2
-              class="!w-full [&_[data-slot=textarea-v2-textarea]]:font-mono"
-              rows={3}
-              value={model.store.startup}
-              placeholder={language.t("dialog.project.edit.worktree.startup.placeholder")}
-              spellcheck={false}
-              onInput={(event) => model.setStore("startup", event.currentTarget.value)}
-            />
-          </Field>
         </DialogBody>
         <DialogFooter>
           <ButtonV2 type="button" variant="neutral" disabled={model.save.isPending} onClick={model.close}>

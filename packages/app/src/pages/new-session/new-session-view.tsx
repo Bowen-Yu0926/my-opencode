@@ -8,7 +8,7 @@ import { createStore } from "solid-js/store"
 import { Portal } from "solid-js/web"
 import createPresence from "solid-presence"
 import { PromptInputV2Composer } from "@/components/prompt-input-v2"
-import { PromptGitStatus, PromptWorkspaceSelector } from "@/components/prompt-workspace-selector"
+import { PromptGitStatus } from "@/components/prompt-workspace-selector"
 import {
   PromptProjectAddButton,
   PromptProjectSelector,
@@ -48,21 +48,7 @@ export function NewSessionView(props: {
               <Show when={props.project.selected()}>
                 <div class="flex min-h-7 min-w-0 flex-col items-center justify-center gap-0 text-v2-text-text-faint sm:flex-row">
                   <PromptProjectSelector controller={props.project} placement="bottom" />
-                  <Show
-                    when={props.workspace.bar.visible()}
-                    fallback={
-                      <PromptGitStatus branch={props.workspace.bar.branch()} noGit={!props.workspace.project.git()} />
-                    }
-                  >
-                    <PromptWorkspaceSelector
-                      value={props.workspace.selection.value()}
-                      projectRoot={props.workspace.project.root()}
-                      workspaces={props.workspace.project.workspaces()}
-                      branch={props.workspace.bar.branch()}
-                      onChange={props.workspace.selection.set}
-                      onDone={props.input.restoreFocus}
-                    />
-                  </Show>
+                  <PromptGitStatus branch={props.workspace.bar.branch()} noGit={!props.workspace.project.git()} />
                 </div>
               </Show>
             </div>

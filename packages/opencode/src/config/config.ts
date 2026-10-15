@@ -34,6 +34,7 @@ import { ConfigPaths } from "./paths"
 import { ConfigPlugin } from "./plugin"
 import { ConfigVariable } from "./variable"
 import { ConfigV2Compat } from "./v2-compat"
+import { applyProviderFieldReplace, providerReplaceFields } from "./provider-field-replace"
 import { Npm } from "@opencode-ai/core/npm"
 import { withTransientReadRetry } from "@/util/effect-http-client"
 
@@ -171,6 +172,20 @@ function writableGlobal(info: Info) {
   // When a user changes config from a value back to default in the Desktop app, we don't want to leave a blank `"shell": "",` key
   if ("shell" in next && next.shell === "") return { ...next, shell: undefined }
   return next
+}
+
+function replaceProviderFieldsJsonc(input: string, patch: unknown): string {
+  let result = input
+  for (const { id, field, value } of providerReplaceFields(patch)) {
+    const edits = modify(result, ["provider", id, field], value, {
+      formattingOptions: {
+        insertSpaces: true,
+        tabSize: 2,
+      },
+    })
+    result = applyEdits(result, edits)
+  }
+  return result
 }
 
 const layer = Layer.effect(
@@ -663,14 +678,18 @@ const layer = Layer.effect(
       if (!file.endsWith(".jsonc")) {
         const existing = ConfigParse.jsonc(before, file)
         ConfigParse.schema(ConfigV1.Info, ConfigV2Compat.lower(normalizeLoadedConfig(existing), file).value, file)
-        const merged = mergeDeep(isRecord(existing) ? existing : {}, patch)
+        const merged = applyProviderFieldReplace(mergeDeep(isRecord(existing) ? existing : {}, patch), patch)
         const serialized = JSON.stringify(merged, null, 2)
         next = yield* decodeConfig(merged, file)
         changed = serialized !== before
         if (changed) yield* fs.writeFileString(file, serialized).pipe(Effect.orDie)
       } else {
-        const updated = patchJsonc(before, patch)
-        next = yield* decodeConfig(ConfigParse.jsonc(updated, file), file)
+        const patched = patchJsonc(before, patch)
+        const merged = applyProviderFieldReplace(ConfigParse.jsonc(patched, file), patch)
+        const updated = isRecord(merged)
+          ? replaceProviderFieldsJsonc(patched, patch)
+          : patched
+        next = yield* decodeConfig(merged, file)
         changed = updated !== before
         if (changed) yield* fs.writeFileString(file, updated).pipe(Effect.orDie)
       }

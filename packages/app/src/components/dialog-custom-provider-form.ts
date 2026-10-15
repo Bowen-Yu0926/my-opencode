@@ -41,11 +41,56 @@ export type FormState = {
   }
 }
 
+export type CustomProviderConfig = {
+  npm?: string
+  name?: string
+  env?: string[]
+  options?: {
+    baseURL?: string
+    headers?: Record<string, string>
+  }
+  models?: Record<string, { name?: string } | undefined>
+}
+
 type ValidateArgs = {
   form: FormState
   t: Translator
+  mode?: "create" | "edit"
   disabledProviders: string[]
   existingProviderIDs: Set<string>
+}
+
+export function isCustomProviderConfig(
+  provider: CustomProviderConfig | undefined | null,
+): provider is CustomProviderConfig {
+  if (!provider) return false
+  if (provider.npm !== OPENAI_COMPATIBLE) return false
+  if (!provider.models || Object.keys(provider.models).length === 0) return false
+  return true
+}
+
+export function formStateFromCustomProvider(providerID: string, config: CustomProviderConfig): FormState {
+  const models = Object.entries(config.models ?? {}).map(([id, model]) => ({
+    ...modelRow(),
+    id,
+    name: model?.name ?? id,
+  }))
+  const headers = Object.entries(config.options?.headers ?? {}).map(([key, value]) => ({
+    ...headerRow(),
+    key,
+    value,
+  }))
+  const env = config.env?.[0]?.trim()
+
+  return {
+    providerID,
+    name: config.name ?? providerID,
+    baseURL: config.options?.baseURL ?? "",
+    apiKey: env ? `{env:${env}}` : "",
+    models: models.length > 0 ? models : [modelRow()],
+    headers: headers.length > 0 ? headers : [headerRow()],
+    err: {},
+  }
 }
 
 export function validateCustomProvider(input: ValidateArgs) {
@@ -53,6 +98,7 @@ export function validateCustomProvider(input: ValidateArgs) {
   const name = input.form.name.trim()
   const baseURL = input.form.baseURL.trim()
   const apiKey = input.form.apiKey.trim()
+  const mode = input.mode ?? "create"
 
   const env = apiKey.match(/^\{env:([^}]+)\}$/)?.[1]?.trim()
   const key = apiKey && !env ? apiKey : undefined
@@ -71,11 +117,12 @@ export function validateCustomProvider(input: ValidateArgs) {
       : undefined
 
   const disabled = input.disabledProviders.includes(providerID)
-  const existsError = idError
-    ? undefined
-    : input.existingProviderIDs.has(providerID) && !disabled
-      ? input.t("provider.custom.error.providerID.exists")
-      : undefined
+  const existsError =
+    mode === "edit" || idError
+      ? undefined
+      : input.existingProviderIDs.has(providerID) && !disabled
+        ? input.t("provider.custom.error.providerID.exists")
+        : undefined
 
   const seenModels = new Set<string>()
   const models = input.form.models.map((m) => {

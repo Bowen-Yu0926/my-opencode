@@ -1,4 +1,3 @@
-import { DialogSelectServer } from "@/components/dialog-select-server"
 import { useDirectoryPicker } from "@/components/directory-picker"
 import { useGlobal } from "@/context/global"
 import { useLanguage } from "@/context/language"
@@ -6,7 +5,6 @@ import { type ServerConnection, useServer } from "@/context/server"
 import { useServerSync } from "@/context/server-sync"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { Button } from "@opencode-ai/ui/button"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { Icon } from "@opencode-ai/ui/icon"
 import { Logo } from "@opencode-ai/ui/logo"
 import { useNavigate } from "@solidjs/router"
@@ -16,7 +14,6 @@ import { createMemo, For, Match, Switch } from "solid-js"
 export function LegacyHome() {
   const sync = useServerSync()
   const pickDirectory = useDirectoryPicker()
-  const dialog = useDialog()
   const navigate = useNavigate()
   const global = useGlobal()
   const server = useServer()
@@ -68,12 +65,7 @@ export function LegacyHome() {
   return (
     <div class="mx-auto mt-55 w-full md:w-auto px-4">
       <Logo class="md:w-xl opacity-12" />
-      <Button
-        size="large"
-        variant="ghost"
-        class="mt-4 mx-auto text-14-regular text-text-weak"
-        onClick={() => dialog.show(() => <DialogSelectServer />)}
-      >
+      <div class="mt-4 mx-auto flex items-center gap-2 text-14-regular text-text-weak">
         <div
           classList={{
             "size-2 rounded-full": true,
@@ -81,7 +73,7 @@ export function LegacyHome() {
           }}
         />
         {server.name}
-      </Button>
+      </div>
       <Switch>
         <Match when={sync().data.project.length > 0}>
           <div class="mt-20 w-full flex flex-col gap-4">

@@ -171,6 +171,8 @@ export const dict = {
   "provider.connect.toast.connected.description": "{{provider}} models are now available to use.",
 
   "provider.custom.title": "Custom provider",
+  "provider.custom.edit.title": "Edit provider",
+  "provider.custom.edit": "Edit {{provider}}",
   "provider.custom.unavailable": "Custom providers are unavailable on this server",
   "provider.custom.description.prefix": "Configure an OpenAI-compatible provider. See the ",
   "provider.custom.description.link": "provider config docs",
@@ -185,6 +187,9 @@ export const dict = {
   "provider.custom.field.apiKey.label": "API key",
   "provider.custom.field.apiKey.placeholder": "API key",
   "provider.custom.field.apiKey.description": "Optional. Leave empty if you manage auth via headers.",
+  "provider.custom.field.apiKey.description.edit": "Optional. Leave empty to keep the existing API key.",
+  "provider.custom.toast.updated.title": "{{provider}} updated",
+  "provider.custom.toast.updated.description": "{{provider}} models are ready to use.",
   "provider.custom.models.label": "Models",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "model-id",

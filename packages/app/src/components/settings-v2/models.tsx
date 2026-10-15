@@ -1,3 +1,4 @@
+import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useFilteredList } from "@opencode-ai/ui/hooks"
 import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import { Switch } from "@opencode-ai/ui/v2/switch-v2"
@@ -6,9 +7,12 @@ import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { TextInputV2 } from "@opencode-ai/ui/v2/text-input-v2"
 import { type Component, For, Show } from "solid-js"
 import { createStore } from "solid-js/store"
+import { DialogCustomProvider } from "@/components/dialog-custom-provider"
+import { isCustomProviderConfig } from "@/components/dialog-custom-provider-form"
 import { useLanguage } from "@/context/language"
 import { useModels } from "@/context/models"
 import { useServerSDK } from "@/context/server-sdk"
+import { useServerSync } from "@/context/server-sync"
 import { popularProviders } from "@/hooks/use-providers"
 import { Persist, persisted } from "@/utils/persist"
 import { SettingsListV2 } from "./parts/list"
@@ -22,11 +26,22 @@ const PROVIDER_ICON_SIZE = 16
 export const SettingsModelsV2: Component = () => {
   const language = useLanguage()
   const models = useModels()
+  const dialog = useDialog()
   const serverSdk = useServerSDK()
+  const serverSync = useServerSync()
   const [store, setStore] = persisted(
     Persist.serverGlobal(serverSdk().scope, "settings-v2.models.providers"),
     createStore({ collapsed: {} as Record<string, boolean> }),
   )
+
+  const isCustom = (providerID: string) =>
+    isCustomProviderConfig(serverSync().data.config.provider?.[providerID])
+
+  const editProvider = (providerID: string) => {
+    dialog.show(() => (
+      <DialogCustomProvider onBack={dialog.close} mode="edit" providerID={providerID} />
+    ))
+  }
 
   const list = useFilteredList<ModelItem>({
     items: (_filter) => models.list(),
@@ -150,6 +165,19 @@ export const SettingsModelsV2: Component = () => {
                           <span class="settings-v2-section-title">{group.items[0].provider.name}</span>
                         </span>
                       </button>
+                      <Show when={isCustom(group.category)}>
+                        <IconButtonV2
+                          type="button"
+                          variant="ghost-muted"
+                          size="small"
+                          class="settings-v2-models-group-edit"
+                          icon={<IconV2 name="edit" size="small" />}
+                          aria-label={language.t("provider.custom.edit", {
+                            provider: group.items[0].provider.name,
+                          })}
+                          onClick={() => editProvider(group.category)}
+                        />
+                      </Show>
                     </h3>
                     <Show when={expanded()}>
                       <SettingsListV2>

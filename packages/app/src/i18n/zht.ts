@@ -268,6 +268,8 @@ export const dict = {
   "provider.connect.toast.connected.description": "現在可以使用 {{provider}} 模型了。",
 
   "provider.custom.title": "自訂提供者",
+  "provider.custom.edit.title": "編輯提供者",
+  "provider.custom.edit": "編輯 {{provider}}",
   "provider.custom.unavailable": "此伺服器無法使用自訂提供者",
   "provider.custom.description.prefix": "設定與 OpenAI 相容的提供者。請參閱",
   "provider.custom.description.link": "提供者設定文件",
@@ -282,6 +284,9 @@ export const dict = {
   "provider.custom.field.apiKey.label": "API 金鑰",
   "provider.custom.field.apiKey.placeholder": "API 金鑰",
   "provider.custom.field.apiKey.description": "選填。若您透過標頭管理驗證，可留空。",
+  "provider.custom.field.apiKey.description.edit": "選填。留空則保留現有 API 金鑰。",
+  "provider.custom.toast.updated.title": "{{provider}} 已更新",
+  "provider.custom.toast.updated.description": "現在可以使用 {{provider}} 模型了。",
   "provider.custom.models.label": "模型",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "model-id",

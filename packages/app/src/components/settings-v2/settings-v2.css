@@ -387,11 +387,20 @@
 .settings-v2-models-group-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 4px;
   height: 28px;
+}
+
+.settings-v2-models-group-edit {
+  flex-shrink: 0;
+  margin-right: 4px;
 }
 
 .settings-v2-models-group-trigger {
   display: flex;
+  min-width: 0;
+  flex: 1;
   align-items: center;
   gap: 4px;
   height: 28px;

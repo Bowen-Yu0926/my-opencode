@@ -18,65 +18,6 @@ describe("desktop native translations", () => {
       "English",
       "简体中文",
       "繁體中文",
-      "한국어",
-      "Deutsch",
-      "Español",
-      "Français",
-      "Dansk",
-      "日本語",
-      "Polski",
-      "Русский",
-      "Українська",
-      "Bosanski",
-      "العربية",
-      "Norsk",
-      "Português (Brasil)",
-      "ไทย",
-      "Türkçe",
-      "हिन्दी",
-      "Nederlands",
-      "Bahasa Indonesia",
-      "Tiếng Việt",
-      "Italiano",
-      "اردو",
-      "پنجابی",
-      "Azərbaycanca",
-      "Suomi",
-      "Svenska",
-      "አማርኛ",
-      "Български",
-      "বাংলা",
-      "Català",
-      "Čeština",
-      "ދިވެހި",
-      "རྫོང་ཁ",
-      "Ελληνικά",
-      "Eesti",
-      "فارسی",
-      "Føroyskt",
-      "Hrvatski",
-      "Magyar",
-      "Հայերեն",
-      "Íslenska",
-      "ქართული",
-      "ខ្មែរ",
-      "ລາວ",
-      "Lietuvių",
-      "Latviešu",
-      "Македонски",
-      "Монгол",
-      "Bahasa Melayu",
-      "မြန်မာ",
-      "नेपाली",
-      "Română",
-      "සිංහල",
-      "Slovenčina",
-      "Slovenščina",
-      "Shqip",
-      "Српски",
-      "Тоҷикӣ",
-      "Türkmençe",
-      "Oʻzbekcha",
     ])
   })
 
@@ -113,25 +54,14 @@ describe("desktop native translations", () => {
 
 describe("desktop native locale detection", () => {
   test("follows preference order and skips invalid or unsupported tags", () => {
-    expect(detectDesktopNativeLocale(["not_a_locale", "fr-FR"])).toBe("fr")
-    expect(detectDesktopNativeLocale(["eo", "de-DE"])).toBe("de")
+    expect(detectDesktopNativeLocale(["not_a_locale", "fr-FR"])).toBe("zh")
+    expect(detectDesktopNativeLocale(["eo", "de-DE"])).toBe("zh")
+    expect(detectDesktopNativeLocale(["en-US"])).toBe("en")
   })
 
   test("uses Unicode likely subtags for script-sensitive bundles", () => {
     expect(detectDesktopNativeLocale(["zh-TW"])).toBe("zht")
     expect(detectDesktopNativeLocale(["zh-SG"])).toBe("zh")
-    expect(detectDesktopNativeLocale(["pa-PK"])).toBe("pa")
-    expect(detectDesktopNativeLocale(["pa-IN", "fr"])).toBe("fr")
-    expect(detectDesktopNativeLocale(["az-Cyrl", "de"])).toBe("de")
-    expect(detectDesktopNativeLocale(["sr-Cyrl"])).toBe("sr")
-    expect(detectDesktopNativeLocale(["sr-Latn", "en"])).toBe("en")
-    expect(detectDesktopNativeLocale(["uz-Latn"])).toBe("uz")
-  })
-
-  test("recognizes Norwegian language tags", () => {
-    expect(detectDesktopNativeLocale(["no"])).toBe("no")
-    expect(detectDesktopNativeLocale(["nb-NO"])).toBe("no")
-    expect(detectDesktopNativeLocale(["nn-NO"])).toBe("no")
   })
 })
 

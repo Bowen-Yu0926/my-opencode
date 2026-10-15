@@ -10,8 +10,8 @@ import introducingTabsVideo from "@/assets/help/introducing-tabs.mp4"
 import homeImage from "@/assets/help/home.png"
 import tabsImage from "@/assets/help/tabs.png"
 
-// TODO: wire to changelog / seen-state when available
-const showPopover = () => true
+// Local personal build: tabs marketing toast disabled.
+const showPopover = () => false
 
 // can remove this after the tabs rollout has been out for a while
 export function TabsInfoPopup() {
@@ -24,7 +24,7 @@ export function TabsInfoPopup() {
 
   return (
     <Drawer open={drawerOpen()} onOpenChange={setDrawerOpen} side={rtl() ? "left" : "right"}>
-      <Show when={settings.general.shouldDisplayTabsToast()}>
+      <Show when={showPopover() && settings.general.shouldDisplayTabsToast()}>
         <div
           class="fixed bottom-5 end-5 z-50 h-[240px] w-[192px] rounded-[8px] bg-v2-background-bg-base p-1 shadow-[var(--v2-elevation-floating)]"
           aria-label={language.t("help.tabs.toast.ariaLabel")}
