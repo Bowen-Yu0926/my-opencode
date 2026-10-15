@@ -1,6 +1,7 @@
 @echo off
 title OpenCode
-cd /d E:\openCode\opencode\packages\desktop
-set "PATH=C:\Users\baoxin.yu\.bun\bin;%PATH%"
-call "C:\Users\baoxin.yu\.bun\bin\bun.exe" run dev
-pause
+cd /d E:\myopencode
+set "PATH=C:\Users\18141\.bun\bin;%PATH%"
+set "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/"
+call "C:\Users\18141\.bun\bin\bun.exe" run dev:desktop
+if errorlevel 1 pause
