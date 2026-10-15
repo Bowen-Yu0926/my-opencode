@@ -33,6 +33,7 @@ import {
 } from "./server"
 import { setupAutoUpdater, showUpdaterDialog } from "./updater"
 import { safeWebContentsURL } from "./window-state"
+import { relaunchApp } from "./relaunch"
 import {
   getLastFocusedWindow,
   registerRendererProtocol,
@@ -171,8 +172,7 @@ const main = Effect.gen(function* () {
   const relaunch = () => {
     setAppQuitting()
     void stopSidecars().finally(() => {
-      app.relaunch()
-      app.quit()
+      relaunchApp()
     })
   }
 
