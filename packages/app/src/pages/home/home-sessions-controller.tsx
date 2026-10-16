@@ -153,8 +153,7 @@ export function createHomeSessionsController(home: HomeController) {
               ctx.projects.open(directory)
               ctx.projects.touch(directory)
               void startTransition(() => {
-                const tab = tabs.addSessionTab({ server, sessionId: sessionID })
-                tabs.select(tab)
+                tabs.openSessionTab({ server, sessionId: sessionID })
               })
             }}
           />
@@ -199,9 +198,9 @@ export function createHomeSessionsController(home: HomeController) {
           return
         }
         ctx.projects.touch(directory)
+        home.selection.set({ server: ServerConnection.key(conn), directory })
         void startTransition(() => {
-          const tab = tabs.addSessionTab({ server: ServerConnection.key(conn), sessionId: session.id })
-          tabs.select(tab)
+          tabs.openSessionTab({ server: ServerConnection.key(conn), sessionId: session.id })
         })
       },
       archive: async (session: Session) => {

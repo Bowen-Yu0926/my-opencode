@@ -38,7 +38,7 @@ import {
   normalizeProjectInfo,
   normalizeProviderList,
 } from "./utils"
-import { formatServerError } from "@/utils/server-errors"
+import { formatServerError, isTransientServerError } from "@/utils/server-errors"
 import { QueryClient, queryOptions } from "@tanstack/solid-query"
 import { loadMcpQuery, loadMcpResourcesQuery } from "../server-sync"
 import { NormalizedProviderListResponse } from "@opencode-ai/session-ui/context"
@@ -534,6 +534,7 @@ export async function bootstrapDirectory(input: {
         input.queryClient
           .fetchQuery(loadProvidersQuery(input.scope, input.directory, input.api, input.sdk, input.protocol))
           .catch((err) => {
+            if (isTransientServerError(err)) return
             const project = getFilename(input.directory)
             showToast({
               variant: "error",
@@ -544,7 +545,7 @@ export async function bootstrapDirectory(input: {
     ].filter(Boolean) as (() => Promise<any>)[]
 
     await waitForPaint()
-    const slowErrs = errors(await runAll(slow))
+    const slowErrs = errors(await runAll(slow)).filter((err) => !isTransientServerError(err))
     if (slowErrs.length > 0) {
       console.error("Failed to finish bootstrap instance", slowErrs[0])
       const project = getFilename(input.directory)

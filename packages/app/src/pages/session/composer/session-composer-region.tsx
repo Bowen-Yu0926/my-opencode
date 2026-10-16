@@ -24,15 +24,15 @@ export function SessionComposerRegion(props: {
       ref={controller.setDockRef}
       data-component="session-prompt-dock"
       classList={{
-        "w-full shrink-0 flex flex-col justify-center items-center pb-3 pointer-events-none": true,
+        "pointer-events-none flex w-full shrink-0 flex-col items-center justify-center pb-2": true,
         "bg-v2-background-bg-base": settings.general.newLayoutDesigns(),
         "bg-background-stronger": !settings.general.newLayoutDesigns(),
       }}
     >
       <div
         classList={{
-          "w-full px-3 pointer-events-auto": true,
-          "md:max-w-200 md:mx-auto 2xl:max-w-[1000px]": controller.centered(),
+          "pointer-events-auto w-full px-2.5": true,
+          "md:mx-auto md:max-w-[880px] 2xl:max-w-[1120px]": controller.centered(),
         }}
       >
         <Show when={controller.state.permissionRequest()} keyed>
@@ -66,8 +66,10 @@ export function SessionComposerRegion(props: {
                   todos={controller.state.todos()}
                   collapsed={controller.todo.collapsed()}
                   onToggle={controller.todo.onToggle}
+                  onArchive={controller.state.archive}
                   collapseLabel={language.t("session.todo.collapse")}
                   expandLabel={language.t("session.todo.expand")}
+                  archiveLabel={language.t("session.todo.archive")}
                   dockProgress={controller.dockProgress()}
                 />
               </div>
@@ -138,13 +140,13 @@ export function SessionComposerRegion(props: {
               >
                 <div
                   ref={controller.setPromptRef}
-                  class="w-full rounded-[12px] border border-border-weak-base bg-background-base p-3 text-16-regular text-text-weak"
+                  class="w-full rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-base p-3 text-[13px] leading-5 text-v2-text-text-muted [font-weight:440]"
                 >
                   <span>{language.t("session.child.promptDisabled")} </span>
                   <Show when={controller.parentID()}>
                     <button
                       type="button"
-                      class="text-text-base transition-colors hover:text-text-strong"
+                      class="text-v2-text-text-base transition-colors hover:text-v2-text-text-accent"
                       onClick={controller.openParent}
                     >
                       {language.t("session.child.backToParent")}

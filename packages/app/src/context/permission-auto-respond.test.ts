@@ -1,7 +1,16 @@
 import { describe, expect, test } from "bun:test"
 import type { PermissionRequest, Session } from "@opencode-ai/sdk/v2/client"
 import { base64Encode } from "@opencode-ai/core/util/encode"
-import { autoRespondsPermission, isDirectoryAutoAccepting, sessionAutoAccept } from "./permission-auto-respond"
+import { pathKey } from "@/utils/path-key"
+import {
+  acceptKey,
+  autoRespondsPermission,
+  clearDirectorySessionOverrides,
+  directoryAcceptKey,
+  isDirectoryAutoAccepting,
+  normalizeAutoAcceptKeys,
+  sessionAutoAccept,
+} from "./permission-auto-respond"
 
 const session = (input: { id: string; parentID?: string }) =>
   ({
@@ -121,5 +130,59 @@ describe("isDirectoryAutoAccepting", () => {
     const directory = "/tmp/project"
     const autoAccept = { [`${base64Encode(directory)}/*`]: false }
     expect(isDirectoryAutoAccepting(autoAccept, directory)).toBe(false)
+  })
+
+  test("matches Windows path slash variants for directory-level accept", () => {
+    const stored = "E:\\openCode\\opencode"
+    const event = "E:/openCode/opencode"
+    const autoAccept = { [directoryAcceptKey(stored)]: true }
+
+    expect(isDirectoryAutoAccepting(autoAccept, event)).toBe(true)
+    expect(autoRespondsPermission(autoAccept, [session({ id: "root" })], permission("root"), event)).toBe(true)
+  })
+
+  test("matches Windows path slash variants for session-level accept", () => {
+    const stored = "E:\\openCode\\opencode"
+    const event = "E:/openCode/opencode"
+    const autoAccept = { [acceptKey("root", stored)]: true }
+
+    expect(autoRespondsPermission(autoAccept, [session({ id: "root" })], permission("root"), event)).toBe(true)
+  })
+})
+
+describe("normalizeAutoAcceptKeys", () => {
+  test("rewrites backslash directory keys to pathKey form", () => {
+    const legacy = "E:\\openCode\\opencode"
+    const normalized = pathKey(legacy)
+    const input = {
+      [`${base64Encode(legacy)}/*`]: true,
+      [`${base64Encode(legacy)}/ses_1`]: false,
+      bare: true,
+    }
+
+    expect(normalizeAutoAcceptKeys(input)).toEqual({
+      [`${base64Encode(normalized)}/*`]: true,
+      [`${base64Encode(normalized)}/ses_1`]: false,
+      bare: true,
+    })
+  })
+})
+
+describe("clearDirectorySessionOverrides", () => {
+  test("removes session keys under the directory but keeps the directory key", () => {
+    const directory = "/tmp/project"
+    const autoAccept = {
+      [directoryAcceptKey(directory)]: true,
+      [acceptKey("a", directory)]: false,
+      [acceptKey("b", directory)]: true,
+      other: true,
+    }
+
+    clearDirectorySessionOverrides(autoAccept, directory)
+
+    expect(autoAccept).toEqual({
+      [directoryAcceptKey(directory)]: true,
+      other: true,
+    })
   })
 })

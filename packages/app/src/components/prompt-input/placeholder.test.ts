@@ -61,8 +61,10 @@ describe("promptPlaceholder", () => {
 
 describe("promptDesignPlaceholder", () => {
   const t = (key: string, params?: Record<string, string>) => {
-    if (key !== "ui.promptInput.placeholder.normal") return key
-    return `Ask anything, ${params?.slash} for commands, ${params?.at} for context...`
+    if (key === "ui.promptInput.placeholder.normal") {
+      return `Ask anything, ${params?.slash} for commands, ${params?.at} for context...`
+    }
+    return key
   }
 
   test("composes the design placeholder from localized fragments", () => {

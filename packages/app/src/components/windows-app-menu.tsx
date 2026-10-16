@@ -68,25 +68,20 @@ export function WindowsAppMenu(props: {
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content class="desktop-app-menu">
-                <DropdownMenu.Group>
-                  <DropdownMenu.GroupLabel class="desktop-app-menu-heading">
-                    {language.t(menu.labelKey)}
-                  </DropdownMenu.GroupLabel>
-                  <For each={menu.items?.filter((entry) => desktopMenuVisible(entry, "windows")) ?? []}>
-                    {(entry) =>
-                      entry.type === "separator" ? (
-                        <DropdownMenu.Separator />
-                      ) : (
-                        <DesktopMenuItem
-                          label={entry.labelKey ? language.t(entry.labelKey) : ""}
-                          keybind={entry.command ? props.command.keybind(entry.command) : entry.accelerator?.windows}
-                          disabled={entry.command ? commandDisabled(entry.command) : false}
-                          onSelect={() => runEntry(entry)}
-                        />
-                      )
-                    }
-                  </For>
-                </DropdownMenu.Group>
+                <For each={menu.items?.filter((entry) => desktopMenuVisible(entry, "windows")) ?? []}>
+                  {(entry) =>
+                    entry.type === "separator" ? (
+                      <DropdownMenu.Separator />
+                    ) : (
+                      <DesktopMenuItem
+                        label={entry.labelKey ? language.t(entry.labelKey) : ""}
+                        keybind={entry.command ? props.command.keybind(entry.command) : entry.accelerator?.windows}
+                        disabled={entry.command ? commandDisabled(entry.command) : false}
+                        onSelect={() => runEntry(entry)}
+                      />
+                    )
+                  }
+                </For>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu>

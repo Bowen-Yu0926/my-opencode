@@ -117,6 +117,16 @@ export function createSessionComposerController(options?: { closeMs?: number | (
     sync().set("todo", id, [])
   }
 
+  /** Manually dismiss the todo dock for this turn (local store only). */
+  const archive = () => {
+    if (timer) window.clearTimeout(timer)
+    timer = undefined
+    if (raf) cancelAnimationFrame(raf)
+    raf = undefined
+    clear()
+    setStore({ dock: false, closing: false, opening: false })
+  }
+
   createEffect(
     on(
       () => [params.id, todos().length, done(), live()] as const,
@@ -192,6 +202,7 @@ export function createSessionComposerController(options?: { closeMs?: number | (
     permissionResponding,
     decide,
     todos,
+    archive,
     dock: () =>
       store.sessionID === params.id
         ? store.dock

@@ -28,6 +28,7 @@ export interface MockServerConfig {
   fileContent?: (path: string) => unknown | Promise<unknown>
   findFiles?: (input: { query: string; dirs?: string; limit?: number }) => unknown | Promise<unknown>
   sessionStatus?: Record<string, unknown> | (() => Record<string, unknown>)
+  agents?: Array<{ name: string; mode?: string }>
 }
 
 export async function mockOpenCodeServer(page: Page, config: MockServerConfig) {
@@ -43,7 +44,9 @@ export async function mockOpenCodeServer(page: Page, config: MockServerConfig) {
     },
     "/project": [config.project],
     "/project/current": config.project,
-    "/agent": [{ name: "build", mode: "primary" }],
+    "/agent": config.agents?.map((agent) => ({ mode: "primary", ...agent })) ?? [
+      { name: "build", mode: "primary" },
+    ],
     "/vcs": { branch: "main", default_branch: "main" },
     "/session": config.sessions,
   }
@@ -126,16 +129,14 @@ export async function mockOpenCodeServer(page: Page, config: MockServerConfig) {
     if (path === "/api/agent")
       return json(route, {
         location: location(config),
-        data: [
-          {
-            id: "build",
-            name: "Build",
-            mode: "primary",
-            hidden: false,
-            request: { settings: {}, headers: {}, body: {} },
-            permissions: [],
-          },
-        ],
+        data: (config.agents ?? [{ name: "build", mode: "primary" }]).map((agent) => ({
+          id: agent.name,
+          name: agent.name,
+          mode: agent.mode ?? "primary",
+          hidden: false,
+          request: { settings: {}, headers: {}, body: {} },
+          permissions: [],
+        })),
       })
     if (path === "/api/command") return json(route, { location: location(config), data: [] })
     if (path === "/api/mcp") return json(route, { location: location(config), data: [] })

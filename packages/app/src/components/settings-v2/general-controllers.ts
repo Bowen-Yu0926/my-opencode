@@ -29,11 +29,11 @@ export function createPermissionScopeController(input: {
   const permission = usePermission()
 
   return {
+    // Settings toggle is project-scoped: once on, all sessions in the directory auto-accept.
+    // Session-only toggle remains on the command palette (mod+shift+a).
     accepting: createMemo(() => {
       const dir = input.directory()
       if (!dir) return false
-      const id = input.sessionID()
-      if (id) return permission.isAutoAccepting(id, dir)
       return permission.isAutoAcceptingDirectory(dir)
     }),
     // Editable whenever we know the active project directory (session optional).
@@ -41,14 +41,8 @@ export function createPermissionScopeController(input: {
     set: (checked: boolean) => {
       const dir = input.directory()
       if (!dir) return
-      const id = input.sessionID()
-      if (!id) {
-        if (permission.isAutoAcceptingDirectory(dir) === checked) return
-        permission.toggleAutoAcceptDirectory(dir)
-        return
-      }
-      if (checked) return permission.enableAutoAccept(id, dir)
-      permission.disableAutoAccept(id, dir)
+      if (permission.isAutoAcceptingDirectory(dir) === checked) return
+      permission.toggleAutoAcceptDirectory(dir)
     },
   }
 }

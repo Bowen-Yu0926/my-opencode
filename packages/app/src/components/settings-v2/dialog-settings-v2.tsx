@@ -8,7 +8,6 @@ import { SettingsGeneralV2 } from "./general"
 import { SettingsKeybinds } from "../settings-keybinds"
 import { SettingsProvidersV2 } from "./providers"
 import { SettingsModelsV2 } from "./models"
-import { SettingsPluginsV2 } from "./plugins"
 import "./settings-v2.css"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
@@ -47,7 +46,8 @@ export const DialogSettings: Component<{
       )
     }
     if (props.sessionID) return serverSync().session.get(props.sessionID)?.directory
-    return undefined
+    // Home / project list: use the currently selected project so the toggle stays usable.
+    return layout.home.selection().directory
   })
 
   const showProviders = () => {
@@ -92,10 +92,6 @@ export const DialogSettings: Component<{
                       <Icon name="models" />
                       {language.t("settings.models.title")}
                     </TabsV2.Trigger>
-                    <TabsV2.Trigger value="plugins">
-                      <Icon name="code" />
-                      {language.t("settings.plugins.title")}
-                    </TabsV2.Trigger>
                   </div>
                 </div>
               </div>
@@ -117,9 +113,6 @@ export const DialogSettings: Component<{
         </TabsV2.Content>
         <TabsV2.Content value="models" class="settings-v2-panel">
           <SettingsModelsV2 />
-        </TabsV2.Content>
-        <TabsV2.Content value="plugins" class="settings-v2-panel">
-          <SettingsPluginsV2 />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

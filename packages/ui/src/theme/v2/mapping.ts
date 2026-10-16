@@ -78,13 +78,11 @@ const light: Record<string, V2ColorValue> = {
   ...V2_AVATAR_LIGHT,
   // Harness-like: prefer hairline borders over soft multi-layer shadows.
   "v2-elevation-raised": "0px 0px 0px 0.5px var(--v2-alpha-dark-12)",
-  "v2-elevation-floating":
-    "0px 2px 8px 0px var(--v2-alpha-dark-6), 0px 0px 0px 0.5px var(--v2-alpha-dark-12)",
+  "v2-elevation-floating": "0px 0px 0px 0.5px var(--v2-alpha-dark-12)",
   "v2-elevation-overlay":
-    "0px 8px 24px 0px var(--v2-alpha-dark-8), 0px 0px 0px 0.5px var(--v2-alpha-dark-12)",
+    "0px 2px 8px 0px var(--v2-alpha-dark-6), 0px 0px 0px 0.5px var(--v2-alpha-dark-12)",
   "v2-elevation-button-neutral": "0px 0px 0px 0.5px var(--v2-alpha-dark-14)",
-  "v2-elevation-button-contrast":
-    "0px 0px 0px 0.5px var(--v2-grey-800), inset 0px 1px 0px 0px var(--v2-alpha-light-10)",
+  "v2-elevation-button-contrast": "0px 0px 0px 0.5px var(--v2-grey-800)",
   "v2-elevation-elements": "0px 0.5px 0.5px 0px var(--v2-alpha-dark-40)",
   "v2-elevation-switch-off":
     "inset 0px 1px 1px 0px var(--v2-alpha-dark-8), inset 0px 0.5px 0.5px 0px var(--v2-alpha-dark-8), inset 0px 0px 0px 0.5px var(--v2-alpha-dark-10)",
@@ -141,10 +139,9 @@ const dark: Record<string, V2ColorValue> = {
   ...darkAgentTokens,
   ...V2_AVATAR_DARK,
   "v2-elevation-raised": "0px 0px 0px 0.5px var(--v2-alpha-light-16)",
-  "v2-elevation-floating":
-    "0px 2px 8px 0px var(--v2-alpha-dark-30), 0px 0px 0px 0.5px var(--v2-alpha-light-16)",
+  "v2-elevation-floating": "0px 0px 0px 0.5px var(--v2-alpha-light-16)",
   "v2-elevation-overlay":
-    "0px 8px 24px 0px var(--v2-alpha-dark-30), 0px 0px 0px 0.5px var(--v2-alpha-light-16)",
+    "0px 2px 8px 0px var(--v2-alpha-dark-30), 0px 0px 0px 0.5px var(--v2-alpha-light-16)",
   "v2-elevation-button-neutral": "0px 0px 0px 0.5px var(--v2-alpha-light-20)",
   "v2-elevation-button-contrast": "0px 0px 0px 0.5px var(--v2-alpha-light-40)",
   "v2-elevation-elements": "0px 0.5px 0.5px 0px var(--v2-alpha-dark-40)",

@@ -85,9 +85,7 @@ export const DESKTOP_MENU: DesktopMenu[] = [
         enabled: "updater",
       },
       { type: "item", labelKey: "desktop.menu.settings", command: "settings.open", accelerator: { macos: "Cmd+," } },
-      { type: "item", labelKey: "desktop.menu.reloadWebview", action: "view.reload" },
       { type: "item", labelKey: "desktop.menu.restart", action: "app.relaunch" },
-      { type: "item", labelKey: "desktop.menu.exportLogs", command: "logs.export" },
       { type: "separator" },
       { type: "item", role: "hide" },
       { type: "item", role: "hideOthers" },
@@ -104,13 +102,13 @@ export const DESKTOP_MENU: DesktopMenu[] = [
         type: "item",
         labelKey: "desktop.menu.newSession",
         command: "session.new",
-        accelerator: { macos: "Shift+Cmd+S" },
+        accelerator: { macos: "Cmd+Shift+S", windows: "Ctrl+Shift+S" },
       },
       {
         type: "item",
         labelKey: "desktop.menu.openProject",
         command: "project.open",
-        accelerator: { macos: "Cmd+O" },
+        accelerator: { macos: "Cmd+O", windows: "Ctrl+O" },
       },
       {
         type: "item",
@@ -121,11 +119,18 @@ export const DESKTOP_MENU: DesktopMenu[] = [
       },
       {
         type: "item",
+        labelKey: "desktop.menu.checkForUpdates",
+        action: "app.checkForUpdates",
+        enabled: "updater",
+        platforms: ["windows"],
+      },
+      { type: "separator" },
+      {
+        type: "item",
         labelKey: "desktop.menu.newWindow",
         action: "window.new",
         accelerator: { macos: "Cmd+Shift+N", windows: "Ctrl+Shift+N" },
       },
-      { type: "separator" },
       { type: "item", labelKey: "desktop.menu.closeWindow", action: "window.close", role: "close" },
     ],
   },
@@ -169,7 +174,6 @@ export const DESKTOP_MENU: DesktopMenu[] = [
         role: "paste",
         accelerator: { windows: "Ctrl+V" },
       },
-      { type: "item", labelKey: "desktop.menu.delete", action: "edit.delete" },
       {
         type: "item",
         labelKey: "desktop.menu.selectAll",
@@ -183,22 +187,15 @@ export const DESKTOP_MENU: DesktopMenu[] = [
     id: "view",
     labelKey: "desktop.menu.view",
     items: [
-      { type: "item", labelKey: "desktop.menu.toggleSidebar", command: "sidebar.toggle" },
+      { type: "item", labelKey: "desktop.menu.toggleFileTree", command: "fileTree.toggle" },
       {
         type: "item",
         labelKey: "desktop.menu.toggleTerminal",
         command: "terminal.toggle",
         accelerator: { macos: "Ctrl+`" },
       },
-      { type: "item", labelKey: "desktop.menu.toggleFileTree", command: "fileTree.toggle" },
       { type: "separator" },
       { type: "item", labelKey: "desktop.menu.reload", action: "view.reload", role: "reload" },
-      {
-        type: "item",
-        labelKey: "desktop.menu.toggleDeveloperTools",
-        action: "view.toggleDevTools",
-        role: "toggleDevTools",
-      },
       { type: "separator" },
       {
         type: "item",
@@ -231,40 +228,6 @@ export const DESKTOP_MENU: DesktopMenu[] = [
     ],
   },
   {
-    id: "go",
-    labelKey: "desktop.menu.go",
-    items: [
-      { type: "item", labelKey: "desktop.menu.back", command: "common.goBack", accelerator: { macos: "Cmd+[" } },
-      { type: "item", labelKey: "desktop.menu.forward", command: "common.goForward", accelerator: { macos: "Cmd+]" } },
-      { type: "separator" },
-      {
-        type: "item",
-        labelKey: "desktop.menu.previousSession",
-        command: "session.previous",
-        accelerator: { macos: "Option+Up" },
-      },
-      {
-        type: "item",
-        labelKey: "desktop.menu.nextSession",
-        command: "session.next",
-        accelerator: { macos: "Option+Down" },
-      },
-      { type: "separator" },
-      {
-        type: "item",
-        labelKey: "desktop.menu.previousProject",
-        command: "project.previous",
-        accelerator: { macos: "Cmd+Option+Up" },
-      },
-      {
-        type: "item",
-        labelKey: "desktop.menu.nextProject",
-        command: "project.next",
-        accelerator: { macos: "Cmd+Option+Down" },
-      },
-    ],
-  },
-  {
     id: "window",
     labelKey: "desktop.menu.window",
     role: "windowMenu",
@@ -274,11 +237,6 @@ export const DESKTOP_MENU: DesktopMenu[] = [
       { type: "separator" },
       { type: "item", labelKey: "desktop.menu.closeWindow", action: "window.close" },
     ],
-  },
-  {
-    id: "help",
-    labelKey: "desktop.menu.help",
-    items: [{ type: "item", labelKey: "desktop.menu.exportLogs", command: "logs.export" }],
   },
 ]
 

@@ -1,4 +1,4 @@
-import { batch, createEffect, createMemo, on, onCleanup } from "solid-js"
+import { batch, createEffect, createMemo, on, onCleanup, untrack } from "solid-js"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { createSimpleContext } from "@opencode-ai/ui/context"
 import { showToast } from "@/utils/toast"
@@ -25,6 +25,7 @@ import { createFileViewCache } from "./file/view-cache"
 import { useServerSDK } from "./server-sdk"
 import { SessionRouteKey, SessionStateKey } from "@/utils/server-scope"
 import { pathKey } from "@/utils/path-key"
+import { isTransientServerError } from "@/utils/server-errors"
 import { createFileTreeStore, acquireSharedFileTree, peekSharedFileTree, releaseSharedFileTree } from "./file/tree-store"
 import { invalidateFromWatcher } from "./file/watcher"
 import {
@@ -88,14 +89,24 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       const helpers = createPathHelpers(() => directory)
       const store = acquireSharedFileTree(shareKey, () =>
         createFileTreeStore({
+          // Freeze the worktree string into the shared tree. Refcount can outlive
+          // the creating FileProvider; a live scope memo would go stale.
           scope: () => directory,
           normalizeDir: helpers.normalizeDir,
+          // Must use createClient({ directory }) so the worktree is sent on the
+          // request. On v2, serverSDK().api.file.list ignores location.directory
+          // and hits the server default cwd — only the first project looks fine.
           list: (dir) =>
             serverSDK()
               .createClient({ directory, throwOnError: true })
-              .file.list({ path: dir })
-              .then((x) => x.data ?? []),
+              .file.list({ path: dir || "." })
+              .then((x) => {
+                if (x.error) throw x.error
+                const data = x.data
+                return Array.isArray(data) ? data : []
+              }),
           onError: (message) => {
+            if (isTransientServerError(message)) return
             showToast({
               variant: "error",
               title: language.t("toast.file.listFailed.title"),
@@ -136,7 +147,12 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       batch(() => {
         setStore("file", reconcile({}))
       })
-      void tree().listDir("")
+      const shared = tree()
+      // Must untrack store reads. Tracking isLoaded/children here re-runs this
+      // effect when listDir finishes; an empty root then force-reloads forever
+      // and the UI sticks on "加载中…".
+      const staleEmpty = untrack(() => shared.isLoaded("") && shared.children("").length === 0)
+      void shared.listDir("", staleEmpty ? { force: true } : undefined)
     })
 
     const viewCache = createFileViewCache(serverSDK().scope)

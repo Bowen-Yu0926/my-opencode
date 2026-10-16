@@ -111,7 +111,7 @@ export function PromptInputV2(props: PromptInputV2Props) {
         data-component="prompt-input-v2"
         data-answer-pending={view.answerPending?.() ? "true" : "false"}
         data-dock-border-underlay={props.borderUnderlay ? "v2" : undefined}
-        class="group/prompt-input relative min-h-[96px] w-full overflow-clip rounded-[6px] bg-v2-background-bg-base"
+        class="group/prompt-input relative min-h-[96px] w-full overflow-clip rounded-[16px] bg-v2-background-bg-base"
         classList={{
           "border border-v2-border-border-muted": !props.borderUnderlay,
           "border border-v2-icon-icon-info border-dashed": state.drag === "active",
@@ -692,11 +692,7 @@ export function PromptInputV2SubmitButton(props: {
         tabIndex={props.mode === "normal" ? undefined : -1}
         icon={props.stopping ? "stop" : props.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
         variant="primary"
-        class="size-7 rounded-md p-[6px] text-v2-icon-icon-muted shadow-[var(--v2-elevation-button-contrast)] disabled:opacity-50"
-        style={{
-          "background-image":
-            "linear-gradient(180deg,var(--v2-alpha-light-20) 0%,var(--v2-alpha-light-0) 100%),linear-gradient(90deg,var(--v2-background-bg-contrast) 0%,var(--v2-background-bg-contrast) 100%)",
-        }}
+        class="size-8 rounded-full p-[6px] text-white bg-v2-background-bg-accent disabled:opacity-50"
         aria-label={props.stopping ? props.stopLabel : props.sendLabel}
         onClick={(event) => {
           event.preventDefault()
@@ -713,7 +709,7 @@ export function PromptInputV2SubmitButton(props: {
 }
 
 function PromptInputV2SuggestionIcon(props: { item: PromptInputV2Suggestion }) {
-  if (props.item.kind === "agent") return <Icon name="brain" size="small" class="shrink-0 text-icon-info-active" />
+  if (props.item.kind === "agent") return <Icon name="brain" size="small" class="shrink-0 text-v2-text-text-accent" />
   if (props.item.kind === "command") return null
   return (
     <FileIcon

@@ -153,6 +153,24 @@ const layer = Layer.effect(
             mode: "primary",
             native: true,
           },
+          ask: {
+            name: "ask",
+            description: "Answer questions about the codebase without editing files or running commands.",
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                question: "allow",
+                edit: "deny",
+                write: "deny",
+                bash: "deny",
+                task: "deny",
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+          },
           plan: {
             name: "plan",
             description: "Plan mode. Disallows all edit tools.",

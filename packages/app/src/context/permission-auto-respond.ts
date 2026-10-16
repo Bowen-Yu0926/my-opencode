@@ -1,12 +1,23 @@
-import { base64Encode } from "@opencode-ai/core/util/encode"
+import { base64Decode, base64Encode } from "@opencode-ai/core/util/encode"
+import { pathKey } from "@/utils/path-key"
+
+/** Normalize directory paths so Windows `\` / `/` variants share one auto-accept key. */
+export function acceptDirectoryKey(directory: string) {
+  return pathKey(directory)
+}
 
 export function acceptKey(sessionID: string, directory?: string) {
   if (!directory) return sessionID
-  return `${base64Encode(directory)}/${sessionID}`
+  return `${base64Encode(acceptDirectoryKey(directory))}/${sessionID}`
 }
 
 export function directoryAcceptKey(directory: string) {
-  return `${base64Encode(directory)}/*`
+  return `${base64Encode(acceptDirectoryKey(directory))}/*`
+}
+
+/** Prefix for all keys scoped to a directory (`base64(dir)/…`). */
+export function directoryAcceptPrefix(directory: string) {
+  return `${base64Encode(acceptDirectoryKey(directory))}/`
 }
 
 function accepted(autoAccept: Record<string, boolean>, sessionID: string, directory?: string) {
@@ -17,6 +28,44 @@ function accepted(autoAccept: Record<string, boolean>, sessionID: string, direct
 export function isDirectoryAutoAccepting(autoAccept: Record<string, boolean>, directory: string) {
   const key = directoryAcceptKey(directory)
   return autoAccept[key] ?? false
+}
+
+/**
+ * Rewrite persisted auto-accept keys so directories use pathKey (slash-normalized).
+ * Legacy keys without a directory segment (bare session IDs) are left as-is.
+ */
+export function normalizeAutoAcceptKeys(autoAccept: Record<string, boolean>) {
+  const next: Record<string, boolean> = {}
+  for (const [key, value] of Object.entries(autoAccept)) {
+    const slash = key.indexOf("/")
+    if (slash === -1) {
+      next[key] = value
+      continue
+    }
+
+    const encoded = key.slice(0, slash)
+    const suffix = key.slice(slash + 1)
+    try {
+      const decoded = base64Decode(encoded)
+      const normalized = `${base64Encode(acceptDirectoryKey(decoded))}/${suffix}`
+      // Prefer already-normalized / later entries if both exist.
+      if (normalized in next && key !== normalized) continue
+      next[normalized] = value
+    } catch {
+      next[key] = value
+    }
+  }
+  return next
+}
+
+/** Drop session-scoped overrides under a directory (keeps the `…/*` directory key). */
+export function clearDirectorySessionOverrides(autoAccept: Record<string, boolean>, directory: string) {
+  const prefix = directoryAcceptPrefix(directory)
+  const directoryKey = directoryAcceptKey(directory)
+  for (const key of Object.keys(autoAccept)) {
+    if (key === directoryKey) continue
+    if (key.startsWith(prefix)) delete autoAccept[key]
+  }
 }
 
 function sessionLineage(session: { id: string; parentID?: string }[], sessionID: string) {

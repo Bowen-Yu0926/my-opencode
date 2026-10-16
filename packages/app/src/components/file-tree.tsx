@@ -3,6 +3,7 @@ import { encodeFilePath } from "@/context/file/path"
 import { Collapsible } from "@opencode-ai/ui/collapsible"
 import { FileIcon } from "@opencode-ai/ui/file-icon"
 import { Icon } from "@opencode-ai/ui/icon"
+import { MenuV2 } from "@opencode-ai/ui/v2/menu-v2"
 import {
   createEffect,
   createMemo,
@@ -18,6 +19,13 @@ import {
 } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import type { FileNode } from "@opencode-ai/sdk/v2"
+
+export type FileTreeFileMenu = {
+  revealLabel?: string
+  deleteLabel?: string
+  onReveal?: (file: FileNode) => void
+  onDelete?: (file: FileNode) => void
+}
 
 const MAX_DEPTH = 128
 
@@ -202,6 +210,7 @@ export default function FileTree(props: {
   draggable?: boolean
   onFileClick?: (file: FileNode) => void
   onFileDoubleClick?: (file: FileNode) => void
+  fileMenu?: FileTreeFileMenu
 
   _filter?: Filter
   _marks?: Set<string>
@@ -442,6 +451,7 @@ export default function FileTree(props: {
                         draggable={props.draggable}
                         onFileClick={props.onFileClick}
                         onFileDoubleClick={props.onFileDoubleClick}
+                        fileMenu={props.fileMenu}
                         _filter={filter()}
                         _marks={marks()}
                         _deeps={deeps()}
@@ -453,52 +463,80 @@ export default function FileTree(props: {
                 </Collapsible>
               </Match>
               <Match when={node.type === "file"}>
-                <FileTreeNode
-                  node={node}
-                  level={level}
-                  active={props.active}
-                  nodeClass={props.nodeClass}
-                  draggable={draggable()}
-                  kinds={kinds()}
-                  marks={marks()}
-                  as="button"
-                  type="button"
-                  onClick={() => props.onFileClick?.(node)}
-                  onDblClick={() => props.onFileDoubleClick?.(node)}
-                >
-                  <div class="w-4 shrink-0" />
-                  <Switch>
-                    <Match when={node.ignored}>
-                      <FileIcon
-                        node={node}
-                        class="size-4 filetree-icon filetree-icon--mono"
-                        style="color: var(--icon-weak-base)"
-                        mono
-                      />
-                    </Match>
-                    <Match when={active()}>
-                      <FileIcon
-                        node={node}
-                        class="size-4 filetree-icon filetree-icon--mono"
-                        style={kindTextColor(kind()!)}
-                        mono
-                      />
-                    </Match>
-                    <Match when={!node.ignored}>
-                      <span class="filetree-iconpair size-4">
-                        <FileIcon
-                          node={node}
-                          class="size-4 filetree-icon filetree-icon--color opacity-0 group-hover/filetree:opacity-100"
-                        />
-                        <FileIcon
-                          node={node}
-                          class="size-4 filetree-icon filetree-icon--mono group-hover/filetree:opacity-0"
-                          mono
-                        />
-                      </span>
-                    </Match>
-                  </Switch>
-                </FileTreeNode>
+                {(() => {
+                  const icon = (
+                    <>
+                      <div class="w-4 shrink-0" />
+                      <Switch>
+                        <Match when={node.ignored}>
+                          <FileIcon
+                            node={node}
+                            class="size-4 filetree-icon filetree-icon--mono"
+                            style="color: var(--icon-weak-base)"
+                            mono
+                          />
+                        </Match>
+                        <Match when={active()}>
+                          <FileIcon
+                            node={node}
+                            class="size-4 filetree-icon filetree-icon--mono"
+                            style={kindTextColor(kind()!)}
+                            mono
+                          />
+                        </Match>
+                        <Match when={!node.ignored}>
+                          <span class="filetree-iconpair size-4">
+                            <FileIcon
+                              node={node}
+                              class="size-4 filetree-icon filetree-icon--color opacity-0 group-hover/filetree:opacity-100"
+                            />
+                            <FileIcon
+                              node={node}
+                              class="size-4 filetree-icon filetree-icon--mono group-hover/filetree:opacity-0"
+                              mono
+                            />
+                          </span>
+                        </Match>
+                      </Switch>
+                    </>
+                  )
+                  const row = (
+                    <FileTreeNode
+                      node={node}
+                      level={level}
+                      active={props.active}
+                      nodeClass={props.nodeClass}
+                      draggable={draggable()}
+                      kinds={kinds()}
+                      marks={marks()}
+                      as="button"
+                      type="button"
+                      onClick={() => props.onFileClick?.(node)}
+                      onDblClick={() => props.onFileDoubleClick?.(node)}
+                    >
+                      {icon}
+                    </FileTreeNode>
+                  )
+                  const menu = props.fileMenu
+                  if (!menu?.onReveal && !menu?.onDelete) return row
+                  return (
+                    <MenuV2.Context>
+                      <MenuV2.Context.Trigger as="div" class="block w-full min-w-0">
+                        {row}
+                      </MenuV2.Context.Trigger>
+                      <MenuV2.Context.Portal>
+                        <MenuV2.Context.Content>
+                          <Show when={menu.onReveal && menu.revealLabel}>
+                            <MenuV2.Item onSelect={() => menu.onReveal?.(node)}>{menu.revealLabel}</MenuV2.Item>
+                          </Show>
+                          <Show when={menu.onDelete && menu.deleteLabel}>
+                            <MenuV2.Item onSelect={() => menu.onDelete?.(node)}>{menu.deleteLabel}</MenuV2.Item>
+                          </Show>
+                        </MenuV2.Context.Content>
+                      </MenuV2.Context.Portal>
+                    </MenuV2.Context>
+                  )
+                })()}
               </Match>
             </Switch>
           )

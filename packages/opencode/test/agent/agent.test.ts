@@ -49,6 +49,7 @@ it.instance("returns default native agents when no config", () =>
     const agents = yield* load((svc) => svc.list())
     const names = agents.map((a) => a.name)
     expect(names).toContain("build")
+    expect(names).toContain("ask")
     expect(names).toContain("plan")
     expect(names).toContain("general")
     expect(names).toContain("explore")
@@ -66,6 +67,19 @@ it.instance("build agent has correct default properties", () =>
     expect(build?.native).toBe(true)
     expect(evalPerm(build, "edit")).toBe("allow")
     expect(evalPerm(build, "bash")).toBe("allow")
+  }),
+)
+
+it.instance("ask agent denies edits and shell", () =>
+  Effect.gen(function* () {
+    const ask = yield* load((svc) => svc.get("ask"))
+    expect(ask).toBeDefined()
+    expect(ask?.mode).toBe("primary")
+    expect(ask?.native).toBe(true)
+    expect(evalPerm(ask, "edit")).toBe("deny")
+    expect(evalPerm(ask, "write")).toBe("deny")
+    expect(evalPerm(ask, "bash")).toBe("deny")
+    expect(evalPerm(ask, "read")).toBe("allow")
   }),
 )
 

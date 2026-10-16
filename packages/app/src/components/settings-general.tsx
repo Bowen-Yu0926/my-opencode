@@ -97,26 +97,14 @@ export const SettingsGeneral: Component = () => {
   const accepting = createMemo(() => {
     const value = dir()
     if (!value) return false
-    if (!params.id) return permission.isAutoAcceptingDirectory(value)
-    return permission.isAutoAccepting(params.id, value)
+    return permission.isAutoAcceptingDirectory(value)
   })
 
   const toggleAccept = (checked: boolean) => {
     const value = dir()
     if (!value) return
-
-    if (!params.id) {
-      if (permission.isAutoAcceptingDirectory(value) === checked) return
-      permission.toggleAutoAcceptDirectory(value)
-      return
-    }
-
-    if (checked) {
-      permission.enableAutoAccept(params.id, value)
-      return
-    }
-
-    permission.disableAutoAccept(params.id, value)
+    if (permission.isAutoAcceptingDirectory(value) === checked) return
+    permission.toggleAutoAcceptDirectory(value)
   }
   const desktop = createMemo(() => platform.platform === "desktop")
 
@@ -742,17 +730,7 @@ export const SettingsGeneral: Component = () => {
 
         <AppearanceSection />
 
-        <NotificationsSection />
-
-        <SoundsSection />
-
         <UpdatesSection />
-
-        <DisplaySection />
-
-        <Show when={desktop()}>
-          <AdvancedSection />
-        </Show>
       </div>
     </div>
   )

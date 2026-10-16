@@ -1,5 +1,6 @@
 import { createStore, produce, reconcile } from "solid-js/store"
 import type { FileNode } from "@opencode-ai/sdk/v2"
+import { isTransientServerError } from "@/utils/server-errors"
 
 type DirectoryState = {
   expanded: boolean
@@ -20,6 +21,7 @@ type TreeStore = ReturnType<typeof createFileTreeStore>
 
 const sharedTrees = new Map<string, TreeStore>()
 const sharedTreeRefs = new Map<string, number>()
+const TRANSIENT_RETRY_LIMIT = 3
 
 export function acquireSharedFileTree(key: string, factory: () => TreeStore): TreeStore {
   const hit = sharedTrees.get(key)
@@ -59,9 +61,13 @@ export function createFileTreeStore(options: TreeStoreOptions) {
   })
 
   const inflight = new Map<string, Promise<void>>()
+  const generation = new Map<string, number>()
+  const transientAttempts = new Map<string, number>()
 
   const reset = () => {
     inflight.clear()
+    generation.clear()
+    transientAttempts.clear()
     setTree("node", reconcile({}))
     setTree("dir", reconcile({}))
     setTree("dir", "", { expanded: true })
@@ -80,7 +86,10 @@ export function createFileTreeStore(options: TreeStoreOptions) {
     if (!opts?.force && current?.loaded) return Promise.resolve()
 
     const pending = inflight.get(dir)
-    if (pending) return pending
+    if (pending && !opts?.force) return pending
+
+    const token = (generation.get(dir) ?? 0) + 1
+    generation.set(dir, token)
 
     setTree(
       "dir",
@@ -88,15 +97,18 @@ export function createFileTreeStore(options: TreeStoreOptions) {
       produce((draft) => {
         draft.loading = true
         draft.error = undefined
+        if (opts?.force) draft.loaded = false
       }),
     )
 
     const directory = options.scope()
+    const isCurrent = () => generation.get(dir) === token && options.scope() === directory
 
     const promise = options
       .list(dir)
       .then((nodes) => {
-        if (options.scope() !== directory) return
+        if (!isCurrent()) return
+        transientAttempts.delete(dir)
         const prevChildren = tree.dir[dir]?.children ?? []
         const nextChildren = nodes.map((node) => node.path)
         const nextSet = new Set(nextChildren)
@@ -117,7 +129,7 @@ export function createFileTreeStore(options: TreeStoreOptions) {
               const keys = Object.keys(draft)
               for (const key of keys) {
                 for (const removed of removedDirs) {
-                  if (!key.startsWith(removed + "/")) continue
+                  if (!key.startsWith(removed + "/") && !key.startsWith(removed + "\\")) continue
                   delete draft[key]
                   break
                 }
@@ -136,24 +148,44 @@ export function createFileTreeStore(options: TreeStoreOptions) {
           produce((draft) => {
             draft.loaded = true
             draft.loading = false
+            draft.error = undefined
             draft.children = nextChildren
           }),
         )
       })
       .catch((e) => {
-        if (options.scope() !== directory) return
+        if (!isCurrent()) return
+
+        if (isTransientServerError(e)) {
+          const attempt = (transientAttempts.get(dir) ?? 0) + 1
+          transientAttempts.set(dir, attempt)
+          if (attempt <= TRANSIENT_RETRY_LIMIT) {
+            // Keep loading=true while retrying so the UI does not go blank.
+            queueMicrotask(() => {
+              if (generation.get(dir) !== token) return
+              if (options.scope() !== directory) return
+              void listDir(dir, { force: true })
+            })
+            return
+          }
+          transientAttempts.delete(dir)
+        }
+
         setTree(
           "dir",
           dir,
           produce((draft) => {
             draft.loading = false
-            draft.error = e.message
+            // Keep prior children visible on hard failure after retries.
+            draft.error = e instanceof Error ? e.message : String(e)
           }),
         )
-        options.onError(e.message)
+        if (!isTransientServerError(e)) {
+          options.onError(e instanceof Error ? e.message : String(e))
+        }
       })
       .finally(() => {
-        inflight.delete(dir)
+        if (inflight.get(dir) === promise) inflight.delete(dir)
       })
 
     inflight.set(dir, promise)
@@ -166,9 +198,6 @@ export function createFileTreeStore(options: TreeStoreOptions) {
     return Promise.all([...dirs].map((path) => listDir(path, { force: true })))
   }
 
-  // `list: false` marks a directory expanded without fetching its children, for
-  // trees whose nodes are synthesized from a filter; listing directories that
-  // only exist on a diff's base branch fails and surfaces error toasts.
   const expandDir = (input: string, behavior?: { list?: boolean }) => {
     const dir = options.normalizeDir(input)
     ensureDir(dir)

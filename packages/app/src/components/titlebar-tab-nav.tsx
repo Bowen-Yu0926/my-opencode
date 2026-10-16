@@ -256,6 +256,7 @@ export function TabNavItem(props: {
           data-slot="tab-title"
           data-titlebar-tab-title
           class="min-w-0 flex-1 outline-none leading-4"
+          title={projectName()}
           classList={{
             "overflow-hidden text-clip whitespace-nowrap": !editing(),
             "select-text": editing(),
@@ -284,13 +285,21 @@ export function TabNavItem(props: {
             event.preventDefault()
           }}
         />
+        <Show when={!editing() && projectName()}>
+          <span
+            class="max-w-14 shrink-0 truncate text-[11px] leading-4 text-v2-text-text-faint"
+            data-slot="tab-project"
+          >
+            {projectName()}
+          </span>
+        </Show>
       </MenuV2.Context.Trigger>
 
       <div data-slot="tab-close">
         <IconButtonV2
           size="small"
           variant="ghost-muted"
-          class="hover-reveal relative z-10 group-hover:opacity-100 group-data-[active=true]:opacity-100 group-data-[editing=true]:opacity-100"
+          class="hover-reveal relative z-10 group-hover:opacity-100 group-focus-within:opacity-100 group-data-[editing=true]:opacity-100"
           onPointerDown={(event) => {
             event.preventDefault()
             event.stopPropagation()

@@ -35,6 +35,41 @@ export function formatServerError(error: unknown, translate?: Translator, fallba
   return tr(translate, "error.chain.unknown", "Unknown error")
 }
 
+/** Aborted / superseded directory bootstraps — do not surface as user-facing reload failures. */
+export function isTransientServerError(error: unknown) {
+  if (error !== null && typeof error === "object" && "name" in error && (error as { name: unknown }).name === "AbortError") {
+    return true
+  }
+  if (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError") {
+    return true
+  }
+  const status = serverErrorStatus(error)
+  if (status === 499) return true
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : ""
+  if (!message) return false
+  return (
+    /\b499\b/.test(message) ||
+    /AbortError/i.test(message) ||
+    /The operation was aborted/i.test(message) ||
+    /The user aborted a request/i.test(message)
+  )
+}
+
+function serverErrorStatus(error: unknown) {
+  if (error === null || typeof error !== "object") return
+  if ("cause" in error) {
+    const cause = (error as { cause?: unknown }).cause
+    if (cause && typeof cause === "object" && "status" in cause) {
+      const status = (cause as { status?: unknown }).status
+      if (typeof status === "number") return status
+    }
+  }
+  if ("status" in error) {
+    const status = (error as { status?: unknown }).status
+    if (typeof status === "number") return status
+  }
+}
+
 function unwrapNamedError(error: unknown): unknown {
   if (error instanceof Error && error.cause && typeof error.cause === "object" && "body" in error.cause) {
     return (error.cause as Record<string, unknown>).body

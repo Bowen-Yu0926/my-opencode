@@ -7,7 +7,7 @@ import { useSpring } from "@opencode-ai/ui/motion-spring"
 import { TextReveal } from "@opencode-ai/ui/text-reveal"
 import { TextStrikethrough } from "@opencode-ai/ui/text-strikethrough"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { Index, createEffect, createMemo } from "solid-js"
+import { Index, Show, createEffect, createMemo } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import { createStore } from "solid-js/store"
 import { useLanguage } from "@/context/language"
@@ -45,8 +45,10 @@ export function SessionTodoDock(props: {
   todos: Todo[]
   collapsed: boolean
   onToggle: () => void
+  onArchive?: () => void
   collapseLabel: string
   expandLabel: string
+  archiveLabel: string
   dockProgress: number
 }) {
   const language = useLanguage()
@@ -177,7 +179,24 @@ export function SessionTodoDock(props: {
               truncate
             />
           </div>
-          <div class="ml-auto">
+          <div class="ml-auto flex shrink-0 items-center gap-0.5">
+            <Show when={props.onArchive}>
+              <IconButton
+                data-action="session-todo-archive"
+                icon="archive"
+                size="normal"
+                variant="ghost"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  props.onArchive?.()
+                }}
+                aria-label={props.archiveLabel}
+              />
+            </Show>
             <IconButton
               data-action="session-todo-toggle-button"
               data-collapsed={props.collapsed ? "true" : "false"}

@@ -168,7 +168,7 @@ export function ModelSelectorPopover(props: {
       <Kobalte.Trigger as={props.trigger} />
       <Kobalte.Portal>
         <Kobalte.Content
-          class="w-72 h-80 flex flex-col p-2 rounded-md border border-border-base bg-surface-raised-stronger-non-alpha shadow-md z-50 outline-none overflow-hidden"
+          class="z-50 flex h-80 w-72 flex-col overflow-hidden rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-layer-01 p-2 shadow-[var(--v2-elevation-floating)] outline-none"
           onEscapeKeyDown={(event) => {
             close("escape")
             event.preventDefault()

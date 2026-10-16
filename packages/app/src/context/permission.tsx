@@ -16,8 +16,10 @@ import type { ServerScope } from "@/utils/server-scope"
 import { normalizePermissionRequest } from "./global-sync/utils"
 import {
   acceptKey,
+  clearDirectorySessionOverrides,
   directoryAcceptKey,
   isDirectoryAutoAccepting,
+  normalizeAutoAcceptKeys,
   autoRespondsPermission,
   sessionAutoAccept,
 } from "./permission-auto-respond"
@@ -195,14 +197,18 @@ function createServerPermissionState(input: { sdk: ServerSDK; sync: ServerSync }
         if (!value || typeof value !== "object" || Array.isArray(value)) return value
 
         const data = value as Record<string, unknown>
-        if (data.autoAccept) return value
+        const raw =
+          data.autoAccept && typeof data.autoAccept === "object" && !Array.isArray(data.autoAccept)
+            ? (data.autoAccept as Record<string, boolean>)
+            : typeof data.autoAcceptEdits === "object" &&
+                data.autoAcceptEdits &&
+                !Array.isArray(data.autoAcceptEdits)
+              ? (data.autoAcceptEdits as Record<string, boolean>)
+              : {}
 
         return {
           ...data,
-          autoAccept:
-            typeof data.autoAcceptEdits === "object" && data.autoAcceptEdits && !Array.isArray(data.autoAcceptEdits)
-              ? data.autoAcceptEdits
-              : {},
+          autoAccept: normalizeAutoAcceptKeys(raw),
         }
       },
     },
@@ -358,6 +364,8 @@ function createServerPermissionState(input: { sdk: ServerSDK; sync: ServerSync }
     setStore(
       produce((draft) => {
         draft.autoAccept[key] = true
+        // Session false overrides would otherwise block directory-level accept.
+        clearDirectorySessionOverrides(draft.autoAccept, directory)
       }),
     )
 
@@ -378,6 +386,8 @@ function createServerPermissionState(input: { sdk: ServerSDK; sync: ServerSync }
     setStore(
       produce((draft) => {
         draft.autoAccept[key] = false
+        // Clear session overrides so settings OFF actually stops auto-accept.
+        clearDirectorySessionOverrides(draft.autoAccept, directory)
       }),
     )
   }

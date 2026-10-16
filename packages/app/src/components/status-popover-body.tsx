@@ -21,7 +21,7 @@ const pluginEmptyMessage = (value: string, file: string): JSXElement => {
   return (
     <>
       {parts[0]}
-      <code class="bg-surface-raised-base px-1.5 py-0.5 rounded-sm text-text-base">{file}</code>
+      <code class="rounded-[4px] bg-v2-background-bg-layer-02 px-1.5 py-0.5 text-v2-text-text-base">{file}</code>
       {parts.slice(1).join(file)}
     </>
   )
@@ -152,10 +152,10 @@ export function StatusPopoverServerBody() {
 
 function ServerStatusPopoverView(props: { state: ServerStatusState }) {
   return (
-    <div class="flex items-center gap-1 w-[360px] rounded-xl shadow-[var(--shadow-lg-border-base)]">
+    <div class="flex w-[360px] items-center gap-1 rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-base shadow-[var(--v2-elevation-floating)]">
       <Tabs
         aria-label={props.state.ariaLabel}
-        class="tabs bg-background-strong rounded-xl overflow-hidden"
+        class="tabs overflow-hidden rounded-[6px] bg-v2-background-bg-base"
         data-component="tabs"
         data-active="servers"
         defaultValue="servers"
@@ -178,15 +178,15 @@ function ServerStatusPopoverView(props: { state: ServerStatusState }) {
 function ServerStatusList(props: { state: ServerStatusState }) {
   return (
     <div class="flex flex-col px-2 pb-2">
-      <div class="flex flex-col p-3 bg-background-base rounded-sm min-h-14">
+      <div class="flex min-h-14 flex-col rounded-[6px] bg-v2-background-bg-layer-01 p-3">
         <For each={props.state.servers()}>
           {(item) => {
             return (
               <button
                 type="button"
-                class="flex items-center gap-2 w-full h-8 pl-3 pr-1.5 py-1.5 rounded-md transition-colors text-left"
+                class="flex h-8 w-full items-center gap-2 rounded-[6px] py-1.5 pl-3 pr-1.5 text-left transition-colors"
                 classList={{
-                  "hover:bg-surface-raised-base-hover": !item.blocked,
+                  "hover:bg-v2-overlay-simple-overlay-hover": !item.blocked,
                   "cursor-not-allowed": item.blocked,
                 }}
                 aria-disabled={item.blocked}
@@ -256,10 +256,10 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
   const pluginEmpty = createMemo(() => pluginEmptyMessage(language.t("dialog.plugins.empty"), "opencode.json"))
 
   return (
-    <div class="flex items-center gap-1 w-[360px] rounded-xl shadow-[var(--shadow-lg-border-base)]">
+    <div class="flex w-[360px] items-center gap-1 rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-base shadow-[var(--v2-elevation-floating)]">
       <Tabs
         aria-label={language.t("status.popover.ariaLabel")}
-        class="tabs bg-background-strong rounded-xl overflow-hidden"
+        class="tabs overflow-hidden rounded-[6px] bg-v2-background-bg-base"
         data-component="tabs"
         data-active="mcp"
         defaultValue="mcp"
@@ -284,7 +284,7 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
 
         <Tabs.Content value="mcp">
           <div class="flex flex-col px-2 pb-2">
-            <div class="flex flex-col p-3 bg-background-base rounded-sm min-h-14">
+            <div class="flex min-h-14 flex-col rounded-[6px] bg-v2-background-bg-layer-01 p-3">
               <Show
                 when={mcpNames().length > 0}
                 fallback={
@@ -298,7 +298,7 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
                     return (
                       <button
                         type="button"
-                        class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"
+                        class="flex min-h-8 w-full items-center gap-2 rounded-[6px] py-1 pl-3 pr-2 text-left transition-colors hover:bg-v2-overlay-simple-overlay-hover"
                         onClick={() => {
                           if (toggleMcp.isPending) return
                           toggleMcp.mutate(name)
@@ -346,7 +346,7 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
 
         <Tabs.Content value="lsp">
           <div class="flex flex-col px-2 pb-2">
-            <div class="flex flex-col p-3 bg-background-base rounded-sm min-h-14">
+            <div class="flex min-h-14 flex-col rounded-[6px] bg-v2-background-bg-layer-01 p-3">
               <Show
                 when={lspItems().length > 0}
                 fallback={
@@ -375,7 +375,7 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
         <Show when={protocol() === "v1"}>
           <Tabs.Content value="plugins">
             <div class="flex flex-col px-2 pb-2">
-              <div class="flex flex-col p-3 bg-background-base rounded-sm min-h-14">
+              <div class="flex min-h-14 flex-col rounded-[6px] bg-v2-background-bg-layer-01 p-3">
                 <Show
                   when={plugins().length > 0}
                   fallback={<div class="text-14-regular text-text-base text-center my-auto">{pluginEmpty()}</div>}

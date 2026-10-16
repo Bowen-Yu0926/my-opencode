@@ -1,4 +1,6 @@
 Set sh = CreateObject("WScript.Shell")
-sh.CurrentDirectory = "E:\myopencode"
+Set fso = CreateObject("Scripting.FileSystemObject")
+scriptDir = fso.GetParentFolderName(WScript.ScriptFullName)
+sh.CurrentDirectory = scriptDir
 ' 0 = hidden console; false = don't wait
-sh.Run "cmd /c ""E:\myopencode\start-opencode-desktop.bat""", 0, False
+sh.Run "cmd /c """ & scriptDir & "\start-opencode-desktop.bat""", 0, False

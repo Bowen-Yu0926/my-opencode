@@ -31,7 +31,7 @@ import { normalizeSessionInfo } from "@/utils/session"
 import { pathKey } from "@/utils/path-key"
 
 const legacyTitlebarHeight = 40
-const v2TitlebarHeight = 36
+const v2TitlebarHeight = 40
 const minTitlebarZoom = 0.25
 const windowsControlsBaseWidth = 138 // 3 native Windows caption buttons at 46px each.
 const macTrafficLightsBaseWidth = 84
@@ -55,7 +55,7 @@ export function registerTitlebarRightMount(element: HTMLElement | null) {
   titlebarRightMount[1](element)
 }
 
-export function Titlebar(props: { update?: TitlebarUpdate }) {
+export function Titlebar(props: { update?: TitlebarUpdate; embedded?: boolean }) {
   const layout = useLayout()
   const platform = usePlatform()
   const command = useCommand()
@@ -167,18 +167,25 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
       data-slot={useV2Titlebar() ? "titlebar-v2" : undefined}
       classList={{
         "shrink-0 relative flex flex-row": true,
-        "h-9 bg-v2-background-bg-deep overflow-visible": useV2Titlebar(),
+        "h-10 bg-v2-background-bg-deep overflow-visible": useV2Titlebar(),
         "h-10 bg-background-base overflow-hidden": !useV2Titlebar(),
         "order-last": bottom(),
       }}
       style={{
         "min-height": minHeight(),
         // Keep native macOS traffic lights clear even when the desktop window is narrow.
-        "padding-left": macTrafficLights() ? `${macTrafficLightsBaseWidth / zoom()}px` : 0,
-        width: windows() ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))` : undefined,
-        "max-width": windows() ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))` : undefined,
+        // Full-width titlebar (layout-new) owns the traffic-light / caption edges; embedded keeps center-only chrome.
+        "padding-left": !props.embedded && macTrafficLights() ? `${macTrafficLightsBaseWidth / zoom()}px` : 0,
+        width:
+          windows() && !props.embedded
+            ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))`
+            : undefined,
+        "max-width":
+          windows() && !props.embedded
+            ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))`
+            : undefined,
         // Native Windows caption controls remain on the physical right in both writing directions.
-        "margin-right": windows() ? "auto" : undefined,
+        "margin-right": windows() && !props.embedded ? "auto" : undefined,
       }}
       data-tauri-drag-region
     >
@@ -372,10 +379,11 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
               <div
                 class="h-full flex-1 overflow-hidden flex flex-row items-center gap-1 px-2 md:pr-3"
                 classList={{
-                  "pt-2": !bottom(),
-                  "pb-2": bottom(),
+                  // Embedded center titlebar must match side-panel header height without extra padding.
+                  "pt-1": !props.embedded && !bottom(),
+                  "pb-1": !props.embedded && bottom(),
                   "md:pl-2": macTrafficLights(),
-                  "md:pl-3": !macTrafficLights(),
+                  "md:pl-2.5": !macTrafficLights(),
                 }}
               >
                 <ChannelIndicator />

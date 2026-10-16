@@ -235,6 +235,16 @@ export function registerIpcHandlers(deps: Deps) {
     return true
   })
 
+  ipcMain.handle("trash-path", async (_event: IpcMainInvokeEvent, path: string) => {
+    const exists = await stat(path).then(
+      () => true,
+      () => false,
+    )
+    if (!exists) return false
+    await shell.trashItem(path)
+    return true
+  })
+
   ipcMain.handle("read-clipboard-image", () => {
     const image = clipboard.readImage()
     if (image.isEmpty()) return null

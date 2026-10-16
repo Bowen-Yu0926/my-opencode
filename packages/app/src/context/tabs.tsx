@@ -176,6 +176,26 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
       if (draftID) removeDraftPersisted(draftID)
     }
 
+    const activeTabIndex = () => {
+      const key = recentKey()
+      if (key) {
+        const index = store.findIndex((tab) => tabKey(tab) === key)
+        if (index !== -1) return index
+      }
+      if (params.id) {
+        const index = store.findIndex((tab) => tab.type === "session" && tab.sessionId === params.id)
+        if (index !== -1) return index
+      }
+      if (location.pathname === "/new-session") {
+        const draftID = location.query.draftId
+        if (typeof draftID === "string" && draftID) {
+          const index = store.findIndex((tab) => tab.type === "draft" && tab.draftID === draftID)
+          if (index !== -1) return index
+        }
+      }
+      return -1
+    }
+
     const actions = {
       addSessionTab: (tab: Omit<SessionTab, "type">) => {
         const next = { type: "session" as const, ...tab }
@@ -189,6 +209,42 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
             }),
           )
         })
+        return next
+      },
+      /**
+       * Open a session in the current window: switch to an existing tab if
+       * present, otherwise replace the active tab (or create the first one).
+       * Used by the left session list so clicks do not spawn extra tabs.
+       */
+      openSessionTab: (tab: Omit<SessionTab, "type">) => {
+        const next = { type: "session" as const, ...tab }
+        const existing = store.find((item) => tabKey(item) === tabKey(next))
+        if (existing) {
+          navigateTab(existing)
+          return existing
+        }
+
+        const index = activeTabIndex()
+        const previous = index !== -1 ? store[index] : undefined
+        void startTransition(() => {
+          setStore(
+            produce((tabs) => {
+              if (tabs.some((item) => tabKey(item) === tabKey(next))) return
+              if (index !== -1 && index < tabs.length) {
+                tabs[index] = next
+                return
+              }
+              tabs.push(next)
+            }),
+          )
+          navigateTab(next)
+        })
+
+        if (previous && tabKey(previous) !== tabKey(next)) {
+          memory.remove(tabKey(previous))
+          removeInfo(tabKey(previous))
+          if (previous.type === "draft") removeDraftPersisted(previous.draftID)
+        }
         return next
       },
       reorder(keys: string[]) {

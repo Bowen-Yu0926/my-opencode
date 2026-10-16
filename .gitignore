@@ -32,3 +32,10 @@ UPCOMING_CHANGELOG.md
 logs/
 *.bun-build
 tsconfig.tsbuildinfo
+
+# executable-testcases probe (env, screenshots, results)
+testcases/**/_probe/.env
+testcases/**/_probe/storage_state.json
+testcases/**/*.result.md
+testcases/**/_probe/*.png
+testcases/**/_probe/*.webm

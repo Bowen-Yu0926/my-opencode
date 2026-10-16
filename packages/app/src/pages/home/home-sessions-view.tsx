@@ -78,11 +78,11 @@ export function HomeSessionsView(props: HomeSessionsViewProps) {
       class="min-h-0 min-w-0 flex-1 flex flex-col"
       aria-label={props.language.t("sidebar.project.recentSessions")}
     >
-      <div class="sticky top-0 z-30 shrink-0 bg-v2-background-bg-base pb-3 pt-6 lg:pt-12" onWheel={props.onWheel}>
+      <div class="sticky top-0 z-30 shrink-0 bg-v2-background-bg-base pb-2 pt-4 lg:pt-8" onWheel={props.onWheel}>
         <HomeSessionSearch {...props} />
         <Suspense>
           <Show when={props.groups().length > 0 && props.canCreateSession()}>
-            <div class="pointer-events-none absolute right-0 top-[84px] z-20 flex lg:top-[108px]">
+            <div class="pointer-events-none absolute right-0 top-[68px] z-20 flex lg:top-[92px]">
               <ButtonV2
                 data-action="home-new-session"
                 variant="ghost-muted"
@@ -97,14 +97,14 @@ export function HomeSessionsView(props: HomeSessionsViewProps) {
           </Show>
         </Suspense>
       </div>
-      <div class="pointer-events-none sticky top-[84px] z-40 h-0 -mr-3 lg:top-[108px]">
+      <div class="pointer-events-none sticky top-[68px] z-40 -mr-3 h-0 lg:top-[92px]">
         <div
           ref={props.onSetThumbTrack}
           data-component="home-session-scroll-track"
-          class="relative ml-auto h-[calc(100cqh-84px)] w-3 lg:h-[calc(100cqh-108px)]"
+          class="relative ml-auto h-[calc(100cqh-68px)] w-3 lg:h-[calc(100cqh-92px)]"
         />
       </div>
-      <div class="-mr-3 min-h-[calc(100cqh-72px)] lg:min-h-[calc(100cqh-96px)]">
+      <div class="-mr-3 min-h-[calc(100cqh-56px)] lg:min-h-[calc(100cqh-80px)]">
         <Suspense
           fallback={
             <div class="pt-3">
@@ -121,7 +121,7 @@ export function HomeSessionsView(props: HomeSessionsViewProps) {
               />
             }
           >
-            <div ref={props.onSetContent} class="flex flex-col pt-3 pr-3 pb-16">
+            <div ref={props.onSetContent} class="flex flex-col pt-2 pr-3 pb-10">
               <For each={props.groups()}>
                 {(group, index) => (
                   <>
@@ -132,7 +132,7 @@ export function HomeSessionsView(props: HomeSessionsViewProps) {
                       elevated={index() === 0}
                     />
                     <div
-                      class={`flex min-w-0 flex-col gap-px pt-4 ${index() === props.groups().length - 1 ? "" : "mb-6"}`}
+                      class={`flex min-w-0 flex-col gap-px pt-2 ${index() === props.groups().length - 1 ? "" : "mb-4"}`}
                     >
                       <For each={group.sessions}>{(record) => <HomeSessionRow {...props} record={record} />}</For>
                     </div>
@@ -357,7 +357,7 @@ function HomeSessionSearchResultRow(
       role="option"
       aria-selected={props.selected}
       class={`
-        flex h-10 w-full shrink-0 cursor-default items-center gap-2 border-0 py-3 pl-[18px] pr-6 text-left
+        flex h-9 w-full shrink-0 cursor-default items-center gap-2 border-0 py-2 pl-[18px] pr-6 text-left
         transition-[background-color] duration-[120ms] ease-in-out
         hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none
       `}
@@ -402,8 +402,8 @@ function HomeSessionGroupHeader(props: {
     <div
       ref={props.onSetRef}
       class={`
-        pointer-events-none sticky top-[84px] flex h-7 min-w-0 items-center justify-between
-        bg-v2-background-bg-base pl-3 lg:top-[108px]
+        pointer-events-none sticky top-[68px] flex h-7 min-w-0 items-center justify-between
+        bg-v2-background-bg-base pl-3 lg:top-[92px]
       `}
       classList={{ "home-session-group-header z-[5]": !!props.elevated, "z-10": !props.elevated }}
     >
@@ -420,15 +420,15 @@ function HomeSessionRow(props: HomeSessionsViewProps & { record: HomeSessionReco
 
   return (
     <div
-      class="group/session relative flex h-10 min-w-0 items-center rounded-[6px]"
+      class="group/session relative flex h-9 min-w-0 items-center rounded-[6px]"
       classList={{ group: !!showProjectName() }}
     >
       <button
         type="button"
         data-component="home-session-row"
         class={`
-          flex h-10 min-w-0 w-full flex-1 shrink-0 cursor-default items-center gap-2 rounded-[6px] border-0
-          bg-transparent py-3 pl-3 pr-10 text-left text-v2-text-text-muted [font-weight:530]
+          flex h-9 min-w-0 w-full flex-1 shrink-0 cursor-default items-center gap-2 rounded-[6px] border-0
+          bg-transparent py-2 pl-3 pr-10 text-left text-v2-text-text-muted [font-weight:530]
           transition-[background-color,color,box-shadow] duration-[120ms] ease-in-out
           hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none
         `}
@@ -543,7 +543,7 @@ function HomeSessionSkeleton(props: { label: string }) {
         <div class={HOME_SECTION_LABEL}>{props.label}</div>
       </div>
       <div class="flex min-w-0 flex-col gap-px" aria-hidden="true">
-        <For each={[0, 1, 2, 3]}>{() => <div class="h-10 rounded-[6px] bg-v2-background-bg-deep opacity-70" />}</For>
+        <For each={[0, 1, 2, 3]}>{() => <div class="h-9 rounded-[6px] bg-v2-background-bg-deep opacity-70" />}</For>
       </div>
     </div>
   )

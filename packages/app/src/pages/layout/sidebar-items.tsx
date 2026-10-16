@@ -60,7 +60,7 @@ export const ProjectIcon = (props: {
             "absolute top-px right-px size-1.5 rounded-full z-10": true,
             "bg-surface-warning-strong": hasPermissions(),
             "bg-icon-critical-base": !hasPermissions() && hasError(),
-            "bg-text-interactive-base": !hasPermissions() && !hasError(),
+            "bg-v2-background-bg-accent": !hasPermissions() && !hasError(),
           }}
         />
       </Show>
@@ -120,7 +120,7 @@ const SessionRow = (props: {
       <Show when={props.isWorking() || props.hasPermissions() || props.hasError() || props.unseenCount() > 0}>
         <div
           class="shrink-0 size-6 flex items-center justify-center"
-          style={{ color: props.tint() ?? "var(--icon-interactive-base)" }}
+          style={{ color: props.tint() ?? "var(--v2-icon-icon-accent)" }}
         >
           <Switch>
             <Match when={props.isWorking()}>
@@ -133,7 +133,7 @@ const SessionRow = (props: {
               <div class="size-1.5 rounded-full bg-text-diff-delete-base" />
             </Match>
             <Match when={props.unseenCount() > 0}>
-              <div class="size-1.5 rounded-full bg-text-interactive-base" />
+              <div class="size-1.5 rounded-full bg-v2-background-bg-accent" />
             </Match>
           </Switch>
         </div>

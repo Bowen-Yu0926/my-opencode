@@ -91,51 +91,52 @@ const draftDirectory = (page: import("@playwright/test").Page) =>
     return drafts.at(-1)?.directory
   })
 
-test("workspace panel new session targets the selected project", async ({ page }) => {
+test("workspace panel highlights the active session project and titlebar new session follows it", async ({
+  page,
+}) => {
   await setup(page)
-
-  const newSessionButton = page.locator('[data-action="workspace-panel-new-session"]')
-  await expectAppVisible(newSessionButton)
 
   const openRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${openProject}"]`)
   const selectedRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${selectedProject}"]`)
   await expect(openRow).toBeVisible()
-  await expect(selectedRow).toHaveAttribute("aria-current", "page")
-  await expect(openRow).not.toHaveAttribute("aria-current", "page")
+  await expect(openRow).toHaveAttribute("aria-current", "page")
+  await expect(selectedRow).not.toHaveAttribute("aria-current", "page")
 
-  await newSessionButton.click()
+  const titlebarButton = page.locator('[data-action="titlebar-new-session"]')
+  await expectAppVisible(titlebarButton)
+  await titlebarButton.click()
   await page.waitForURL(/\/new-session\?draftId=/)
 
-  await expect.poll(() => draftDirectory(page)).toBe(selectedProject)
-  await expect(selectedRow).toHaveAttribute("aria-current", "page")
+  await expect.poll(() => draftDirectory(page)).toBe(openProject)
+  await expect(openRow).toHaveAttribute("aria-current", "page")
 })
 
-test("titlebar new session follows the selected project while a different session is active", async ({ page }) => {
+test("titlebar new session follows the project of the active session", async ({ page }) => {
   await setup(page)
 
   const titlebarButton = page.locator('[data-action="titlebar-new-session"]')
   await expectAppVisible(titlebarButton)
 
-  const selectedRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${selectedProject}"]`)
-  await expect(selectedRow).toHaveAttribute("aria-current", "page")
+  const openRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${openProject}"]`)
+  await expect(openRow).toHaveAttribute("aria-current", "page")
 
   await titlebarButton.click()
   await page.waitForURL(/\/new-session\?draftId=/)
 
-  await expect.poll(() => draftDirectory(page)).toBe(selectedProject)
+  await expect.poll(() => draftDirectory(page)).toBe(openProject)
 })
 
-test("workspace panel new project button registers the picked directory as a project", async ({ page }) => {
+test("open project command registers the picked directory and new session follows it", async ({ page }) => {
   await setup(page)
 
-  const newProjectButton = page.locator('[data-action="workspace-panel-new-project"]')
-  await expectAppVisible(newProjectButton)
-  await expect(newProjectButton).toContainText("新建项目")
+  const openRow = page.locator(`[data-action="workspace-file-panel-project"][data-worktree="${openProject}"]`)
+  await expect(openRow).toHaveAttribute("aria-current", "page")
 
-  await newProjectButton.click()
+  await page.keyboard.press("Control+o")
 
   const dialog = page.getByRole("dialog")
   await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole("heading")).toContainText(/打开项目|Open project/)
   await dialog.getByRole("textbox").fill("brandnew")
 
   const pickedRow = page.locator(`[data-directory-path="${pickedSelector}"]`)

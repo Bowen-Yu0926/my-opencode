@@ -31,7 +31,7 @@ import { estimateRootSessionTotal, loadRootSessions, loadRootSessionsV1 } from "
 import { trimSessions } from "./global-sync/session-trim"
 import type { ProjectMeta } from "./global-sync/types"
 import { SESSION_RECENT_LIMIT } from "./global-sync/types"
-import { formatServerError } from "@/utils/server-errors"
+import { formatServerError, isTransientServerError } from "@/utils/server-errors"
 import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/solid-query"
 import type { SolidQueryOptions } from "@tanstack/solid-query"
 import { createRefreshQueue } from "./global-sync/queue"
@@ -408,6 +408,7 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
       void loadCommands(directory, serverSDK.api.command, sdkFor(directory), serverSDK.protocol)
         .then((commands) => setStore("command", commands))
         .catch((err) => {
+          if (isTransientServerError(err)) return
           showToast({
             variant: "error",
             title: language.t("toast.project.reloadFailed.title", { project: getFilename(directory) }),
@@ -490,6 +491,7 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
               sessionMeta.set(key, { limit })
             })
             .catch((err) => {
+              if (isTransientServerError(err)) return
               console.error("Failed to load sessions", err)
               const project = getFilename(directory)
               showToast({

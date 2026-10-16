@@ -42,7 +42,7 @@ export const ProjectDragOverlay = (props: {
   return (
     <Show when={project()}>
       {(p) => (
-        <div class="bg-background-base rounded-xl p-1">
+        <div class="rounded-[6px] bg-v2-background-bg-base p-1">
           <ProjectIcon project={p()} />
         </div>
       )}
@@ -101,11 +101,14 @@ const ProjectTile = (props: {
         data-action="project-switch"
         data-project={base64Encode(props.project.worktree)}
         classList={{
-          "flex items-center justify-center size-10 p-1 rounded-lg overflow-hidden transition-colors cursor-default": true,
-          "bg-transparent border-2 border-icon-strong-base hover:bg-surface-base-hover": props.selected(),
-          "bg-transparent border border-transparent hover:bg-surface-base-hover hover:border-border-weak-base":
+          "flex size-10 cursor-default items-center justify-center overflow-hidden rounded-[6px] p-1 transition-colors":
+            true,
+          "border border-v2-border-border-strong bg-transparent hover:bg-v2-overlay-simple-overlay-hover":
+            props.selected(),
+          "border border-transparent bg-transparent hover:border-v2-border-border-muted hover:bg-v2-overlay-simple-overlay-hover":
             !props.selected() && !props.active(),
-          "bg-surface-base-hover border border-border-weak-base": !props.selected() && props.active(),
+          "border border-v2-border-border-muted bg-v2-overlay-simple-overlay-hover":
+            !props.selected() && props.active(),
         }}
         onPointerDown={(event) => {
           if (event.button === 0 && !event.ctrlKey) {
