@@ -1,36 +1,24 @@
-import { createEffect, createMemo, createResource, createSignal, Match, Show, Switch, untrack } from "solid-js"
+import { createEffect, createMemo, createSignal, Match, Show, Switch, untrack } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useLocation, useNavigate, useParams } from "@solidjs/router"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { Icon } from "@opencode-ai/ui/icon"
 import { Button } from "@opencode-ai/ui/button"
 import { Tooltip, TooltipKeybind } from "@opencode-ai/ui/tooltip"
-import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
-import { KeybindV2 } from "@opencode-ai/ui/v2/keybind-v2"
-import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 
-import { LayoutRoute, useLayout } from "@/context/layout"
+import { useLayout } from "@/context/layout"
 import { usePlatform } from "@/context/platform"
 import { useCommand } from "@/context/command"
 import { useLanguage } from "@/context/language"
 import { useSettings } from "@/context/settings"
 import { WindowsAppMenu } from "./windows-app-menu"
 import { applyPath, backPath, forwardPath } from "./titlebar-history"
-import { TitlebarTabStrip } from "@/components/titlebar-tab-strip"
-import { makeEventListener } from "@solid-primitives/event-listener"
 import { createMediaQuery } from "@solid-primitives/media"
-import { readSessionTabsRemovedDetail, SESSION_TABS_REMOVED_EVENT } from "@/components/titlebar-session-events"
-import { useGlobal } from "@/context/global"
-import { ServerConnection, useServer } from "@/context/server"
-import { tabKey, useTabs } from "@/context/tabs"
-import type { PromptSession } from "@/context/prompt"
 import "./titlebar.css"
-import { newTabTooltipKeybind } from "./command-tooltip-keybind"
-import { normalizeSessionInfo } from "@/utils/session"
-import { pathKey } from "@/utils/path-key"
 
 const legacyTitlebarHeight = 40
+/** App menu row only; session tabs live in the center column. */
 const v2TitlebarHeight = 40
 const minTitlebarZoom = 0.25
 const windowsControlsBaseWidth = 138 // 3 native Windows caption buttons at 46px each.
@@ -61,7 +49,6 @@ export function Titlebar(props: { update?: TitlebarUpdate; embedded?: boolean })
   const command = useCommand()
   const language = useLanguage()
   const settings = useSettings()
-  const server = useServer()
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams()
@@ -191,245 +178,24 @@ export function Titlebar(props: { update?: TitlebarUpdate; embedded?: boolean })
     >
       <Switch>
         <Match when={useV2Titlebar()}>
-          {(_) => {
-            const layout = useLayout()
-            const global = useGlobal()
-
-            const tabs = useTabs()
-            const tabsStore = tabs.store
-            const tabsStoreActions = tabs
-            const [session] = createResource(
-              () => {
-                const route = layout.route()
-                if (route.type !== "session") return undefined
-                const conn = global.servers
-                  .list()
-                  .find((item) => ServerConnection.key(item) === (route.server ?? server.key))
-                return conn ? { route, sdk: global.ensureServerCtx(conn).sdk } : undefined
-              },
-              ({ route, sdk }) =>
-                sdk.api.session
-                  .get({ sessionID: route.sessionId })
-                  .then(normalizeSessionInfo)
-                  .catch(() => {}),
-            )
-
-            const matchRoute = (route: LayoutRoute) => {
-              if (route.type === "home") return
-              if (route.type === "draft") {
-                return tabsStore.find((item) => item.type === "draft" && item.draftID === route.draftID)
-              }
-              if (route.type === "session") {
-                const main = tabsStore.find(
-                  (item) =>
-                    item.type === "session" && item.server === route.server && item.sessionId === route.sessionId,
-                )
-                if (main) return main
-                const s = session()
-                if (s?.parentID) {
-                  const parentID = s.parentID
-                  const parent = tabsStore.find(
-                    (item) => item.type === "session" && item.server === route.server && item.sessionId === parentID,
-                  )
-                  if (parent) return parent
-                }
-              }
-            }
-
-            const currentTab = () => matchRoute(layout.route())
-
-            createEffect(() => {
-              const route = layout.route()
-              if (!tabs.ready()) return
-              const tab = currentTab()
-              if (tab) {
-                tabs.remember(tab)
-                return
-              }
-
-              if (route.type === "session") {
-                const s = session()
-                if (!s) return
-                const sessionId = s.parentID ?? s.id
-                const next = { server: route.server ?? server.key, sessionId }
-                tabsStoreActions.addSessionTab(next)
-              }
-            })
-
-            makeEventListener(window, SESSION_TABS_REMOVED_EVENT, (event) => {
-              const detail = readSessionTabsRemovedDetail(event)
-              if (!detail) return
-              tabsStoreActions.removeSessions(detail)
-            })
-
-            const openNewTab = () => {
-              const selection = layout.home.selection()
-              const selectionDirectory = selection.directory
-              const selectionKey = selectionDirectory ? pathKey(selectionDirectory) : undefined
-              const selectionConn = global.servers
-                .list()
-                .find((item) => ServerConnection.key(item) === selection.server)
-              const selectionProject =
-                selectionConn && selectionKey
-                  ? global
-                      .ensureServerCtx(selectionConn)
-                      .projects.list()
-                      .find(
-                        (item) =>
-                          pathKey(item.worktree) === selectionKey ||
-                          item.sandboxes?.some((sandbox) => pathKey(sandbox) === selectionKey),
-                      )
-                  : undefined
-              if (selectionDirectory && selectionConn && selectionProject) {
-                tabs.newDraft({ server: ServerConnection.key(selectionConn), directory: selectionDirectory }, "")
-                return
-              }
-
-              const route = layout.route()
-              const activeSession = session()
-              if (route.type === "session" && activeSession) {
-                const sessionTab = {
-                  type: "session" as const,
-                  server: route.server ?? server.key,
-                  sessionId: activeSession.id,
-                }
-                const model = tabs.stateValue<PromptSession>(sessionTab, "prompt")?.model.current()
-                tabs.newDraft({ server: sessionTab.server, directory: activeSession.directory }, "", model)
-                return
-              }
-
-              const activeTab = currentTab()
-              if (activeTab?.type === "draft") {
-                const model = tabs.stateValue<PromptSession>(activeTab, "prompt")?.model.current()
-                tabs.newDraft({ server: activeTab.server, directory: activeTab.directory }, "", model)
-                return
-              }
-
-              const current = layout.projects.list()[0]
-              if (current) {
-                tabs.newDraft({ server: server.key, directory: current.worktree }, "")
-                return
-              }
-
-              const fallback = global.servers.list().flatMap((conn) => {
-                const project = global.ensureServerCtx(conn).projects.list()[0]
-                return project ? [{ server: ServerConnection.key(conn), project }] : []
-              })[0]
-              if (!fallback) return
-
-              tabs.newDraft({ server: fallback.server, directory: fallback.project.worktree }, "")
-            }
-            const toggleHome = () => tabs.toggleHome({ home: layout.route().type === "home", current: currentTab() })
-
-            command.register("titlebar-home", () => [
-              {
-                id: "home.toggle",
-                title: language.t("home.title"),
-                category: language.t("command.category.view"),
-                keybind: "mod+b",
-                hidden: true,
-                onSelect: toggleHome,
-              },
-            ])
-
-            command.register("tabs", () => {
-              const current = currentTab()
-
-              return [
-                {
-                  id: "tab.new",
-                  category: "tab",
-                  title: language.t("command.session.new"),
-                  keybind: "mod+t,mod+n",
-                  hidden: true,
-                  onSelect: openNewTab,
-                },
-                // The desktop File menu binds "New Session" to this command id, so it must be
-                // registered on every route (home and drafts included), not only under a session page.
-                {
-                  id: "session.new",
-                  category: language.t("command.category.session"),
-                  title: language.t("command.session.new"),
-                  keybind: "mod+shift+s",
-                  onSelect: openNewTab,
-                },
-                current && {
-                  id: "tab.close",
-                  category: "tab",
-                  title: language.t("command.tab.close"),
-                  keybind: "mod+w",
-                  hidden: true,
-                  onSelect: () => {
-                    tabsStoreActions.closeTab(tabsStore.findIndex((tab) => current === tab))
-                  },
-                },
-                {
-                  id: "tab.reopenClosed",
-                  category: language.t("command.category.file"),
-                  title: language.t("command.tab.reopenClosed"),
-                  keybind: "mod+shift+t",
-                  onSelect: () => tabsStoreActions.reopenClosedTab(),
-                },
-              ].filter((v) => v !== undefined)
-            })
-
-            const [tabsAreOverflowing, setTabsAreOverflowing] = createSignal(false)
-
-            return (
-              <div
-                class="h-full flex-1 overflow-hidden flex flex-row items-center gap-1 px-2 md:pr-3"
-                classList={{
-                  // Embedded center titlebar must match side-panel header height without extra padding.
-                  "pt-1": !props.embedded && !bottom(),
-                  "pb-1": !props.embedded && bottom(),
-                  "md:pl-2": macTrafficLights(),
-                  "md:pl-2.5": !macTrafficLights(),
-                }}
-              >
-                <ChannelIndicator />
-                <Show when={windows() || linux()}>
-                  <WindowsAppMenu command={command} platform={platform} variant="v2" />
-                </Show>
-                <TitlebarTabStrip
-                  tabs={tabsStore}
-                  currentTab={currentTab}
-                  forceTruncate={tabsAreOverflowing()}
-                  onOverflowChange={setTabsAreOverflowing}
-                  onNavigate={(tab, el) => {
-                    tabs.select(tab)
-                    el?.scrollIntoView({ behavior: "instant" })
-                  }}
-                  onClose={(tab) => {
-                    const index = tabsStore.findIndex((item) => tabKey(item) === tabKey(tab))
-                    if (index !== -1) tabsStoreActions.closeTab(index)
-                  }}
-                  onReorder={(keys) => tabsStoreActions.reorder(keys)}
-                />
-                <TooltipV2
-                  placement="bottom"
-                  value={
-                    <>
-                      {language.t("command.session.new")}
-                      <KeybindV2 keys={newTabTooltipKeybind(command)} variant="neutral" />
-                    </>
-                  }
-                >
-                  <IconButtonV2
-                    type="button"
-                    variant="ghost-muted"
-                    size="large"
-                    class="shrink-0"
-                    icon={<IconV2 name="plus" />}
-                    onClick={openNewTab}
-                    aria-label={language.t("command.session.new")}
-                    data-action="titlebar-new-session"
-                  />
-                </TooltipV2>
-                <div class="flex-1" />
-                <TitlebarV2Right state={v2RightState()} />
-              </div>
-            )
-          }}
+          <div
+            data-slot="titlebar-v2-menu"
+            class="flex h-full min-w-0 flex-1 flex-row items-center gap-1 px-2 md:pr-3"
+            classList={{
+              "pt-1": !props.embedded && !bottom(),
+              "pb-1": !props.embedded && bottom(),
+              "md:pl-2": macTrafficLights(),
+              "md:pl-2.5": !macTrafficLights(),
+            }}
+            data-tauri-drag-region
+          >
+            <ChannelIndicator />
+            <Show when={windows() || linux()}>
+              <WindowsAppMenu command={command} platform={platform} variant="v2" />
+            </Show>
+            <div class="min-w-0 flex-1" data-tauri-drag-region />
+            <TitlebarV2Right state={v2RightState()} />
+          </div>
         </Match>
         <Match when>
           <div

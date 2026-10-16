@@ -1,5 +1,6 @@
 import { createEffect, Suspense, type ParentProps } from "solid-js"
 import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
+import { TitlebarSessionTabs } from "@/components/titlebar-session-tabs"
 import { WorkspaceFilePanel } from "@/components/workspace-file-panel"
 import { WorkspaceFileTreePanel } from "@/components/workspace-file-tree-panel"
 import { usePlatform } from "@/context/platform"
@@ -31,8 +32,11 @@ export default function NewLayout(props: ParentProps) {
       <Titlebar update={update} />
       <main class="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-row contain-strict">
         <WorkspaceFilePanel />
-        <div class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col my-1.5">
-          <Suspense>{props.children}</Suspense>
+        <div class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col my-1.5 rounded-[12px] border border-v2-border-border-muted bg-v2-background-bg-base overflow-hidden">
+          <TitlebarSessionTabs />
+          <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden flex flex-col">
+            <Suspense>{props.children}</Suspense>
+          </div>
         </div>
         <WorkspaceFileTreePanel />
       </main>
