@@ -149,11 +149,19 @@ export function createHomeSessionsController(home: HomeController) {
               if (!entry.sessionID || !entry.directory || !entry.server) return
               const sessionID = entry.sessionID
               const server = entry.server
-              const directory = entry.project?.worktree ?? entry.directory
+              const directoryKey = pathKey(entry.directory)
+              const project =
+                entry.project ??
+                home.project.list().find((item) => pathKey(item.worktree) === directoryKey) ??
+                home.project.list().find((item) => item.sandboxes?.some((sandbox) => pathKey(sandbox) === directoryKey))
+              const directory = project?.worktree ?? entry.directory
               ctx.projects.open(directory)
               ctx.projects.touch(directory)
               void startTransition(() => {
-                tabs.openSessionTab({ server, sessionId: sessionID })
+                tabs.openSessionTab(
+                  { server, sessionId: sessionID },
+                  { projectDirectories: project ? directories(project) : [directory] },
+                )
               })
             }}
           />
@@ -200,7 +208,10 @@ export function createHomeSessionsController(home: HomeController) {
         ctx.projects.touch(directory)
         home.selection.set({ server: ServerConnection.key(conn), directory })
         void startTransition(() => {
-          tabs.openSessionTab({ server: ServerConnection.key(conn), sessionId: session.id })
+          tabs.openSessionTab(
+            { server: ServerConnection.key(conn), sessionId: session.id },
+            { projectDirectories: project ? directories(project) : [session.directory] },
+          )
         })
       },
       archive: async (session: Session) => {

@@ -19,6 +19,7 @@ import {
   homeProjectDirectories,
   homeSessionServerStatus,
   latestRootSession,
+  projectDirectories,
   sessionsForActiveProject,
   sortedRootSessions,
   toggleHomeProjectSelection,
@@ -114,17 +115,19 @@ describe("layout deep links", () => {
 })
 
 describe("layout workspace helpers", () => {
+  const drive = process.platform === "linux" ? "C:" : "c:"
+
   test("normalizes trailing slash in workspace key", () => {
     expect(String(pathKey("/tmp/demo///"))).toBe("/tmp/demo")
-    expect(String(pathKey("C:\\tmp\\demo\\\\"))).toBe("C:/tmp/demo")
+    expect(String(pathKey("C:\\tmp\\demo\\\\"))).toBe(`${drive}/tmp/demo`)
   })
 
   test("preserves posix and drive roots in workspace key", () => {
     expect(String(pathKey("/"))).toBe("/")
     expect(String(pathKey("///"))).toBe("/")
-    expect(String(pathKey("C:\\"))).toBe("C:/")
-    expect(String(pathKey("C://"))).toBe("C:/")
-    expect(String(pathKey("C:///"))).toBe("C:/")
+    expect(String(pathKey("C:\\"))).toBe(`${drive}/`)
+    expect(String(pathKey("C://"))).toBe(`${drive}/`)
+    expect(String(pathKey("C:///"))).toBe(`${drive}/`)
   })
 
   test("keeps local first while preserving known order", () => {
@@ -387,5 +390,36 @@ describe("sessionsForActiveProject", () => {
   test("keeps all sessions when there are no projects", () => {
     const result = sessionsForActiveProject(sessions, [], "/repo/alpha")
     expect(result.map((item) => item.id)).toEqual(["alpha", "alpha-sandbox", "beta", "other"])
+  })
+})
+
+describe("projectDirectories", () => {
+  const projects = [
+    { id: "alpha", worktree: "/repo/alpha", sandboxes: ["/repo/alpha-sandbox"] },
+    { worktree: "C:\\repo\\beta" },
+  ]
+
+  test("returns the full worktree and sandbox set when the project resolves", () => {
+    expect(
+      projectDirectories(session({ id: "alpha-1", directory: "/repo/alpha" }), projects),
+    ).toEqual(["/repo/alpha", "/repo/alpha-sandbox"])
+  })
+
+  test("matches a session whose directory is a sandbox of the project", () => {
+    expect(
+      projectDirectories(session({ id: "alpha-1", directory: "/repo/alpha-sandbox" }), projects),
+    ).toEqual(["/repo/alpha", "/repo/alpha-sandbox"])
+  })
+
+  test("falls back to the session directory when no project resolves", () => {
+    expect(
+      projectDirectories(session({ id: "orphan", directory: "/repo/orphan" }), projects),
+    ).toEqual(["/repo/orphan"])
+  })
+
+  test("falls back when the projects list is empty", () => {
+    expect(
+      projectDirectories(session({ id: "orphan", directory: "/repo/orphan" }), []),
+    ).toEqual(["/repo/orphan"])
   })
 })

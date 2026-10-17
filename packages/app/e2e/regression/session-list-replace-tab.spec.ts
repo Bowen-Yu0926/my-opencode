@@ -33,10 +33,26 @@ const sessionC = {
   version: "dev",
   time: { created: 1_700_000_000_000, updated: 1_700_000_000_300 },
 }
+const otherDirectory = "C:/OpenCode/SessionListReplaceTabOther"
+const otherProjectID = "proj_session_list_replace_tab_other"
+const sessionOther = {
+  id: "ses_replace_tab_other",
+  slug: "ses_replace_tab_other",
+  projectID: otherProjectID,
+  directory: otherDirectory,
+  title: "Replace tab session other project",
+  version: "dev",
+  time: { created: 1_700_000_000_000, updated: 1_700_000_000_400 },
+}
 
 test.use({ viewport: { width: 1440, height: 900 } })
 
-async function setup(page: import("@playwright/test").Page, tabs: Array<{ sessionId: string }>) {
+async function setup(
+  page: import("@playwright/test").Page,
+  tabs: Array<{ sessionId: string }>,
+  options?: { projects?: Array<{ worktree: string }>; sessions?: Array<{ id: string }> },
+) {
+  const projects = options?.projects ?? [{ worktree: directory }]
   await mockOpenCodeServer(page, {
     directory,
     project: {
@@ -60,12 +76,12 @@ async function setup(page: import("@playwright/test").Page, tabs: Array<{ sessio
       connected: ["opencode"],
       default: { providerID: "opencode", modelID: "test" },
     },
-    sessions: [sessionA, sessionB, sessionC],
+    sessions: [...[sessionA, sessionB, sessionC], ...(options?.sessions ?? [])],
     pageMessages: () => ({ items: [] }),
   })
 
   await page.addInitScript(
-    ({ directory, server, tabs }) => {
+    ({ directory, server, tabs, projects }) => {
       localStorage.setItem(
         "settings.v3",
         JSON.stringify({ general: { newLayoutDesigns: true, shouldDisplayTabsToast: false } }),
@@ -74,7 +90,7 @@ async function setup(page: import("@playwright/test").Page, tabs: Array<{ sessio
         "opencode.global.dat:server",
         JSON.stringify({
           list: [],
-          projects: { local: [{ worktree: directory, expanded: true }] },
+          projects: { local: projects.map((project) => ({ worktree: project.worktree, expanded: true })) },
           lastProject: { local: directory },
         }),
       )
@@ -87,7 +103,7 @@ async function setup(page: import("@playwright/test").Page, tabs: Array<{ sessio
         JSON.stringify(tabs.map((tab) => ({ type: "session", server, sessionId: tab.sessionId }))),
       )
     },
-    { directory, server, tabs },
+    { directory, server, tabs, projects },
   )
 }
 
@@ -145,4 +161,27 @@ test("workspace session list replaces only the active tab when others stay open"
   await expect(titlebarTabs(page).filter({ hasText: sessionC.title })).toHaveCount(1)
   await expect(titlebarTabs(page).filter({ hasText: sessionB.title })).toHaveCount(1)
   await expect(titlebarTabs(page).filter({ hasText: sessionA.title })).toHaveCount(0)
+})
+
+test("workspace session list opens a session from another project in a new tab", async ({ page }) => {
+  await setup(page, [{ sessionId: sessionA.id }], {
+    projects: [{ worktree: directory }, { worktree: otherDirectory }],
+    sessions: [sessionOther],
+  })
+  await page.goto(`/server/${base64Encode(server)}/session/${sessionA.id}`)
+  await expectSessionTitle(page, sessionA.title)
+  await expect(titlebarTabs(page)).toHaveCount(1)
+  await expect(titlebarTabs(page)).toContainText(sessionA.title)
+
+  await page.locator('[data-action="workspace-file-panel-project"]').filter({ hasText: otherDirectory }).click()
+
+  const otherList = page.locator('[data-component="project-session-list"]')
+  await expectAppVisible(otherList)
+  await otherList.locator('[data-action="project-session-row"]').filter({ hasText: sessionOther.title }).click()
+
+  await expectSessionTitle(page, sessionOther.title)
+  await expect(page).toHaveURL(new RegExp(`/session/${sessionOther.id}$`))
+  await expect(titlebarTabs(page)).toHaveCount(2)
+  await expect(titlebarTabs(page).filter({ hasText: sessionA.title })).toHaveCount(1)
+  await expect(titlebarTabs(page).filter({ hasText: sessionOther.title })).toHaveCount(1)
 })

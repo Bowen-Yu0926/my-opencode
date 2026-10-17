@@ -374,6 +374,11 @@ function legacyWorkspaceStorage(dir: string) {
   if (drive) {
     const backslash = workspaceStorage(key.replaceAll("/", "\\"))
     if (backslash !== storage) result.add(backslash)
+    // Case normalization renames the storage (e.g. `C:/Repo` -> `c:/repo`); keep
+    // the slash-normalized original-case name so data persisted before the
+    // change is still migrated.
+    const slash = workspaceStorage(dir.replaceAll("\\", "/"))
+    if (slash !== storage) result.add(slash)
   }
 
   if (result.size === 0) return

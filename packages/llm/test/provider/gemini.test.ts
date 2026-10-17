@@ -542,6 +542,28 @@ describe("Gemini route", () => {
     }),
   )
 
+  it.effect("treats MALFORMED_RESPONSE as a retryable incomplete stream", () =>
+    Effect.gen(function* () {
+      const error = yield* LLMClient.generate(request).pipe(
+        Effect.provide(
+          fixedResponse(
+            sseEvents({
+              candidates: [{ content: { role: "model", parts: [{ text: "partial" }] }, finishReason: "MALFORMED_RESPONSE" }],
+            }),
+          ),
+        ),
+        Effect.flip,
+      )
+
+      expect(error).toBeInstanceOf(LLMError)
+      expect(error.reason).toMatchObject({
+        _tag: "InvalidProviderOutput",
+        classification: "incomplete-stream",
+      })
+      expect(error.retryable).toBe(true)
+    }),
+  )
+
   it.effect("leaves total usage undefined when component counts are missing", () =>
     Effect.gen(function* () {
       const response = yield* LLMClient.generate(request).pipe(

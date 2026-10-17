@@ -574,6 +574,7 @@ export function PromptInputV2Select(props: {
           as={ButtonV2}
           variant="ghost-muted"
           size="normal"
+          data-slot="prompt-select-chip"
           class={`max-w-[220px] justify-start ![font-weight:440] ${props.class ?? ""}`}
           aria-label={props.title}
         >
@@ -692,6 +693,7 @@ export function PromptInputV2SubmitButton(props: {
         tabIndex={props.mode === "normal" ? undefined : -1}
         icon={props.stopping ? "stop" : props.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
         variant="primary"
+        data-slot="prompt-submit"
         class="size-8 rounded-full p-[6px] text-white bg-v2-background-bg-accent disabled:opacity-50"
         aria-label={props.stopping ? props.stopLabel : props.sendLabel}
         onClick={(event) => {

@@ -521,8 +521,9 @@ function HomeProjectNavButton(props: JSX.ButtonHTMLAttributes<HTMLButtonElement>
         flex h-7 min-w-0 w-full shrink-0 cursor-default items-center gap-2 rounded-[6px] bg-transparent px-1.5 text-left
         text-v2-text-text-muted [font-weight:440] transition-[background-color,color,box-shadow] duration-[120ms] ease-in-out
         hover:bg-v2-background-bg-layer-02 hover:text-v2-text-text-base
-        data-[selected]:bg-v2-background-bg-layer-03 data-[selected]:text-v2-text-text-base
+        data-[selected]:bg-v2-background-bg-layer-03 data-[selected]:text-v2-text-text-accent
         data-[selected]:hover:bg-v2-background-bg-layer-03
+        data-[selected]:[box-shadow:inset_2px_0_0_0_var(--v2-background-bg-accent)]
         focus-visible:bg-v2-background-bg-layer-02 focus-visible:text-v2-text-text-base focus-visible:outline-none
         focus-visible:[box-shadow:inset_0_0_0_0.5px_var(--v2-border-border-muted)]
         ${local.class ?? ""}

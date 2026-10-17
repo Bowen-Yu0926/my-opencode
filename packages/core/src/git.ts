@@ -2,7 +2,7 @@ export * as Git from "./git"
 
 import path from "path"
 import { randomUUID } from "crypto"
-import { Context, Effect, Layer, Schema, Stream } from "effect"
+import { Context, Effect, Layer, Schedule, Schema, Stream } from "effect"
 import { ChildProcess } from "effect/unstable/process"
 import { AbsolutePath, RelativePath } from "./schema"
 import { FSUtil } from "./fs-util"
@@ -321,6 +321,22 @@ const layer = Layer.effect(
       ...args,
     ]
 
+    /**
+     * On Windows, two Git processes finalizing the same loose object get a sharing
+     * violation instead of "already exists". Objects are content-addressed, so a
+     * retry finds the other process's copy. Only a Git exit is retried.
+     */
+    const retryConcurrentObjectWrite = <A, E extends { cause?: unknown }, R>(effect: Effect.Effect<A, E, R>) =>
+      process.platform === "win32"
+        ? effect.pipe(
+            Effect.retry({
+              times: 2,
+              schedule: Schedule.spaced("50 millis"),
+              while: (error) => error.cause === undefined,
+            }),
+          )
+        : effect
+
     const repositoryOperation = Effect.fnUntraced(function* (
       operationName: OperationError["operation"],
       repository: Repository,
@@ -479,11 +495,13 @@ const layer = Layer.effect(
           { stdin: remove.join("\0") + "\0" },
         )
       if (stage.length)
-        yield* repositoryOperation(
-          "refresh",
-          input.repository,
-          ["add", "--all", "--sparse", "--pathspec-from-file=-", "--pathspec-file-nul"],
-          { stdin: stage.join("\0") + "\0" },
+        yield* retryConcurrentObjectWrite(
+          repositoryOperation(
+            "refresh",
+            input.repository,
+            ["add", "--all", "--sparse", "--pathspec-from-file=-", "--pathspec-file-nul"],
+            { stdin: stage.join("\0") + "\0" },
+          ),
         )
       return { skipped }
     })
@@ -528,7 +546,9 @@ const layer = Layer.effect(
     })
 
     const writeTree = Effect.fn("Git.tree.write")(function* (repository: Repository) {
-      return TreeID.make((yield* repositoryOperation("write_tree", repository, ["write-tree"])).text.trim())
+      return TreeID.make(
+        (yield* retryConcurrentObjectWrite(repositoryOperation("write_tree", repository, ["write-tree"]))).text.trim(),
+      )
     })
 
     const captureTree = Effect.fn("Git.tree.capture")(
@@ -673,7 +693,9 @@ const layer = Layer.effect(
                 { discard: true },
               )
               const target = TreeID.make(
-                (yield* repositoryOperation("diff", input.repository, ["write-tree"], { env })).text.trim(),
+                (yield* retryConcurrentObjectWrite(
+                  repositoryOperation("diff", input.repository, ["write-tree"], { env }),
+                )).text.trim(),
               )
               return yield* treeDiff({
                 repository: input.repository,

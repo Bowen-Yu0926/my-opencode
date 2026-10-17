@@ -337,12 +337,13 @@ function SessionRouteFrame(props: ParentProps<{ padded?: boolean }>) {
 function SessionPanelFrame(props: ParentProps<{ newLayout: boolean; raised?: boolean }>) {
   return (
     <div
+      data-component={props.newLayout && props.raised ? "session-inner-card" : undefined}
       classList={{
         "flex-1 min-h-0 flex flex-col": true,
-        "bg-v2-background-bg-base": props.newLayout,
+        "bg-v2-background-bg-base": props.newLayout && !props.raised,
         "bg-background-stronger": !props.newLayout,
-        "rounded-[6px] overflow-hidden": props.newLayout,
-        "border border-v2-border-border-muted": props.newLayout && props.raised,
+        "rounded-[10px] overflow-hidden": props.newLayout && !props.raised,
+        "border border-v2-border-border-muted": props.newLayout && !props.raised,
       }}
     >
       {props.children}

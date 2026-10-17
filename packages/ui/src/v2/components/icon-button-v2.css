@@ -8,12 +8,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--v2-text-text-base);
   user-select: none;
   outline: none;
   padding: 0;
   cursor: default;
+  transition:
+    background-color 140ms ease,
+    background-image 140ms ease,
+    color 140ms ease,
+    box-shadow 160ms ease,
+    transform 140ms ease,
+    opacity 120ms ease;
 }
 
 [data-component="icon-button-v2"]:focus {
@@ -22,27 +29,28 @@
 
 [data-component="icon-button-v2"]:is(:focus-visible, [data-state="focus"]):not(:disabled) {
   outline: 2px solid var(--v2-border-border-focus);
-  outline-offset: 2.5px;
+  outline-offset: 2px;
 }
 
 [data-component="icon-button-v2"][data-size="small"] {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 [data-component="icon-button-v2"][data-size="normal"] {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
 }
 
 [data-component="icon-button-v2"][data-size="large"] {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
 }
 
 [data-component="icon-button-v2"] [data-slot="icon-svg"] {
   color: currentColor;
+  stroke-width: 1.4;
 }
 
 /* Neutral */
@@ -56,12 +64,15 @@
   background-image:
     linear-gradient(90deg, var(--v2-overlay-simple-overlay-hover) 0%, var(--v2-overlay-simple-overlay-hover) 100%),
     linear-gradient(90deg, var(--v2-background-bg-button-neutral) 0%, var(--v2-background-bg-button-neutral) 100%);
+  color: var(--v2-text-text-accent);
+  box-shadow: var(--v2-elevation-raised);
 }
 
 [data-component="icon-button-v2"][data-variant="neutral"]:is(:active, [data-state="pressed"]):not(:disabled) {
   background-image:
     linear-gradient(90deg, var(--v2-overlay-simple-overlay-pressed) 0%, var(--v2-overlay-simple-overlay-pressed) 100%),
     linear-gradient(90deg, var(--v2-background-bg-button-neutral) 0%, var(--v2-background-bg-button-neutral) 100%);
+  transform: translateY(0.5px);
 }
 
 [data-component="icon-button-v2"][data-variant="neutral"]:is(:disabled, [data-state="disabled"]) {
@@ -69,29 +80,33 @@
   cursor: not-allowed;
 }
 
-/* Contrast */
+/* Contrast → accent primary */
 [data-component="icon-button-v2"][data-variant="contrast"] {
-  background-color: var(--v2-background-bg-contrast);
-  color: var(--v2-text-text-contrast);
+  background-color: var(--v2-background-bg-accent);
+  color: #ffffff;
   box-shadow: var(--v2-elevation-button-contrast);
 }
 
 [data-component="icon-button-v2"][data-variant="contrast"]:is(:hover, [data-state="hover"]):not(:disabled) {
   background-image: linear-gradient(
-    90deg,
-    var(--v2-overlay-simple-overlay-contrast-hover) 0%,
-    var(--v2-overlay-simple-overlay-contrast-hover) 100%
+    180deg,
+    color-mix(in srgb, #ffffff 12%, transparent) 0%,
+    transparent 100%
   );
-  background-color: var(--v2-background-bg-contrast);
+  background-color: var(--v2-background-bg-accent);
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--v2-background-bg-accent) 35%, transparent),
+    0 8px 18px color-mix(in srgb, var(--v2-background-bg-accent) 28%, transparent);
 }
 
 [data-component="icon-button-v2"][data-variant="contrast"]:is(:active, [data-state="pressed"]):not(:disabled) {
   background-image: linear-gradient(
-    90deg,
-    var(--v2-overlay-simple-overlay-contrast-pressed) 0%,
-    var(--v2-overlay-simple-overlay-contrast-pressed) 100%
+    180deg,
+    color-mix(in srgb, #000000 10%, transparent) 0%,
+    transparent 100%
   );
-  background-color: var(--v2-background-bg-contrast);
+  background-color: var(--v2-background-bg-accent);
+  transform: translateY(0.5px);
 }
 
 [data-component="icon-button-v2"][data-variant="contrast"]:is(:disabled, [data-state="disabled"]) {
@@ -102,21 +117,24 @@
 /* Ghost */
 [data-component="icon-button-v2"][data-variant="ghost"] {
   background-color: transparent;
-  color: var(--v2-text-text-base);
+  color: var(--v2-icon-icon-base);
 }
 
 [data-component="icon-button-v2"][data-variant="ghost"]:is(:hover, [data-state="hover"]):not(:disabled):not(
     [data-expanded]
   ) {
   background-color: var(--v2-overlay-simple-overlay-hover);
+  color: var(--v2-icon-icon-accent);
 }
 
 [data-component="icon-button-v2"][data-variant="ghost"]:is(:active, [data-state="pressed"]):not(:disabled) {
   background-color: var(--v2-overlay-simple-overlay-pressed);
+  color: var(--v2-icon-icon-accent);
 }
 
 [data-component="icon-button-v2"][data-variant="ghost"]:where([data-expanded]):not(:disabled) {
   background-color: var(--v2-overlay-simple-overlay-pressed);
+  color: var(--v2-icon-icon-accent);
 }
 
 [data-component="icon-button-v2"][data-variant="ghost"]:is(:disabled, [data-state="disabled"]) {
@@ -124,7 +142,7 @@
   cursor: not-allowed;
 }
 
-/* Ghost */
+/* Ghost muted */
 [data-component="icon-button-v2"][data-variant="ghost-muted"] {
   background-color: transparent;
   color: var(--v2-icon-icon-muted);
@@ -134,6 +152,7 @@
     [data-expanded]
   ) {
   background-color: var(--v2-overlay-simple-overlay-hover);
+  color: var(--v2-icon-icon-accent);
 }
 
 [data-component="icon-button-v2"][data-variant="ghost-muted"]:is(:active, [data-state="pressed"]):not(:disabled) {
@@ -143,7 +162,7 @@
 
 [data-component="icon-button-v2"][data-variant="ghost-muted"]:where([data-expanded]):not(:disabled) {
   background-color: var(--v2-overlay-simple-overlay-pressed);
-  color: var(--v2-icon-icon-base);
+  color: var(--v2-icon-icon-accent);
 }
 
 [data-component="icon-button-v2"][data-variant="ghost-muted"]:is(:disabled, [data-state="disabled"]) {

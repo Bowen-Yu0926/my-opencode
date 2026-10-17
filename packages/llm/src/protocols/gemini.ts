@@ -1,14 +1,17 @@
-import { Effect, Schema } from "effect"
+import { Effect, Schema, Stream } from "effect"
 import { Route } from "../route/client"
+import * as HttpTransport from "../route/transport/http"
+import type { Transport, TransportPrepareInput, TransportRuntime } from "../route/transport"
 import { Auth } from "../route/auth"
 import { Endpoint } from "../route/endpoint"
-import { Framing } from "../route/framing"
 import { Protocol } from "../route/protocol"
 import {
   LLMEvent,
   Usage,
   type FinishReason,
   type JsonSchema,
+  InvalidProviderOutputReason,
+  LLMError,
   type LLMRequest,
   type MediaPart,
   type ProviderMetadata,
@@ -111,6 +114,7 @@ const GeminiBodyFields = {
   tools: optionalArray(GeminiTool),
   toolConfig: Schema.optional(GeminiToolConfig),
   generationConfig: Schema.optional(GeminiGenerationConfig),
+  continuationToken: Schema.optional(Schema.String),
 }
 const GeminiBody = Schema.Struct(GeminiBodyFields)
 export type GeminiBody = Schema.Schema.Type<typeof GeminiBody>
@@ -402,6 +406,19 @@ const step = (state: ParserState, event: GeminiEvent) => {
     usage: event.usageMetadata ? (mapUsage(event.usageMetadata) ?? state.usage) : state.usage,
   }
   const candidate = event.candidates?.[0]
+  if (candidate?.finishReason === "MALFORMED_RESPONSE")
+    return Effect.fail(
+      new LLMError({
+        module: "Gemini",
+        method: "stream",
+        reason: new InvalidProviderOutputReason({
+          route: ADAPTER,
+          message: `Gemini stopped with ${candidate.finishReason}`,
+          raw: JSON.stringify(event),
+          classification: "incomplete-stream",
+        }),
+      }),
+    )
   if (!candidate?.content)
     return Effect.succeed([
       { ...nextState, finishReason: candidate?.finishReason ?? nextState.finishReason },
@@ -497,6 +514,97 @@ export const protocol = Protocol.make({
   },
 })
 
+const CONTINUATION = "CONTINUATION"
+const MAX_GEMINI_CONTINUATIONS = 8
+const sse = HttpTransport.sseJson.with<GeminiBody>()
+
+const readCheckpoint = (frame: string) => {
+  try {
+    const event = JSON.parse(frame) as {
+      candidates?: Array<{ finishReason?: string; continuationToken?: string }>
+    }
+    return event.candidates?.[0]
+  } catch {
+    return undefined
+  }
+}
+
+type GeminiPrepared = {
+  readonly http: HttpTransport.HttpPrepared<string>
+  readonly body: GeminiBody
+  readonly input: TransportPrepareInput<GeminiBody>
+}
+
+const continueFrames = (
+  prepared: GeminiPrepared,
+  request: LLMRequest,
+  runtime: TransportRuntime,
+  depth: number,
+): Stream.Stream<string, LLMError> => {
+  if (depth > MAX_GEMINI_CONTINUATIONS)
+    return Stream.fail(
+      new LLMError({
+        module: "Gemini",
+        method: "stream",
+        reason: new InvalidProviderOutputReason({
+          route: ADAPTER,
+          message: "Gemini continuation exceeded the request limit",
+        }),
+      }),
+    )
+  let token: string | undefined
+  let finish: string | undefined
+  let dropped: LLMError | undefined
+  return sse.frames(prepared.http, request, runtime).pipe(
+    Stream.map((frame) => {
+      const text = typeof frame === "string" ? frame : String(frame)
+      const candidate = readCheckpoint(text)
+      if (candidate?.continuationToken) token = candidate.continuationToken
+      if (candidate?.finishReason) finish = candidate.finishReason
+      return text
+    }),
+    Stream.catch((error: unknown) => {
+      dropped = error instanceof LLMError ? error : undefined
+      return Stream.empty
+    }),
+    Stream.concat(
+      Stream.unwrap(
+        Effect.sync(() => {
+          if (token && (finish === undefined || finish === CONTINUATION)) {
+            const continuationToken = token
+            return Stream.unwrap(
+              sse
+                .prepare({ ...prepared.input, body: { ...prepared.body, continuationToken } })
+                .pipe(
+                  Effect.map((http) =>
+                    continueFrames(
+                      {
+                        http,
+                        body: { ...prepared.body, continuationToken },
+                        input: prepared.input,
+                      },
+                      request,
+                      runtime,
+                      depth + 1,
+                    ),
+                  ),
+                ),
+            )
+          }
+          if (dropped) return Stream.fail(dropped)
+          return Stream.empty
+        }),
+      ),
+    ),
+  )
+}
+
+const transport: Transport<GeminiBody, GeminiPrepared, string> = {
+  id: sse.id,
+  prepare: (input) => sse.prepare(input).pipe(Effect.map((http) => ({ http, body: input.body, input }))),
+  frames: (prepared, request, runtime) => continueFrames(prepared, request, runtime, 0),
+}
+
 export const route = Route.make({
   id: ADAPTER,
   provider: "google",
@@ -506,7 +614,7 @@ export const route = Route.make({
     baseURL: DEFAULT_BASE_URL,
   }),
   auth: Auth.none,
-  framing: Framing.sse,
+  transport,
 })
 
 export * as Gemini from "./gemini"

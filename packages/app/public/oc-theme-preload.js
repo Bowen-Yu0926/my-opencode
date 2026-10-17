@@ -15,11 +15,11 @@
 
   document.documentElement.dataset.theme = themeId
   document.documentElement.dataset.colorScheme = mode
-  document.documentElement.style.backgroundColor = isDark ? "#080808" : "#fafafa"
+  document.documentElement.style.backgroundColor = isDark ? "#08090c" : "#eef0f3"
 
   // Update theme-color meta tag to match app color scheme
   var metas = document.querySelectorAll("meta[name='theme-color']")
-  if (metas.length > 0) metas[0].setAttribute("content", isDark ? "#080808" : "#fafafa")
+  if (metas.length > 0) metas[0].setAttribute("content", isDark ? "#08090c" : "#eef0f3")
 
   if (themeId === "oc-2") return
 

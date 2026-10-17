@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test"
 import { ServerScope } from "./server-scope"
+import { pathKey } from "./path-key"
 
 type PersistTestingType = typeof import("./persist").PersistTesting
 type PersistType = typeof import("./persist").Persist
@@ -123,15 +124,17 @@ describe("persist localStorage resilience", () => {
   test("workspace target keeps raw path storage as legacy fallback", () => {
     const target = Persist.workspace("C:\\Users\\foo", "vcs")
 
-    expect(target.storage).toBe(persistTesting.workspaceStorage("C:/Users/foo"))
-    expect(target.legacyStorageNames).toEqual([persistTesting.workspaceStorage("C:\\Users\\foo")])
+    expect(target.storage).toBe(persistTesting.workspaceStorage(pathKey("C:\\Users\\foo")))
+    expect(target.legacyStorageNames ?? []).toContain(persistTesting.workspaceStorage("C:\\Users\\foo"))
   })
 
   test("workspace target keeps backslash storage as fallback for normalized Windows paths", () => {
     const target = Persist.workspace("C:/Users/foo", "vcs")
 
-    expect(target.storage).toBe(persistTesting.workspaceStorage("C:/Users/foo"))
-    expect(target.legacyStorageNames).toEqual([persistTesting.workspaceStorage("C:\\Users\\foo")])
+    expect(target.storage).toBe(persistTesting.workspaceStorage(pathKey("C:/Users/foo")))
+    expect(target.legacyStorageNames ?? []).toContain(
+      persistTesting.workspaceStorage(pathKey("C:/Users/foo").replaceAll("/", "\\")),
+    )
   })
 
   test("migrates direct legacy keys into scoped storage", () => {

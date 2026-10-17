@@ -13,6 +13,7 @@ import { SkillTool } from "./skill"
 import { TodoWriteTool } from "./todowrite"
 import { WebFetchTool } from "./webfetch"
 import { WebSearchTool } from "./websearch"
+import { WorktreeTool } from "./worktree"
 import { WriteTool } from "./write"
 
 /**
@@ -26,7 +27,8 @@ import { WriteTool } from "./write"
  * TODO: Port the remaining launch-follow-up leaves deliberately: edit fuzzy
  * parity, task, LSP,
  * repo_clone, repo_overview, plan_exit, and Rune/code mode. Keep MCP and plugin
- * transforms separate from this static built-in list.
+ * transforms separate from this static built-in list. Worktree create/list/remove
+ * are included so agents can isolate changes without a separate plugin.
  */
 export const node = makeLocationNode({
   name: "built-in-tools",
@@ -43,6 +45,7 @@ export const node = makeLocationNode({
     TodoWriteTool.node,
     WebFetchTool.node,
     WebSearchTool.node,
+    WorktreeTool.node,
     WriteTool.node,
   ],
 })

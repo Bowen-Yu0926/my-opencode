@@ -7,8 +7,11 @@ const themePath = import.meta.dir + "/../src/theme/themes/oc-2.json"
 const theme = (await Bun.file(themePath).json()) as DesktopTheme
 const css = await Bun.file(import.meta.dir + "/../src/v2/styles/theme.css").text()
 
-const light = { ...V2_PRIMITIVES_DEFAULT, ...readTokens("light") }
-const dark = { ...V2_PRIMITIVES_DEFAULT, ...readTokens("dark") }
+// Committed values win over generated defaults. The checked-in theme carries hand-tuned primitives
+// (grey/blue ramps) and contrast tweaks that `theme.css` does not describe, so a plain regenerate
+// would silently revert them. This script therefore backfills missing tokens only.
+const light = { ...V2_PRIMITIVES_DEFAULT, ...readTokens("light"), ...theme.light.v2Overrides }
+const dark = { ...V2_PRIMITIVES_DEFAULT, ...readTokens("dark"), ...theme.dark.v2Overrides }
 
 const next: DesktopTheme = {
   ...theme,
@@ -26,7 +29,12 @@ function readTokens(mode: "light" | "dark") {
   return Object.fromEntries(
     [...block.matchAll(/--(v2-[\w-]+):\s*([^;]+);/g)]
       // Fonts and the fixed avatar foreground remain global CSS rather than theme overrides.
-      .filter(([, key]) => key !== "v2-avatar-fg" && key !== "v2-font-family-sans")
+      // Agent colors are owned by `v2/mapping.ts` at runtime; `theme.css` only mirrors them for
+      // pre-hydration paint, so baking them here would override the richer runtime values.
+      .filter(
+        ([, key]) =>
+          key !== "v2-avatar-fg" && key !== "v2-font-family-sans" && !key.startsWith("v2-agent-"),
+      )
       .map(([, key, value]) => [key, value!.replace(/\s+/g, " ").trim()]),
   )
 }

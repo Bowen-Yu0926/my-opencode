@@ -32,6 +32,8 @@ const DEFAULT_FILE_TREE_WIDTH = 200
 const DEFAULT_SESSION_WIDTH = 600
 const DEFAULT_TERMINAL_HEIGHT = 280
 const DEFAULT_REVIEW_PANEL_OPENED = false
+const DEFAULT_WORKSPACE_PROJECTS_WIDTH = 260
+const DEFAULT_WORKSPACE_FILES_WIDTH = 260
 export type AvatarColorKey = (typeof AVATAR_COLOR_KEYS)[number]
 
 export function getAvatarColors(key?: string) {
@@ -247,10 +249,20 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
         return next
       })()
 
+      const workspacePanels = value.workspacePanels
+      const migratedWorkspacePanels =
+        isRecord(workspacePanels) && isRecord(workspacePanels.projects) && isRecord(workspacePanels.files)
+          ? workspacePanels
+          : {
+              projects: { opened: true, width: DEFAULT_WORKSPACE_PROJECTS_WIDTH },
+              files: { opened: true, width: DEFAULT_WORKSPACE_FILES_WIDTH },
+            }
+
       if (
         migratedSidebar === sidebar &&
         migratedReview === review &&
         migratedFileTree === fileTree &&
+        migratedWorkspacePanels === workspacePanels &&
         migratedSessionTabs === value.sessionTabs &&
         sessionView === value.sessionView
       ) {
@@ -262,6 +274,7 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
         sidebar: migratedSidebar,
         review: migratedReview,
         fileTree: migratedFileTree,
+        workspacePanels: migratedWorkspacePanels,
         sessionTabs: migratedSessionTabs,
         sessionView,
       }
@@ -303,6 +316,10 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
         },
         home: {
           selection: { server: server.key } as HomeProjectSelection,
+        },
+        workspacePanels: {
+          projects: { opened: true, width: DEFAULT_WORKSPACE_PROJECTS_WIDTH },
+          files: { opened: true, width: DEFAULT_WORKSPACE_FILES_WIDTH },
         },
       }),
     )
@@ -622,6 +639,40 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
       if (sessionTimer !== undefined) window.clearTimeout(sessionTimer)
     })
 
+    const workspacePane = (key: "projects" | "files", fallback: number) => ({
+      opened: createMemo(() => store.workspacePanels?.[key]?.opened ?? true),
+      width: createMemo(() => store.workspacePanels?.[key]?.width ?? fallback),
+      open() {
+        writeWorkspacePane(key, { opened: true }, fallback)
+      },
+      close() {
+        writeWorkspacePane(key, { opened: false }, fallback)
+      },
+      toggle() {
+        writeWorkspacePane(key, { opened: !(store.workspacePanels?.[key]?.opened ?? true) }, fallback)
+      },
+      resize(width: number) {
+        writeWorkspacePane(key, { width }, fallback)
+      },
+    })
+
+    const writeWorkspacePane = (
+      key: "projects" | "files",
+      patch: { opened?: boolean; width?: number },
+      fallback: number,
+    ) => {
+      const current = store.workspacePanels ?? {
+        projects: { opened: true, width: DEFAULT_WORKSPACE_PROJECTS_WIDTH },
+        files: { opened: true, width: DEFAULT_WORKSPACE_FILES_WIDTH },
+      }
+      const pane = current[key] ?? { opened: true, width: fallback }
+      setStore("workspacePanels", {
+        projects: current.projects ?? { opened: true, width: DEFAULT_WORKSPACE_PROJECTS_WIDTH },
+        files: current.files ?? { opened: true, width: DEFAULT_WORKSPACE_FILES_WIDTH },
+        [key]: { ...pane, ...patch },
+      })
+    }
+
     return {
       route,
       ready,
@@ -711,6 +762,10 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
           }
           setStore("review", "diffStyle", diffStyle)
         },
+      },
+      workspacePanels: {
+        projects: workspacePane("projects", DEFAULT_WORKSPACE_PROJECTS_WIDTH),
+        files: workspacePane("files", DEFAULT_WORKSPACE_FILES_WIDTH),
       },
       fileTree: {
         opened: createMemo(() => store.fileTree?.opened ?? true),

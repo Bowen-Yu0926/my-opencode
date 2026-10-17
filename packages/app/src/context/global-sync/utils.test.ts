@@ -41,6 +41,7 @@ describe("normalizeAgentList", () => {
       },
     ])
   })
+
 })
 
 describe("normalizePermissionRequest", () => {
@@ -121,9 +122,12 @@ describe("normalizeProviderList", () => {
 })
 
 describe("directoryKey", () => {
+  // pathKey lowercases on case-insensitive filesystems; Linux keeps original case.
+  const expected = (path: string) => (process.platform === "linux" ? path : path.toLowerCase())
+
   test("normalizes slashes", () => {
-    expect(String(directoryKey("C:\\Repos\\sst\\opencode"))).toBe("C:/Repos/sst/opencode")
-    expect(String(directoryKey("C:/Repos/sst/opencode"))).toBe("C:/Repos/sst/opencode")
+    expect(String(directoryKey("C:\\Repos\\sst\\opencode"))).toBe(expected("C:/Repos/sst/opencode"))
+    expect(String(directoryKey("C:/Repos/sst/opencode"))).toBe(expected("C:/Repos/sst/opencode"))
   })
 
   test("preserves backslashes in posix paths", () => {
@@ -131,8 +135,8 @@ describe("directoryKey", () => {
   })
 
   test("trims trailing slashes without breaking roots", () => {
-    expect(String(directoryKey("C:/Repos/sst/opencode/"))).toBe("C:/Repos/sst/opencode")
-    expect(String(directoryKey("C:/"))).toBe("C:/")
+    expect(String(directoryKey("C:/Repos/sst/opencode/"))).toBe(expected("C:/Repos/sst/opencode"))
+    expect(String(directoryKey("C:/"))).toBe(expected("C:/"))
     expect(String(directoryKey("/"))).toBe("/")
   })
 })

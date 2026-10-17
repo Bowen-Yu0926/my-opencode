@@ -36,8 +36,9 @@
 }
 
 [data-component="file-tree-v2"] [data-slot="file-tree-v2-row"][data-selected] {
-  color: var(--v2-text-text-base);
+  color: var(--v2-text-text-accent);
   background-color: var(--v2-overlay-simple-overlay-pressed);
+  box-shadow: inset 2px 0 0 0 var(--v2-background-bg-accent);
 }
 
 [data-component="file-tree-v2"] [data-slot="file-tree-v2-row"][data-selected]:hover {

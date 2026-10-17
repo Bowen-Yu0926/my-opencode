@@ -1931,6 +1931,7 @@ export type Config = {
    */
   autoupdate?: boolean | "notify"
   disabled_providers?: Array<string>
+  disabled_plugins?: Array<string>
   enabled_providers?: Array<string>
   model?: string
   small_model?: string

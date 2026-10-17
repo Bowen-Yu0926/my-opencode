@@ -164,6 +164,21 @@ describe("Git", () => {
     }),
   )
 
+  it.live("statUntrackedBatch() stats several untracked files at once", () =>
+    Effect.gen(function* () {
+      const tmp = yield* scopedTmpdir({ git: true })
+      yield* Effect.promise(() => fs.writeFile(path.join(tmp.path, "a.txt"), "hello\nworld\n", "utf-8"))
+      yield* Effect.promise(() => fs.writeFile(path.join(tmp.path, "b.txt"), "one\n", "utf-8"))
+
+      const git = yield* Git.Service
+      const map = yield* git.statUntrackedBatch(tmp.path, ["a.txt", "b.txt", "missing.txt"])
+
+      expect(map.get("a.txt")).toEqual(expect.objectContaining({ file: "a.txt", additions: 2, deletions: 0 }))
+      expect(map.get("b.txt")).toEqual(expect.objectContaining({ file: "b.txt", additions: 1, deletions: 0 }))
+      expect(map.has("missing.txt")).toBe(false)
+    }),
+  )
+
   it.live("show() returns empty text for binary blobs", () =>
     Effect.gen(function* () {
       const tmp = yield* scopedTmpdir({ git: true })

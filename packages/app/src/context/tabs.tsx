@@ -9,6 +9,7 @@ import { usePlatform } from "./platform"
 import { uuid } from "@/utils/uuid"
 import { SessionTabsRemovedDetail } from "@/components/titlebar-session-events"
 import { sessionHref } from "@/utils/session-route"
+import { pathKey } from "@/utils/path-key"
 import { createTabMemory } from "./tab-memory"
 import { nextTabAfterClose, pushClosedTab, removeClosedTabs, takeClosedTab, type ClosedTab } from "./closed-tabs"
 import { createDraftPromptSession, type PromptModel } from "./prompt-state"
@@ -65,7 +66,7 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
       createStore<Tab[]>([]),
     )
     const [recent, setRecent, , recentReady] = persisted(Persist.window("tabs.recent"), createStore<RecentTab>({}))
-    const [info, setInfo] = persisted(Persist.window("tabs.info"), createStore<Record<string, TabInfo>>({}))
+    const [info, setInfo, , infoReady] = persisted(Persist.window("tabs.info"), createStore<Record<string, TabInfo>>({}))
     const [closed, setClosed, , closedReady] = persisted(Persist.window("tabs.closed"), createStore<ClosedTab[]>([]))
 
     const params = useParams()
@@ -196,6 +197,8 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
       return -1
     }
 
+    const tabDirectory = (tab: Tab) => (tab.type === "draft" ? tab.directory : info[tabKey(tab)]?.directory)
+
     const actions = {
       addSessionTab: (tab: Omit<SessionTab, "type">) => {
         const next = { type: "session" as const, ...tab }
@@ -212,20 +215,49 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
         return next
       },
       /**
-       * Open a session in the current window: switch to an existing tab if
-       * present, otherwise replace the active tab (or create the first one).
-       * Used by the left session list so clicks do not spawn extra tabs.
+       * Open a session in the current window. A session that belongs to the
+       * active tab's project replaces that tab so the left session list does
+       * not spawn extra tabs. A session from a different project opens in a new
+       * tab so the active tab is preserved.
        */
-      openSessionTab: (tab: Omit<SessionTab, "type">) => {
+      openSessionTab: (tab: Omit<SessionTab, "type">, options?: { projectDirectories?: string[] }) => {
         const next = { type: "session" as const, ...tab }
         const existing = store.find((item) => tabKey(item) === tabKey(next))
         if (existing) {
           navigateTab(existing)
           return existing
         }
+        // Wait for the persisted info store before resolving the active tab's
+        // directory: a cold start reads undefined and would replace the active
+        // tab instead of opening a same/different-project decision correctly.
+        if (!infoReady()) {
+          void infoReady.promise?.then(() => actions.openSessionTab(tab, options))
+          return next
+        }
 
         const index = activeTabIndex()
         const previous = index !== -1 ? store[index] : undefined
+        const previousDirectory = previous ? tabDirectory(previous) : undefined
+        const previousKey = previousDirectory ? pathKey(previousDirectory) : undefined
+        const projectDirectories = options?.projectDirectories ?? []
+        const opensInNewTab =
+          !!previousKey &&
+          projectDirectories.length > 0 &&
+          !projectDirectories.some((directory) => pathKey(directory) === previousKey)
+
+        if (opensInNewTab) {
+          void startTransition(() => {
+            setStore(
+              produce((tabs) => {
+                if (tabs.some((item) => tabKey(item) === tabKey(next))) return
+                tabs.push(next)
+              }),
+            )
+            navigateTab(next)
+          })
+          return next
+        }
+
         void startTransition(() => {
           setStore(
             produce((tabs) => {

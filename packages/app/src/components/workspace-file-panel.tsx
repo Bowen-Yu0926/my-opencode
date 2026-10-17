@@ -19,10 +19,11 @@ import { useServerSync } from "@/context/server-sync"
 import { displayName, projectForSession, getProjectAvatarSource } from "@/pages/layout/helpers"
 import { fileManagerApp } from "@/utils/file-manager"
 import { pathKey } from "@/utils/path-key"
+import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
 
 const NAV_ROW =
-  "flex min-h-7 min-w-0 w-full shrink-0 items-center gap-1.5 rounded-[6px] border-0 bg-transparent px-1.5 py-1 text-left\n" +
-  "text-v2-text-text-muted [font-weight:440] transition-[background-color,color] duration-[100ms] ease-out\n" +
+  "flex min-h-8 min-w-0 w-full shrink-0 items-center gap-1.5 rounded-[8px] border-0 bg-transparent px-2 py-1 text-left\n" +
+  "text-v2-text-text-muted [font-weight:440] transition-[background-color,color,box-shadow] duration-[140ms] ease-out\n" +
   "hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base\n" +
   "focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:text-v2-text-text-base focus-visible:outline-none\n" +
   "disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-v2-text-text-muted"
@@ -149,11 +150,34 @@ export function WorkspaceFilePanel() {
   const focusedConn = () => home.server.focused() ?? server.current
   const isExpanded = (worktree: string) => !!expanded() && pathKey(expanded()!) === pathKey(worktree)
   const isActive = (worktree: string) => pathKey(activeDirectory() ?? "") === pathKey(worktree)
+  const pane = layout.workspacePanels.projects
+  const panelMax = () => (typeof window === "undefined" ? 480 : Math.min(520, Math.round(window.innerWidth * 0.42)))
 
   return (
+    <div
+      class="workspace-panel-shell relative my-2 mr-1.5 flex min-h-0 shrink-0 self-stretch"
+      style={{ width: pane.opened() ? `${pane.width()}px` : "2.75rem" }}
+    >
+      <Show
+        when={pane.opened()}
+        fallback={
+          <div class="workspace-panel-card flex h-full w-full flex-col items-center gap-1 pt-2 pb-2">
+            <TooltipV2 placement="right" value={language.t("command.sidebar.toggle")}>
+              <IconButtonV2
+                data-action="workspace-panel-expand"
+                variant="neutral"
+                size="normal"
+                icon={<IconV2 name="panel-left" />}
+                aria-label={language.t("command.sidebar.toggle")}
+                onClick={() => pane.open()}
+              />
+            </TooltipV2>
+          </div>
+        }
+      >
     <aside
       aria-label={language.t("sidebar.nav.projectsAndSessions")}
-      class="m-1.5 flex w-[260px] shrink-0 flex-col gap-0.5 overflow-hidden rounded-[12px] border border-v2-border-border-muted bg-v2-background-bg-base min-h-0"
+      class="workspace-panel-card flex h-full min-h-0 w-full flex-col gap-0.5"
     >
       <div
         class="flex h-10 shrink-0 items-center justify-between gap-2 px-2.5"
@@ -163,16 +187,28 @@ export function WorkspaceFilePanel() {
         <span class="min-w-0 truncate text-[13px] leading-4 text-v2-text-text-muted [font-weight:530]">
           {language.t("home.projects")}
         </span>
-        <TooltipV2 placement="bottom" value={language.t("command.session.new")}>
-          <IconButtonV2
-            data-action="workspace-panel-new-session"
-            variant="ghost-muted"
-            size="small"
-            icon={<IconV2 name="plus" />}
-            aria-label={language.t("command.session.new")}
-            onClick={createSession}
-          />
-        </TooltipV2>
+        <div data-slot="workspace-panel-toolbar" class="flex shrink-0 items-center gap-0.5 rounded-[8px] p-0.5">
+          <TooltipV2 placement="bottom" value={language.t("command.sidebar.toggle")}>
+            <IconButtonV2
+              data-action="workspace-panel-collapse"
+              variant="ghost-muted"
+              size="small"
+              icon={<IconV2 name="panel-left" />}
+              aria-label={language.t("command.sidebar.toggle")}
+              onClick={() => pane.close()}
+            />
+          </TooltipV2>
+          <TooltipV2 placement="bottom" value={language.t("command.session.new")}>
+            <IconButtonV2
+              data-action="workspace-panel-new-session"
+              variant="ghost-muted"
+              size="small"
+              icon={<IconV2 name="plus-soft" />}
+              aria-label={language.t("command.session.new")}
+              onClick={createSession}
+            />
+          </TooltipV2>
+        </div>
       </div>
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-1.5">
         <div class="flex flex-col gap-px">
@@ -199,7 +235,7 @@ export function WorkspaceFilePanel() {
                       data-action="workspace-file-panel-project"
                       data-worktree={project.worktree}
                       title={project.worktree}
-                      class={`${NAV_ROW} items-center pr-8`}
+                      class={`${NAV_ROW} items-center pr-14`}
                       classList={{
                         "bg-v2-overlay-simple-overlay-hover text-v2-text-text-base [font-weight:530]": isActive(
                           project.worktree,
@@ -214,7 +250,7 @@ export function WorkspaceFilePanel() {
                     >
                       <span
                         data-action="workspace-file-panel-project-expand"
-                        class="flex size-4 shrink-0 items-center justify-center text-v2-icon-icon-muted"
+                        class="flex size-4 shrink-0 items-center justify-center rounded-[4px] text-v2-icon-icon-muted hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-icon-icon-base"
                         onClick={(event) => {
                           event.preventDefault()
                           event.stopPropagation()
@@ -224,7 +260,7 @@ export function WorkspaceFilePanel() {
                         <IconV2
                           name="chevron-down"
                           size="small"
-                          class="size-3.5 transition-transform duration-100"
+                          class="size-3 transition-transform duration-150"
                           classList={{ "-rotate-90": !isExpanded(project.worktree) }}
                         />
                       </span>
@@ -234,18 +270,23 @@ export function WorkspaceFilePanel() {
                         src={getProjectAvatarSource(project.id, project.icon)}
                         variant={getProjectAvatarVariant(project.icon?.color)}
                       />
-                      <span class="flex min-w-0 flex-1 items-baseline gap-1.5">
-                        <span class="shrink-0 text-[14px] leading-5 tracking-[-0.01em] [font-weight:530]">
+                      <span class="flex min-w-0 flex-1 items-baseline gap-1.5 overflow-hidden">
+                        <span class="shrink-0 text-[13px] leading-5 tracking-[-0.01em] [font-weight:530]">
                           {displayName(project)}
                         </span>
-                        <span class="min-w-0 flex-1 truncate text-[12px] leading-5 text-v2-text-text-faint [font-weight:400]">
+                        <span
+                          data-slot="workspace-project-path"
+                          class="min-w-0 flex-1 overflow-hidden text-[11px] leading-5 text-v2-text-text-faint [font-weight:400] whitespace-nowrap"
+                          title={project.worktree}
+                        >
                           {project.worktree}
                         </span>
                       </span>
                     </button>
                     <div
+                      data-slot="workspace-project-actions"
                       data-menu={projectMenu() === projectMenuID(project.worktree)}
-                      class="absolute right-0.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity duration-100 group-hover/project:opacity-100 focus-within:opacity-100 data-[menu=true]:opacity-100"
+                      class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-px rounded-[7px] bg-v2-background-bg-base/90 p-0.5 opacity-0 shadow-[var(--v2-elevation-raised)] backdrop-blur-[6px] transition-opacity duration-120 group-hover/project:opacity-100 focus-within:opacity-100 data-[menu=true]:opacity-100"
                     >
                       <MenuV2
                         gutter={6}
@@ -261,7 +302,7 @@ export function WorkspaceFilePanel() {
                           data-action="workspace-file-panel-project-menu"
                           variant="ghost-muted"
                           size="small"
-                          icon={<IconV2 name="outline-dots" />}
+                          icon={<IconV2 name="more" />}
                           aria-label={language.t("common.moreOptions")}
                         />
                         <MenuV2.Portal>
@@ -323,7 +364,7 @@ export function WorkspaceFilePanel() {
                         data-action="workspace-file-panel-project-new-session"
                         variant="ghost-muted"
                         size="small"
-                        icon={<IconV2 name="plus" />}
+                        icon={<IconV2 name="plus-soft" />}
                         aria-label={language.t("command.session.new")}
                         onClick={() => {
                           const conn = focusedConn()
@@ -352,5 +393,17 @@ export function WorkspaceFilePanel() {
         </button>
       </div>
     </aside>
+        <ResizeHandle
+          direction="horizontal"
+          edge="end"
+          size={pane.width()}
+          min={200}
+          max={panelMax()}
+          collapseThreshold={140}
+          onResize={(width) => pane.resize(width)}
+          onCollapse={() => pane.close()}
+        />
+      </Show>
+    </div>
   )
 }

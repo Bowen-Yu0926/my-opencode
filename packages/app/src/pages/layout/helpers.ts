@@ -107,6 +107,18 @@ export function projectForSession<T extends { id?: string; worktree: string; san
   )
 }
 
+/** Full worktree+sandbox set for the session's project, so a same-project click
+ * is never misread as cross-project. Falls back to the session directory only
+ * when the project cannot be resolved. */
+export function projectDirectories<T extends { id?: string; worktree: string; sandboxes?: string[] }>(
+  session: Session,
+  projects: T[],
+  byID?: Map<string, T>,
+) {
+  const project = projectForSession(session, projects, byID)
+  return project ? [project.worktree, ...(project.sandboxes ?? [])] : [session.directory]
+}
+
 // Resolves the active project the same way the workspace panel highlights it:
 // a known selection wins, otherwise the first project, otherwise no filtering.
 export function sessionsForActiveProject<T extends { directory: string }>(

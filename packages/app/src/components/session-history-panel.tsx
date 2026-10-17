@@ -16,7 +16,7 @@ import { ServerConnection, useServer } from "@/context/server"
 import { useLanguage } from "@/context/language"
 import { sessionHasOpenTab, useTabs } from "@/context/tabs"
 import { loadHomeSessionIndex, retainHomeSessions, type HomeSessionEvents } from "@/context/global-sync/home-session-index"
-import { projectForSession, sessionsForActiveProject } from "@/pages/layout/helpers"
+import { projectDirectories, sessionsForActiveProject } from "@/pages/layout/helpers"
 import { pathKey } from "@/utils/path-key"
 import { sessionTitle } from "@/utils/session-title"
 import { showToast } from "@/utils/toast"
@@ -54,8 +54,7 @@ export function createHomeSessionSource() {
   const ctx = createMemo(() => (server.current ? global.ensureServerCtx(server.current) : undefined))
 
   const projects = createMemo(() => {
-    const key = layout.home.selection().server
-    const conn = global.servers.list().find((item) => ServerConnection.key(item) === key) ?? server.current
+    const conn = server.current
     return conn ? global.ensureServerCtx(conn).projects.list() : []
   })
 
@@ -99,8 +98,8 @@ export function createHomeSessionSource() {
     const conn = server.current
     if (!conn) return
     const key = ServerConnection.key(conn)
-    const project = projectForSession(session, projects())
-    const directory = project?.worktree ?? session.directory
+    const directories = projectDirectories(session, projects())
+    const directory = directories[0] ?? session.directory
     layout.home.setSelection({ server: key, directory })
     const active = ctx()
     if (active) {
@@ -108,7 +107,10 @@ export function createHomeSessionSource() {
       active.projects.touch(directory)
       active.sync.child(directory)
     }
-    tabs.openSessionTab({ server: key, sessionId: session.id })
+    tabs.openSessionTab(
+      { server: key, sessionId: session.id },
+      { projectDirectories: directories },
+    )
   }
 
   async function rename(session: Session, title: string) {
@@ -403,13 +405,14 @@ function SessionRow(props: {
             title={language.t("session.list.openInCurrentTab")}
             data-action="project-session-row"
             classList={{
-              "flex w-full min-w-0 items-center border-0 bg-transparent text-left transition-[background-color,color] duration-100 ease-out focus-visible:outline-none":
+              "flex w-full min-w-0 items-center border-0 bg-transparent text-left transition-[background-color,color,box-shadow] duration-140 ease-out focus-visible:outline-none":
                 true,
-              "h-7 gap-1.5 rounded-[5px] px-1.5 pr-6 text-v2-text-text-muted [font-weight:440] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
+              "h-7 gap-1.5 rounded-[8px] px-1.5 pr-6 text-v2-text-text-muted [font-weight:440] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
                 !!props.compact,
-              "h-9 gap-2 rounded-[6px] px-1.5 pr-9 text-v2-text-text-muted [font-weight:530] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
+              "h-9 gap-2 rounded-[8px] px-1.5 pr-9 text-v2-text-text-muted [font-weight:530] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
                 !props.compact,
-              "bg-v2-overlay-simple-overlay-hover text-v2-text-text-base [font-weight:530]": props.open,
+              "bg-v2-background-bg-layer-03 text-v2-text-text-accent [font-weight:530] shadow-[inset_2px_0_0_0_var(--v2-background-bg-accent)]":
+                props.open,
             }}
             onClick={props.onOpen}
           >

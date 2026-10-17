@@ -295,7 +295,10 @@ const layer = Layer.effect(
             return yield* Effect.die(continueAfterOverflowCompaction(currentStep))
           if (overflowFailure) yield* publish(overflowFailure)
           const llmFailure = failure instanceof LLMError ? failure : undefined
-          if (llmFailure && !publisher.hasProviderError()) {
+          const incomplete =
+            llmFailure?.reason._tag === "InvalidProviderOutput" &&
+            llmFailure.reason.classification === "incomplete-stream"
+          if (llmFailure && !incomplete && !publisher.hasProviderError()) {
             yield* withPublication(publisher.failUnsettledTools("Provider did not return a tool result", true))
             yield* withPublication(publisher.failAssistant(llmFailure.reason.message))
           }
@@ -346,10 +349,18 @@ const layer = Layer.effect(
             yield* withPublication(publisher.failUnsettledTools("Tool execution interrupted"))
           if (stream._tag === "Success" && !publisher.hasProviderError())
             yield* withPublication(publisher.failUnsettledTools("Provider did not return a tool result", true))
-          if (stream._tag === "Failure") return yield* Effect.failCause(stream.cause)
+          if (stream._tag === "Failure" && !incomplete) return yield* Effect.failCause(stream.cause)
           if (settled._tag === "Failure" && Cause.hasInterrupts(settled.cause))
             return yield* Effect.failCause(settled.cause)
-          return { needsContinuation: !publisher.hasProviderError() && needsContinuation, step: currentStep }
+          const lengthStreak = lengthFinishStreak(context)
+          const continueAfterLength =
+            stepSettlement?.finish === "length" && lengthStreak < 2 && !publisher.hasProviderError()
+          return {
+            needsContinuation:
+              !publisher.hasProviderError() && (needsContinuation || incomplete || continueAfterLength),
+            malformedRetry: incomplete,
+            step: currentStep,
+          }
         }),
       )
     }, Effect.scoped)
@@ -357,7 +368,10 @@ const layer = Layer.effect(
       sessionID: SessionSchema.ID,
       promotion: SessionInput.Delivery | undefined,
       step: number,
-    ) => Effect.Effect<{ readonly needsContinuation: boolean; readonly step: number }, RunError>
+    ) => Effect.Effect<
+      { readonly needsContinuation: boolean; readonly malformedRetry: boolean; readonly step: number },
+      RunError
+    >
 
     const runAfterOverflowCompaction: RunTurn = Effect.fnUntraced(function* (sessionID, promotion, step) {
       return yield* runTurnAttempt(sessionID, promotion, step).pipe(
@@ -400,9 +414,11 @@ const layer = Layer.effect(
       while (shouldRun) {
         let needsContinuation = true
         let step = 1
+        let malformedRetries = 0
         while (needsContinuation) {
           const result = yield* runTurn(input.sessionID, promotion, step)
-          needsContinuation = result.needsContinuation
+          malformedRetries = result.malformedRetry ? malformedRetries + 1 : 0
+          needsContinuation = result.needsContinuation && malformedRetries <= 2
           step = result.step + 1
           promotion = "steer"
           if (!needsContinuation) needsContinuation = yield* SessionInput.hasPending(db, input.sessionID, "steer")
@@ -417,6 +433,17 @@ const layer = Layer.effect(
     })
   }),
 )
+
+const lengthFinishStreak = (messages: ReadonlyArray<{ readonly type?: string; readonly finish?: string }>) => {
+  let count = 0
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index]
+    if (!message || message.type !== "assistant") continue
+    if (message.finish !== "length") break
+    count += 1
+  }
+  return count
+}
 
 export const node = makeLocationNode({
   service: Service,

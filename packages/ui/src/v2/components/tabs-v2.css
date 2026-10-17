@@ -136,7 +136,7 @@
 
 [data-component="tabs-v2"][data-variant="normal"][data-orientation="horizontal"]
   [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected]) {
-  border-bottom-color: var(--v2-text-text-faint);
+  border-bottom-color: var(--v2-background-bg-accent);
   color: var(--v2-text-text-base);
 }
 
@@ -171,8 +171,8 @@
 [data-component="tabs-v2"][data-variant="pill"][data-orientation="horizontal"]
   [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected]) {
   background-color: var(--v2-background-bg-layer-03);
-  color: var(--v2-text-text-base);
-  border: 0.5px solid var(--v2-border-border-muted);
+  color: var(--v2-text-text-accent);
+  border: 0.5px solid color-mix(in srgb, var(--v2-background-bg-accent) 28%, transparent);
 }
 
 [data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"] [data-slot="tabs-v2-list"] {
@@ -197,8 +197,8 @@
 
 [data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"] [data-slot="tabs-v2-trigger-wrapper"] {
   width: 100%;
-  height: 28px;
-  border-radius: 4px;
+  height: 32px;
+  border-radius: 8px;
   box-sizing: border-box;
   color: var(--v2-text-text-muted);
 }
@@ -207,18 +207,21 @@
   width: 100%;
   height: 100%;
   justify-content: flex-start;
-  gap: 6px;
-  padding: 0 6px;
+  gap: 8px;
+  padding: 0 8px;
 }
 
 [data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
   [data-slot="tabs-v2-trigger-wrapper"]:hover:not(:disabled):not(:has([data-selected])) {
-  background-color: var(--v2-background-bg-layer-03);
+  background-color: var(--v2-overlay-simple-overlay-hover);
   color: var(--v2-text-text-base);
 }
 
 [data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
   [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected]) {
   background-color: var(--v2-background-bg-layer-03);
-  color: var(--v2-text-text-base);
+  color: var(--v2-text-text-accent);
+  box-shadow:
+    inset 0 0 0 0.5px color-mix(in srgb, var(--v2-background-bg-accent) 28%, transparent),
+    inset 2px 0 0 0 var(--v2-background-bg-accent);
 }

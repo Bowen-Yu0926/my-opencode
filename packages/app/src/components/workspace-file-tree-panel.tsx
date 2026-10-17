@@ -24,6 +24,7 @@ import { fileManagerApp } from "@/utils/file-manager"
 import { pathKey } from "@/utils/path-key"
 import { SessionRouteKey, SessionStateKey } from "@/utils/server-scope"
 import { showToast } from "@/utils/toast"
+import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
 
 function FileTreeSection(props: { refreshTick: number }) {
   const file = useFile()
@@ -231,6 +232,8 @@ export function WorkspaceFileTreePanel() {
 
   const projects = home.project.list
   const selection = layout.home.selection
+  const pane = layout.workspacePanels.files
+  const panelMax = () => (typeof window === "undefined" ? 480 : Math.min(520, Math.round(window.innerWidth * 0.42)))
 
   const workspacesOf = (project: { worktree: string; sandboxes?: string[] }) => [
     project.worktree,
@@ -278,9 +281,30 @@ export function WorkspaceFileTreePanel() {
   }
 
   return (
+    <div
+      class="workspace-panel-shell relative my-2 ml-1.5 flex min-h-0 shrink-0 self-stretch"
+      style={{ width: pane.opened() ? `${pane.width()}px` : "2.75rem" }}
+    >
+      <Show
+        when={pane.opened()}
+        fallback={
+          <div class="workspace-panel-card flex h-full w-full flex-col items-center gap-1 pt-2 pb-2">
+            <TooltipV2 placement="left" value={language.t("command.fileTree.toggle")}>
+              <IconButtonV2
+                data-action="workspace-file-tree-expand"
+                variant="neutral"
+                size="normal"
+                icon={<IconV2 name="panel-right" />}
+                aria-label={language.t("command.fileTree.toggle")}
+                onClick={() => pane.open()}
+              />
+            </TooltipV2>
+          </div>
+        }
+      >
     <aside
       aria-label={language.t("session.files.all")}
-      class="m-1.5 flex h-full min-h-0 w-[260px] shrink-0 flex-col gap-0.5 self-stretch overflow-hidden rounded-[12px] border border-v2-border-border-muted bg-v2-background-bg-base"
+      class="workspace-panel-card flex h-full min-h-0 w-full flex-col gap-0.5 self-stretch"
       data-component="workspace-file-tree-panel"
     >
       <div
@@ -291,17 +315,29 @@ export function WorkspaceFileTreePanel() {
         <span class="min-w-0 truncate text-[13px] leading-4 text-v2-text-text-muted [font-weight:530]">
           {language.t("session.files.all")}
         </span>
-        <TooltipV2 placement="bottom" value={language.t("sidebar.refresh")}>
-          <IconButtonV2
-            data-action="workspace-file-tree-refresh"
-            variant="ghost-muted"
-            size="small"
-            icon={<IconV2 name="refresh" />}
-            aria-label={language.t("sidebar.refresh")}
-            disabled={refreshing() || !activeDirectory()}
-            onClick={refreshAll}
-          />
-        </TooltipV2>
+        <div data-slot="workspace-panel-toolbar" class="ml-auto flex shrink-0 items-center gap-0.5 rounded-[8px] p-0.5">
+          <TooltipV2 placement="bottom" value={language.t("sidebar.refresh")}>
+            <IconButtonV2
+              data-action="workspace-file-tree-refresh"
+              variant="ghost-muted"
+              size="small"
+              icon={<IconV2 name="refresh" />}
+              aria-label={language.t("sidebar.refresh")}
+              disabled={refreshing() || !activeDirectory()}
+              onClick={refreshAll}
+            />
+          </TooltipV2>
+          <TooltipV2 placement="bottom" value={language.t("command.fileTree.toggle")}>
+            <IconButtonV2
+              data-action="workspace-file-tree-collapse"
+              variant="ghost-muted"
+              size="small"
+              icon={<IconV2 name="panel-right" />}
+              aria-label={language.t("command.fileTree.toggle")}
+              onClick={() => pane.close()}
+            />
+          </TooltipV2>
+        </div>
       </div>
       <Show
         when={activeDirectoryKey()}
@@ -327,5 +363,17 @@ export function WorkspaceFileTreePanel() {
         }}
       </Show>
     </aside>
+        <ResizeHandle
+          direction="horizontal"
+          edge="start"
+          size={pane.width()}
+          min={200}
+          max={panelMax()}
+          collapseThreshold={140}
+          onResize={(width) => pane.resize(width)}
+          onCollapse={() => pane.close()}
+        />
+      </Show>
+    </div>
   )
 }

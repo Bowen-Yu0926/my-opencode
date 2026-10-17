@@ -294,6 +294,7 @@ export function SessionSidePanel(props: {
         aria-label={language.t("session.panel.reviewAndFiles")}
         aria-hidden={!open()}
         inert={!open()}
+        data-component={settings.general.newLayoutDesigns() ? "session-inner-card" : undefined}
         class="relative min-w-0 flex overflow-hidden"
         classList={{
           "bg-v2-background-bg-base": settings.general.newLayoutDesigns(),
@@ -303,7 +304,6 @@ export function SessionSidePanel(props: {
           "pointer-events-none": !open(),
           "transition-[width] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
             !props.size.active() && !props.reviewSnap,
-          "rounded-[6px] border border-v2-border-border-muted overflow-hidden": settings.general.newLayoutDesigns(),
           "flex-1": reviewOpen(),
         }}
         style={{ width: panelWidth() }}

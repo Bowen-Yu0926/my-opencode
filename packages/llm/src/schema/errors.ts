@@ -138,10 +138,11 @@ export class InvalidProviderOutputReason extends Schema.Class<InvalidProviderOut
   message: Schema.String,
   route: Schema.optional(Schema.String),
   raw: Schema.optional(Schema.String),
+  classification: Schema.optional(Schema.Literal("incomplete-stream")),
   providerMetadata: Schema.optional(ProviderMetadata),
 }) {
   get retryable() {
-    return false
+    return this.classification === "incomplete-stream"
   }
 }
 

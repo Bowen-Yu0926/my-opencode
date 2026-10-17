@@ -172,12 +172,12 @@ export function TerminalPanelV2(props: { stacked?: boolean } = {}) {
       aria-label={language.t("terminal.title")}
       aria-hidden={!opened()}
       inert={!opened()}
+      data-component={isDesktop() && newLayout() ? "session-inner-card" : undefined}
       class="relative shrink-0 overflow-hidden bg-v2-background-bg-base"
       classList={{
         "w-full": !isDesktop() || stacked(),
         "min-w-0 h-full flex-1": isDesktop() && opened() && !stacked(),
         "w-0 h-full pointer-events-none": isDesktop() && !opened(),
-        "rounded-[6px] border border-v2-border-border-muted": isDesktop() && newLayout(),
         "transition-[height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[height] motion-reduce:transition-none":
           !isDesktop() && !size.active(),
       }}

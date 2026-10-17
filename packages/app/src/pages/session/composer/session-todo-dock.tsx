@@ -98,10 +98,9 @@ export function SessionTodoDock(props: {
   return (
     <Dynamic
       component={settings.general.newLayoutDesigns() ? "div" : DockTray}
-      data-component="session-todo-dock"
+      data-component={settings.general.newLayoutDesigns() ? "session-dock-card" : "session-todo-dock"}
       classList={{
-        "w-full overflow-hidden rounded-[6px] border border-v2-border-border-muted bg-v2-background-bg-layer-01":
-          settings.general.newLayoutDesigns(),
+        "w-full": settings.general.newLayoutDesigns(),
       }}
       style={{
         "overflow-x": "visible",

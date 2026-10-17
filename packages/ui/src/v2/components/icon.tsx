@@ -29,6 +29,22 @@ const icons = {
     viewBox: "0 0 20 20",
     body: `<path d="M2.91536 2.91406H2.36536V2.36406H2.91536V2.91406ZM2.91536 17.0807V17.6307H2.36536V17.0807H2.91536ZM17.082 17.0807H17.632V17.6307H17.082V17.0807ZM17.082 2.91406V2.36406H17.632V2.91406H17.082ZM6.9987 2.91406H6.4487V2.36406H6.9987V2.91406ZM6.9987 17.0807V17.6307H6.4487V17.0807H6.9987ZM2.91536 2.91406H3.46536V17.0807H2.91536H2.36536V2.91406H2.91536ZM2.91536 17.0807V16.5307H17.082V17.0807V17.6307H2.91536V17.0807ZM17.082 17.0807H16.532V2.91406H17.082H17.632V17.0807H17.082ZM17.082 2.91406V3.46406H2.91536V2.91406V2.36406H17.082V2.91406ZM6.9987 2.91406H7.5487V17.0807H6.9987H6.4487V2.91406H6.9987ZM17.082 17.0807L17.082 17.6307L6.9987 17.6307V17.0807V16.5307L17.082 16.5307L17.082 17.0807ZM6.9987 2.91406V2.36406H17.082V2.91406V3.46406H6.9987V2.91406Z" fill="currentColor"/>`,
   },
+  "panel-left": {
+    viewBox: "0 0 16 16",
+    body: `<rect x="2.25" y="2.75" width="11.5" height="10.5" rx="2.25" stroke="currentColor" stroke-width="1.35"/><path d="M6.15 2.75v10.5" stroke="currentColor" stroke-width="1.35"/><path d="M2.25 5a2.25 2.25 0 0 1 2.25-2.25H6.15v10.5H4.5A2.25 2.25 0 0 1 2.25 11V5Z" fill="currentColor" fill-opacity="0.16"/>`,
+  },
+  "panel-right": {
+    viewBox: "0 0 16 16",
+    body: `<rect x="2.25" y="2.75" width="11.5" height="10.5" rx="2.25" stroke="currentColor" stroke-width="1.35"/><path d="M9.85 2.75v10.5" stroke="currentColor" stroke-width="1.35"/><path d="M13.75 5a2.25 2.25 0 0 0-2.25-2.25H9.85v10.5h1.65a2.25 2.25 0 0 0 2.25-2.25V5Z" fill="currentColor" fill-opacity="0.16"/>`,
+  },
+  more: {
+    viewBox: "0 0 16 16",
+    body: `<circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/>`,
+  },
+  "plus-soft": {
+    viewBox: "0 0 16 16",
+    body: `<path d="M8 4.15v7.7M4.15 8h7.7" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"/>`,
+  },
   status: {
     viewBox: "0 0 20 20",
     body: `<path d="M2 10V18H18V10M2 10V2H18V10M2 10H18M5 6H9M5 14H9" stroke="currentColor"/>`,

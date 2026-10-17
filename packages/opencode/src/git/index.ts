@@ -1,3 +1,7 @@
+import { randomUUID } from "crypto"
+import fs from "fs/promises"
+import os from "os"
+import path from "path"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { AppProcess } from "@opencode-ai/core/process"
 import { Effect, Layer, Context, Stream } from "effect"
@@ -87,6 +91,7 @@ export interface Interface {
   readonly patchAll: (cwd: string, ref: string, options?: PatchOptions) => Effect.Effect<Patch>
   readonly patchUntracked: (cwd: string, file: string, options?: PatchOptions) => Effect.Effect<Patch>
   readonly statUntracked: (cwd: string, file: string) => Effect.Effect<Stat | undefined>
+  readonly statUntrackedBatch: (cwd: string, files: readonly string[]) => Effect.Effect<Map<string, Stat>>
   readonly applyPatch: (cwd: string, patch: string) => Effect.Effect<Result>
 }
 
@@ -319,6 +324,21 @@ const layer = Layer.effect(
       } satisfies Stat
     })
 
+    /**
+     * Prefetch untracked numstats in parallel. Large working trees used to spawn
+     * one git process per file and blow past the desktop request timeout.
+     */
+    const statUntrackedBatch = Effect.fn("Git.statUntrackedBatch")(function* (cwd: string, files: readonly string[]) {
+      const map = new Map<string, Stat>()
+      if (!files.length) return map
+      const results = yield* Effect.forEach(files, (file) => statUntracked(cwd, file), { concurrency: 16 })
+      for (const [index, stat] of results.entries()) {
+        if (!stat) continue
+        map.set(files[index]!, stat)
+      }
+      return map
+    })
+
     const applyPatch = Effect.fn("Git.applyPatch")(function* (cwd: string, patch: string) {
       return yield* run(["apply", "-"], { cwd, stdin: stdin(patch) })
     })
@@ -338,6 +358,7 @@ const layer = Layer.effect(
       patchAll,
       patchUntracked,
       statUntracked,
+      statUntrackedBatch,
       applyPatch,
     })
   }),

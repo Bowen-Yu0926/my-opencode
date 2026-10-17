@@ -175,9 +175,15 @@ const files = Effect.fnUntraced(function* (
   const next: FileDiff[] = []
   let total = 0
   let capped = false
+  const untracked = yield* git.statUntrackedBatch(
+    cwd,
+    list.filter((item) => item.status === "added" && !map.has(item.file)).map((item) => item.file),
+  )
 
   for (const item of list.toSorted((a, b) => a.file.localeCompare(b.file))) {
-    const stat = map.get(item.file) ?? (item.status === "added" ? yield* git.statUntracked(cwd, item.file) : undefined)
+    const stat =
+      map.get(item.file) ??
+      (item.status === "added" ? (untracked.get(item.file) ?? (yield* git.statUntracked(cwd, item.file))) : undefined)
     const patch = yield* patchForItem(git, cwd, ref, item, batch, capped, options)
     const result: { patch: string; capped: boolean } = capped
       ? { patch, capped: true }
@@ -354,13 +360,19 @@ const layer: Layer.Layer<Service, never, Git.Service | EventV2Bridge.Service> = 
           { concurrency: 2 },
         )
         const map = nums(stats)
+        const untracked = yield* git.statUntrackedBatch(
+          ctx.worktree,
+          list.filter((item) => item.status === "added" && !map.has(item.file)).map((item) => item.file),
+        )
         return yield* Effect.forEach(
           list.toSorted((a, b) => a.file.localeCompare(b.file)),
           (item) =>
             Effect.gen(function* () {
               const stat =
                 map.get(item.file) ??
-                (item.status === "added" ? yield* git.statUntracked(ctx.worktree, item.file) : undefined)
+                (item.status === "added"
+                  ? (untracked.get(item.file) ?? (yield* git.statUntracked(ctx.worktree, item.file)))
+                  : undefined)
               return {
                 file: item.file,
                 additions: stat?.additions ?? 0,

@@ -202,7 +202,7 @@ export function TitlebarSessionTabs() {
   return (
     <div
       data-slot="titlebar-v2-tabs"
-      class="flex h-10 min-w-0 shrink-0 flex-row items-center gap-1 border-b border-v2-border-border-muted bg-v2-background-bg-base px-2"
+      class="flex h-11 min-w-0 shrink-0 flex-row items-center gap-1 border-b border-v2-border-border-muted bg-v2-background-bg-layer-01/60 px-2.5 backdrop-blur-[8px]"
     >
       <TitlebarTabStrip
         tabs={tabsStore}
