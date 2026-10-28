@@ -62,6 +62,7 @@ import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/
 import { SessionContextUsage } from "@/components/session-context-usage"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLanguage } from "@/context/language"
+import { useCommand } from "@/context/command"
 import { useSessionKey } from "@/pages/session/session-layout"
 import { useSessionArchive } from "@/pages/session/session-archive"
 import { useServerSDK } from "@/context/server-sdk"
@@ -268,6 +269,7 @@ export function MessageTimeline(props: {
   const dialog = useDialog()
   const sessionArchive = useSessionArchive()
   const language = useLanguage()
+  const command = useCommand()
   const { params, sessionKey } = useSessionKey()
   const ownerSessionKey = sessionKey()
   const cached = timelineCache.get(ownerSessionKey)
@@ -773,6 +775,17 @@ export function MessageTimeline(props: {
       titleRef.select()
     })
   }
+
+  command.register(() => [
+    {
+      id: "session.rename",
+      category: language.t("command.category.session"),
+      title: language.t("command.session.rename"),
+      keybind: "ctrl+r",
+      disabled: !sessionID() || !!parentID() || title.editing,
+      onSelect: openTitleEditor,
+    },
+  ])
 
   const closeTitleEditor = () => {
     if (titleMutation.isPending) return

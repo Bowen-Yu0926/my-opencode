@@ -209,6 +209,7 @@ export const dict = {
   "command.session.undo.description": "撤销上一条消息",
   "command.session.redo": "重做",
   "command.session.redo.description": "重做上一条撤销的消息",
+  "command.session.rename": "重命名会话",
   "command.session.compact": "压缩会话",
   "command.session.compact.description": "总结会话以减少上下文大小",
   "command.session.fork": "从消息创建新会话",

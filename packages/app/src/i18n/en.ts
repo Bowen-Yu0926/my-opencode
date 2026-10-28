@@ -87,6 +87,7 @@ export const dict = {
   "command.session.undo.description": "Undo the last message",
   "command.session.redo": "Redo",
   "command.session.redo.description": "Redo the last undone message",
+  "command.session.rename": "Rename session",
   "command.session.compact": "Compact session",
   "command.session.compact.description": "Summarize the session to reduce context size",
   "command.session.fork": "Fork from message",
