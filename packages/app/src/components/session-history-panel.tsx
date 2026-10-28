@@ -144,6 +144,35 @@ export function createHomeSessionSource() {
       })
       throw err
     }
+    const removed = new Set<string>([session.id])
+    const byParent = new Map<string, string[]>()
+    const [dirStore] = active.sync.child(session.directory, { bootstrap: false })
+    for (const item of dirStore.session ?? []) {
+      const parentID = item.parentID
+      if (!parentID) continue
+      const existing = byParent.get(parentID)
+      if (existing) existing.push(item.id)
+      else byParent.set(parentID, [item.id])
+    }
+    const stack = [session.id]
+    while (stack.length) {
+      const parentID = stack.pop()
+      if (!parentID) continue
+      const children = byParent.get(parentID)
+      if (!children) continue
+      for (const child of children) {
+        if (removed.has(child)) continue
+        removed.add(child)
+        stack.push(child)
+      }
+    }
+
+    for (const id of removed) {
+      active.sync.session.apply({
+        type: "session.deleted",
+        properties: { sessionID: id },
+      })
+    }
     active.sync.homeSessions.apply({
       type: "session.deleted",
       properties: { sessionID: session.id, info: session },
@@ -152,7 +181,7 @@ export function createHomeSessionSource() {
     notifySessionTabsRemoved({
       server: ServerConnection.key(conn),
       directory: session.directory,
-      sessionIDs: [session.id],
+      sessionIDs: [...removed],
     })
   }
 

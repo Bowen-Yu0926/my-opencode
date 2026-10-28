@@ -60,7 +60,11 @@ export function useSessionArchive() {
         sync().session.evict(sessionID)
         serverSync().homeSessions.remove(sessionID)
         navigateAfterRemoval(sessionID, session.parentID, nextSession?.id)
-        notifySessionTabsRemoved({ directory: sdk().directory, sessionIDs: [sessionID] })
+        notifySessionTabsRemoved({
+          server: params.serverKey ? requireServerKey(params.serverKey) : undefined,
+          directory: sdk().directory,
+          sessionIDs: [sessionID],
+        })
       })
       .catch((err) => {
         showToast({
