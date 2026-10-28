@@ -10,6 +10,10 @@ import { arrayMove } from "@dnd-kit/helpers"
 import { tabHref, tabKey, type SessionTab, type Tab } from "@/context/tabs"
 import { ServerConnection } from "@/context/server"
 import { DraftTabItem, TabNavItem } from "@/components/titlebar-tab-nav"
+import { notifySessionTabsRemoved } from "@/components/titlebar-session-events"
+import { useDialog } from "@opencode-ai/ui/context/dialog"
+import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
+import { DialogV2, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode-ai/ui/v2/dialog-v2"
 import { useGlobal, type ServerCtx } from "@/context/global"
 import { useLanguage } from "@/context/language"
 import { useCommand } from "@/context/command"
@@ -17,6 +21,7 @@ import { useTabs } from "@/context/tabs"
 import { createTabPromptState } from "@/context/prompt"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { showToast } from "@/utils/toast"
+import { sessionTitle } from "@/utils/session-title"
 import { canStartTabDrag, isTabCloseTarget } from "./titlebar-tab-gesture"
 import { adjacentTabKey, mergeVisibleTabOrder } from "./titlebar-tab-order"
 import type { Session } from "@opencode-ai/sdk/v2"
@@ -32,6 +37,7 @@ function SessionTabSlot(props: {
   onRename: (title: string) => Promise<void>
   onNavigate: (element: HTMLDivElement) => void
   onClose: () => void
+  onDelete: () => void
 }) {
   const sortable = useSortable({
     get id() {
@@ -62,6 +68,7 @@ function SessionTabSlot(props: {
         onRename={props.onRename}
         onNavigate={() => props.onNavigate(ref)}
         onClose={props.onClose}
+        onDelete={props.onDelete}
         active={props.active()}
         forceTruncate={props.forceTruncate}
         dragging={sortable.isDragSource()}
@@ -83,6 +90,7 @@ function SessionTabEntry(props: {
 }) {
   const tabs = useTabs()
   const language = useLanguage()
+  const dialog = useDialog()
   const sdk = createMemo(() => props.serverCtx()?.sdk ?? null)
   const cachedSession = createMemo(() => props.serverCtx()?.sync.session.peek(props.tab.sessionId))
   const persisted = createMemo(() => tabs.info[props.id])
@@ -115,6 +123,83 @@ function SessionTabEntry(props: {
         description: err instanceof Error ? err.message : undefined,
       })
     }
+  }
+
+  const deleteSession = async () => {
+    const value = session()
+    const ctx = props.serverCtx()
+    if (!value || !ctx) return
+    try {
+      await ctx.sdk.api.session.remove({ sessionID: value.id, directory: value.directory })
+    } catch (err) {
+      showToast({
+        title: language.t("session.delete.failed.title"),
+        description: err instanceof Error ? err.message : undefined,
+      })
+      throw err
+    }
+    const removed = new Set<string>([value.id])
+    const byParent = new Map<string, string[]>()
+    const [dirStore] = ctx.sync.child(value.directory, { bootstrap: false })
+    for (const item of dirStore.session ?? []) {
+      const parentID = item.parentID
+      if (!parentID) continue
+      const existing = byParent.get(parentID)
+      if (existing) existing.push(item.id)
+      else byParent.set(parentID, [item.id])
+    }
+    const stack = [value.id]
+    while (stack.length) {
+      const parentID = stack.pop()
+      if (!parentID) continue
+      const children = byParent.get(parentID)
+      if (!children) continue
+      for (const child of children) {
+        if (removed.has(child)) continue
+        removed.add(child)
+        stack.push(child)
+      }
+    }
+    for (const id of removed) {
+      ctx.sync.session.apply({ type: "session.deleted", properties: { sessionID: id } })
+    }
+    notifySessionTabsRemoved({
+      server: props.tab.server,
+      directory: value.directory,
+      sessionIDs: [...removed],
+    })
+  }
+
+  function DeleteSessionDialog() {
+    const name = createMemo(
+      () => sessionTitle(session()?.title) ?? language.t("command.session.new"),
+    )
+    const confirm = async () => {
+      dialog.close()
+      try {
+        await deleteSession()
+      } catch {
+        // 失败已 showToast，保持 tab 不动
+      }
+    }
+    return (
+      <DialogV2 fit>
+        <DialogHeader hideClose>
+          <DialogTitleGroup
+            title={language.t("session.delete.title")}
+            description={language.t("session.delete.confirm", { name: name() })}
+          />
+        </DialogHeader>
+        <DialogFooter>
+          <ButtonV2 variant="ghost" autofocus onClick={() => dialog.close()}>
+            {language.t("common.cancel")}
+          </ButtonV2>
+          <ButtonV2 variant="danger" onClick={confirm}>
+            {language.t("session.delete.button")}
+          </ButtonV2>
+        </DialogFooter>
+      </DialogV2>
+    )
   }
 
   createEffect(() => props.onVisibleChange(visible()))
@@ -162,6 +247,7 @@ function SessionTabEntry(props: {
         onRename={rename}
         onNavigate={props.onNavigate}
         onClose={props.onClose}
+        onDelete={() => dialog.show(() => <DeleteSessionDialog />)}
       />
     </Show>
   )

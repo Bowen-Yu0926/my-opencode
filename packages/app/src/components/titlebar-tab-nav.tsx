@@ -27,6 +27,7 @@ export function TabNavItem(props: {
   fallbackTitle?: string
   onRename: (title: string) => Promise<void>
   onClose: () => void
+  onDelete: () => void
   onNavigate: () => void
   active?: boolean
   forceTruncate?: boolean
@@ -346,6 +347,10 @@ export function TabNavItem(props: {
             {language.t("common.rename")}
           </MenuV2.Item>
           <MenuV2.Item onSelect={props.onClose}>{language.t("common.closeTab")}</MenuV2.Item>
+          <MenuV2.Separator />
+          <MenuV2.Item data-variant="critical" disabled={!props.session()} onSelect={props.onDelete}>
+            {language.t("session.delete.title")}…
+          </MenuV2.Item>
         </MenuV2.Context.Content>
       </MenuV2.Context.Portal>
     </MenuV2.Context>
