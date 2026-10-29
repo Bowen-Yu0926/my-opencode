@@ -138,7 +138,7 @@ function getConfig() {
         appId,
         productName: "OpenCode Beta",
         protocols: { name: "OpenCode Beta", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "Bowen-Yu0926", repo: "my-opencode", channel: "latest" },
+        publish: { provider: "github", owner: "Bowen-Yu0926", repo: "my-opencode", channel: "latest", releaseType: "release" },
         deb: { fpm: [metainfoFpm(appId)] },
         rpm: { packageName: "opencode-beta", fpm: [metainfoFpm(appId)] },
       }
@@ -149,7 +149,7 @@ function getConfig() {
         appId,
         productName: "OpenCode",
         protocols: { name: "OpenCode", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "Bowen-Yu0926", repo: "my-opencode", channel: "latest" },
+        publish: { provider: "github", owner: "Bowen-Yu0926", repo: "my-opencode", channel: "latest", releaseType: "release" },
         deb: { fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
         rpm: { packageName: "opencode", fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
       }
