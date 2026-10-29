@@ -29,6 +29,12 @@ console.log(`版本 ${current} -> ${next}`)
 pkg.version = next
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
+// GitHub 要求 published release 的 tag 必须已存在，先创建并推送 tag
+const repoRoot = path.resolve(desktopDir, "../..")
+console.log(`创建并推送 git tag v${next}...`)
+await $`git tag v${next}`.cwd(repoRoot)
+await $`git push origin v${next}`.cwd(repoRoot)
+
 const token =
   process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN ?? (await $`gh auth token`.text()).trim()
 if (!token) {
