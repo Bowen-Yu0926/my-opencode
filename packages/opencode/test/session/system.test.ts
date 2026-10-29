@@ -16,23 +16,27 @@ const skills: Skill.Info[] = [
     description: "Zeta skill.",
     location: "/tmp/zeta-skill/SKILL.md",
     content: "# zeta-skill",
+    source: "project",
   },
   {
     name: "alpha-skill",
     description: "Alpha skill.",
     location: "/tmp/alpha-skill/SKILL.md",
     content: "# alpha-skill",
+    source: "project",
   },
   {
     name: "middle-skill",
     description: "Middle skill.",
     location: "/tmp/middle-skill/SKILL.md",
     content: "# middle-skill",
+    source: "project",
   },
   {
     name: "manual-skill",
     location: "/tmp/manual-skill/SKILL.md",
     content: "# manual-skill",
+    source: "project",
   },
 ]
 
@@ -77,6 +81,8 @@ const it = testEffect(
           all: () => Effect.succeed(skills),
           dirs: () => Effect.succeed([]),
           available: () => Effect.succeed(skills),
+          remove: (name) =>
+            Effect.fail(new Skill.NotFoundError({ name, available: skills.map((skill) => skill.name) })),
         }),
       ),
     ],

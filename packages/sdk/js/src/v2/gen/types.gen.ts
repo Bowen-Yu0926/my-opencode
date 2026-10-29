@@ -2381,6 +2381,13 @@ export type Agent = {
   steps?: number
 }
 
+export type SkillRemoveError = {
+  name: "SkillRemoveError"
+  data: {
+    message: string
+  }
+}
+
 export type LspStatus = {
   id: string
   name: string
@@ -8407,6 +8414,41 @@ export type AppAgentsResponses = {
 
 export type AppAgentsResponse = AppAgentsResponses[keyof AppAgentsResponses]
 
+export type SkillRemoveData = {
+  body?: never
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    name: string
+  }
+  url: "/skill"
+}
+
+export type SkillRemoveErrors = {
+  /**
+   * SkillRemoveError | InvalidRequestError
+   */
+  400: SkillRemoveError | InvalidRequestError
+}
+
+export type SkillRemoveError2 = SkillRemoveErrors[keyof SkillRemoveErrors]
+
+export type SkillRemoveResponses = {
+  /**
+   * Skill removed
+   */
+  200: {
+    name: string
+    description?: string
+    location: string
+    content: string
+    source: "builtin" | "global" | "project" | "config" | "url"
+  }
+}
+
+export type SkillRemoveResponse = SkillRemoveResponses[keyof SkillRemoveResponses]
+
 export type AppSkillsData = {
   body?: never
   path?: never
@@ -8435,6 +8477,7 @@ export type AppSkillsResponses = {
     description?: string
     location: string
     content: string
+    source: "builtin" | "global" | "project" | "config" | "url"
   }>
 }
 

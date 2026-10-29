@@ -39,6 +39,7 @@ export const Info = Schema.Struct({
   description: Schema.optional(Schema.String),
   location: Schema.String,
   content: Schema.String,
+  source: Schema.Literals(["builtin", "global", "project", "config", "url"]),
 })
 export type Info = Schema.Schema.Type<typeof Info>
 
@@ -79,6 +80,17 @@ export class NotFoundError extends Schema.TaggedErrorClass<NotFoundError>()("Ski
   }
 }
 
+export class RemoveError extends Schema.TaggedErrorClass<RemoveError>()("Skill.RemoveError", {
+  name: Schema.String,
+  reason: Schema.Literals(["builtin", "url"]),
+}) {
+  override get message() {
+    return this.reason === "builtin"
+      ? `Skill "${this.name}" is built-in and cannot be removed`
+      : `Skill "${this.name}" was pulled from a URL and cannot be removed`
+  }
+}
+
 type State = {
   skills: Record<string, Info>
   dirs: Set<string>
@@ -87,11 +99,13 @@ type State = {
 type DiscoveryState = {
   matches: string[]
   dirs: string[]
+  sources: Map<string, Info["source"]>
 }
 
 type ScanState = {
   matches: Set<string>
   dirs: Set<string>
+  sources: Map<string, Info["source"]>
 }
 
 export interface Interface {
@@ -100,9 +114,15 @@ export interface Interface {
   readonly all: () => Effect.Effect<Info[]>
   readonly dirs: () => Effect.Effect<string[]>
   readonly available: (agent?: Agent.Info) => Effect.Effect<Info[]>
+  readonly remove: (name: string) => Effect.Effect<Info, RemoveError | NotFoundError>
 }
 
-const add = Effect.fnUntraced(function* (state: State, match: string, events: EventV2Bridge.Service["Service"]) {
+const add = Effect.fnUntraced(function* (
+  state: State,
+  match: string,
+  source: Info["source"],
+  events: EventV2Bridge.Service["Service"],
+) {
   const md = yield* Effect.tryPromise({
     try: () => ConfigMarkdown.parse(match),
     catch: (err) => err,
@@ -136,6 +156,7 @@ const add = Effect.fnUntraced(function* (state: State, match: string, events: Ev
     description: md.data.description,
     location: match,
     content: md.content,
+    source,
   }
 })
 
@@ -143,6 +164,7 @@ const scan = Effect.fnUntraced(function* (
   state: ScanState,
   root: string,
   pattern: string,
+  source: Info["source"],
   opts?: { dot?: boolean; scope?: string },
 ) {
   const matches = yield* Effect.tryPromise({
@@ -167,6 +189,7 @@ const scan = Effect.fnUntraced(function* (
   for (const match of matches) {
     state.matches.add(match)
     state.dirs.add(path.dirname(match))
+    state.sources.set(match, source)
   }
 })
 
@@ -180,7 +203,7 @@ const discoverSkills = Effect.fnUntraced(function* (
   directory: string,
   worktree: string,
 ) {
-  const state: ScanState = { matches: new Set(), dirs: new Set() }
+  const state: ScanState = { matches: new Set(), dirs: new Set(), sources: new Map() }
 
   const externalDirs: string[] = []
   if (!disableExternalSkills) {
@@ -190,7 +213,7 @@ const discoverSkills = Effect.fnUntraced(function* (
     for (const dir of externalDirs) {
       const root = path.join(global.home, dir)
       if (!(yield* fsys.isDir(root))) continue
-      yield* scan(state, root, EXTERNAL_SKILL_PATTERN, { dot: true, scope: "global" })
+      yield* scan(state, root, EXTERNAL_SKILL_PATTERN, "global", { dot: true, scope: "global" })
     }
 
     const upDirs = yield* fsys
@@ -198,13 +221,13 @@ const discoverSkills = Effect.fnUntraced(function* (
       .pipe(Effect.catch(() => Effect.succeed([] as string[])))
 
     for (const root of upDirs) {
-      yield* scan(state, root, EXTERNAL_SKILL_PATTERN, { dot: true, scope: "project" })
+      yield* scan(state, root, EXTERNAL_SKILL_PATTERN, "project", { dot: true, scope: "project" })
     }
   }
 
   const configDirs = yield* config.directories()
   for (const dir of configDirs) {
-    yield* scan(state, dir, OPENCODE_SKILL_PATTERN)
+    yield* scan(state, dir, OPENCODE_SKILL_PATTERN, "config")
   }
 
   const cfg = yield* config.get()
@@ -216,19 +239,20 @@ const discoverSkills = Effect.fnUntraced(function* (
       continue
     }
 
-    yield* scan(state, dir, SKILL_PATTERN)
+    yield* scan(state, dir, SKILL_PATTERN, "config")
   }
 
   for (const url of cfg.skills?.urls ?? []) {
     const pulledDirs = yield* discovery.pull(url)
     for (const dir of pulledDirs) {
-      yield* scan(state, dir, SKILL_PATTERN)
+      yield* scan(state, dir, SKILL_PATTERN, "url")
     }
   }
 
   return {
     matches: Array.from(state.matches),
     dirs: Array.from(state.dirs),
+    sources: state.sources,
   }
 })
 
@@ -237,7 +261,7 @@ const loadSkills = Effect.fnUntraced(function* (
   discovered: DiscoveryState,
   events: EventV2Bridge.Service["Service"],
 ) {
-  yield* Effect.forEach(discovered.matches, (match) => add(state, match, events), {
+  yield* Effect.forEach(discovered.matches, (match) => add(state, match, discovered.sources.get(match) ?? "project", events), {
     concurrency: "unbounded",
     discard: true,
   })
@@ -280,6 +304,7 @@ const layer = Layer.effect(
           description: CUSTOMIZE_OPENCODE_SKILL_DESCRIPTION,
           location: "<built-in>",
           content: CUSTOMIZE_OPENCODE_SKILL_BODY,
+          source: "builtin",
         }
         yield* loadSkills(s, yield* InstanceState.get(discovered), events)
         return s
@@ -314,7 +339,19 @@ const layer = Layer.effect(
       return list.filter((skill) => Permission.evaluate("skill", skill.name, agent.permission).action !== "deny")
     })
 
-    return Service.of({ get, require, all, dirs, available })
+    const remove = Effect.fn("Skill.remove")(function* (name: string) {
+      const s = yield* InstanceState.get(state)
+      const info = s.skills[name]
+      if (!info) return yield* new NotFoundError({ name, available: Object.keys(s.skills).toSorted() })
+      if (info.source === "builtin") return yield* new RemoveError({ name, reason: "builtin" })
+      if (info.source === "url") return yield* new RemoveError({ name, reason: "url" })
+      yield* fsys.remove(info.location, { force: true }).pipe(Effect.orDie)
+      delete s.skills[name]
+      s.dirs.delete(path.dirname(info.location))
+      return info
+    })
+
+    return Service.of({ get, require, all, dirs, available, remove })
   }),
 )
 

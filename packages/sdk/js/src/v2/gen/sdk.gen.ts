@@ -229,6 +229,8 @@ import type {
   SessionUnshareResponses,
   SessionUpdateErrors,
   SessionUpdateResponses,
+  SkillRemoveErrors,
+  SkillRemoveResponses,
   SubtaskPartInput,
   SyncHistoryListErrors,
   SyncHistoryListResponses,
@@ -2264,6 +2266,40 @@ export class Command extends HeyApiClient {
     )
     return (options?.client ?? this.client).get<CommandListResponses, CommandListErrors, ThrowOnError>({
       url: "/command",
+      ...options,
+      ...params,
+    })
+  }
+}
+
+export class Skill extends HeyApiClient {
+  /**
+   * Remove a skill
+   *
+   * Delete a skill's SKILL.md file and remove it from the registry.
+   */
+  public remove<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      name: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "name" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<SkillRemoveResponses, SkillRemoveErrors, ThrowOnError>({
+      url: "/skill",
       ...options,
       ...params,
     })
@@ -6604,7 +6640,7 @@ export class Command2 extends HeyApiClient {
   }
 }
 
-export class Skill extends HeyApiClient {
+export class Skill2 extends HeyApiClient {
   /**
    * List skills
    *
@@ -7125,9 +7161,9 @@ export class V2 extends HeyApiClient {
     return (this._command ??= new Command2({ client: this.client }))
   }
 
-  private _skill?: Skill
-  get skill(): Skill {
-    return (this._skill ??= new Skill({ client: this.client }))
+  private _skill?: Skill2
+  get skill(): Skill2 {
+    return (this._skill ??= new Skill2({ client: this.client }))
   }
 
   private _event?: Event2
@@ -7237,6 +7273,11 @@ export class OpencodeClient extends HeyApiClient {
   private _command?: Command
   get command(): Command {
     return (this._command ??= new Command({ client: this.client }))
+  }
+
+  private _skill?: Skill
+  get skill(): Skill {
+    return (this._skill ??= new Skill({ client: this.client }))
   }
 
   private _lsp?: Lsp
