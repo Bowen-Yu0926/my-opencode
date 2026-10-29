@@ -41,18 +41,8 @@ const APP_IDS = {
   prod: "ai.opencode.desktop",
 } as const
 
-// NSIS 默认安装目录取自 productFilename（默认回落到 package name "@opencode-ai/desktop"，
-// 导致 dev/prod/beta 三个通道共享同一个安装目录，安装一个会卸载另一个）。显式按通道隔离，
-// 让它们分别装到 Programs\OpenCode Dev / OpenCode Beta / OpenCode，互不覆盖。
-const PRODUCT_FILENAMES = {
-  dev: "OpenCode Dev",
-  beta: "OpenCode Beta",
-  prod: "OpenCode",
-} as const
-
 const getBase = (appId: string): Configuration => ({
   artifactName: "opencode-desktop-${os}-${arch}.${ext}",
-  productFilename: PRODUCT_FILENAMES[channel],
   directories: {
     output: "dist",
     buildResources: "resources",
