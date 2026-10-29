@@ -91,9 +91,21 @@ export class RemoveError extends Schema.TaggedErrorClass<RemoveError>()("Skill.R
   }
 }
 
+export class MoveError extends Schema.TaggedErrorClass<MoveError>()("Skill.MoveError", {
+  name: Schema.String,
+  reason: Schema.Literals(["unsupported", "conflict"]),
+}) {
+  override get message() {
+    return this.reason === "unsupported"
+      ? `Skill "${this.name}" cannot be moved between global and project`
+      : `Skill "${this.name}" already exists at the target location`
+  }
+}
+
 type State = {
   skills: Record<string, Info>
   dirs: Set<string>
+  directory: string
 }
 
 type DiscoveryState = {
@@ -115,6 +127,7 @@ export interface Interface {
   readonly dirs: () => Effect.Effect<string[]>
   readonly available: (agent?: Agent.Info) => Effect.Effect<Info[]>
   readonly remove: (name: string) => Effect.Effect<Info, RemoveError | NotFoundError>
+  readonly move: (name: string, to: "global" | "project") => Effect.Effect<Info, MoveError | NotFoundError>
 }
 
 const add = Effect.fnUntraced(function* (
@@ -295,8 +308,8 @@ const layer = Layer.effect(
       }),
     )
     const state = yield* InstanceState.make(
-      Effect.fn("Skill.state")(function* () {
-        const s: State = { skills: {}, dirs: new Set() }
+      Effect.fn("Skill.state")(function* (ctx) {
+        const s: State = { skills: {}, dirs: new Set(), directory: ctx.directory }
         // Register the built-in skill BEFORE disk discovery so a user-disk
         // skill with the same name can override it.
         s.skills[CUSTOMIZE_OPENCODE_SKILL_NAME] = {
@@ -351,7 +364,30 @@ const layer = Layer.effect(
       return info
     })
 
-    return Service.of({ get, require, all, dirs, available, remove })
+    const move = Effect.fn("Skill.move")(function* (name: string, to: "global" | "project") {
+      const s = yield* InstanceState.get(state)
+      const info = s.skills[name]
+      if (!info) return yield* new NotFoundError({ name, available: Object.keys(s.skills).toSorted() })
+      if (info.source !== "global" && info.source !== "project") return yield* new MoveError({ name, reason: "unsupported" })
+      if (info.source === to) return info
+      const targetRoot =
+        to === "global"
+          ? path.join(global.home, ".agents", "skills")
+          : path.join(s.directory, ".agents", "skills")
+      const sourceDir = path.dirname(info.location)
+      const targetDir = path.join(targetRoot, path.basename(sourceDir))
+      if (yield* fsys.existsSafe(targetDir)) return yield* new MoveError({ name, reason: "conflict" })
+      yield* fsys.makeDirectory(targetRoot, { recursive: true }).pipe(Effect.orDie)
+      yield* fsys.copy(sourceDir, targetDir).pipe(Effect.orDie)
+      yield* fsys.remove(sourceDir, { recursive: true, force: true }).pipe(Effect.orDie)
+      const newLocation = path.join(targetDir, path.basename(info.location))
+      s.skills[name] = { ...info, location: newLocation, source: to }
+      s.dirs.delete(sourceDir)
+      s.dirs.add(targetDir)
+      return s.skills[name]
+    })
+
+    return Service.of({ get, require, all, dirs, available, remove, move })
   }),
 )
 

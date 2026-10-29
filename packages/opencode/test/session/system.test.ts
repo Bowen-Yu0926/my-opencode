@@ -83,6 +83,8 @@ const it = testEffect(
           available: () => Effect.succeed(skills),
           remove: (name) =>
             Effect.fail(new Skill.NotFoundError({ name, available: skills.map((skill) => skill.name) })),
+          move: (name) =>
+            Effect.fail(new Skill.NotFoundError({ name, available: skills.map((skill) => skill.name) })),
         }),
       ),
     ],

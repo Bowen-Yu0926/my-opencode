@@ -2388,6 +2388,13 @@ export type SkillRemoveError = {
   }
 }
 
+export type SkillMoveError = {
+  name: "SkillMoveError"
+  data: {
+    message: string
+  }
+}
+
 export type LspStatus = {
   id: string
   name: string
@@ -8482,6 +8489,42 @@ export type AppSkillsResponses = {
 }
 
 export type AppSkillsResponse = AppSkillsResponses[keyof AppSkillsResponses]
+
+export type SkillMoveData = {
+  body?: never
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    name: string
+    to: "global" | "project"
+  }
+  url: "/skill/move"
+}
+
+export type SkillMoveErrors = {
+  /**
+   * SkillMoveError | InvalidRequestError
+   */
+  400: SkillMoveError | InvalidRequestError
+}
+
+export type SkillMoveError2 = SkillMoveErrors[keyof SkillMoveErrors]
+
+export type SkillMoveResponses = {
+  /**
+   * Skill moved
+   */
+  200: {
+    name: string
+    description?: string
+    location: string
+    content: string
+    source: "builtin" | "global" | "project" | "config" | "url"
+  }
+}
+
+export type SkillMoveResponse = SkillMoveResponses[keyof SkillMoveResponses]
 
 export type LspStatusData = {
   body?: never

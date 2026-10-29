@@ -229,6 +229,8 @@ import type {
   SessionUnshareResponses,
   SessionUpdateErrors,
   SessionUpdateResponses,
+  SkillMoveErrors,
+  SkillMoveResponses,
   SkillRemoveErrors,
   SkillRemoveResponses,
   SubtaskPartInput,
@@ -2300,6 +2302,40 @@ export class Skill extends HeyApiClient {
     )
     return (options?.client ?? this.client).delete<SkillRemoveResponses, SkillRemoveErrors, ThrowOnError>({
       url: "/skill",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Move a skill
+   *
+   * Move a skill between the global skills directory and the current project's skills directory.
+   */
+  public move<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      name: string
+      to: "global" | "project"
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "name" },
+            { in: "query", key: "to" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<SkillMoveResponses, SkillMoveErrors, ThrowOnError>({
+      url: "/skill/move",
       ...options,
       ...params,
     })

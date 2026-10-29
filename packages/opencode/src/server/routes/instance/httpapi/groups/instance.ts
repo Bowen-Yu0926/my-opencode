@@ -48,6 +48,14 @@ export class ApiSkillRemoveError extends Schema.ErrorClass<ApiSkillRemoveError>(
   { httpApiStatus: 400 },
 ) {}
 
+export class ApiSkillMoveError extends Schema.ErrorClass<ApiSkillMoveError>("SkillMoveError")(
+  {
+    name: Schema.Literal("SkillMoveError"),
+    data: Schema.Struct({ message: Schema.String }),
+  },
+  { httpApiStatus: 400 },
+) {}
+
 export const InstancePaths = {
   dispose: "/instance/dispose",
   path: "/path",
@@ -183,6 +191,17 @@ export const InstanceApi = HttpApi.make("instance")
             identifier: "skill.remove",
             summary: "Remove a skill",
             description: "Delete a skill's SKILL.md file and remove it from the registry.",
+          }),
+        ),
+        HttpApiEndpoint.post("skillMove", `${InstancePaths.skill}/move`, {
+          query: Schema.Struct({ ...WorkspaceRoutingQueryFields, name: Schema.String, to: Schema.Literals(["global", "project"]) }),
+          success: described(Skill.Info, "Skill moved"),
+          error: ApiSkillMoveError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "skill.move",
+            summary: "Move a skill",
+            description: "Move a skill between the global skills directory and the current project's skills directory.",
           }),
         ),
         HttpApiEndpoint.get("lsp", InstancePaths.lsp, {
