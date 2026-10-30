@@ -3,17 +3,22 @@ import type { UpdaterState } from "@opencode-ai/app/updater"
 export type { UpdaterState } from "@opencode-ai/app/updater"
 
 export type UpdaterReadyRecord = { version: string }
+export type UpdaterDismissedRecord = { version: string }
 
 export type UpdaterBackend = {
   checkForUpdates(): Promise<{ isUpdateAvailable?: boolean; updateInfo?: { version?: string } } | null | undefined>
   downloadUpdate(): Promise<unknown>
+  onDownloadProgress?(cb: (percent: number) => void): () => void
   quitAndInstall(): void
 }
 
 type UpdaterPersistence = {
-  get(): UpdaterReadyRecord | undefined | Promise<UpdaterReadyRecord | undefined>
-  set(value: UpdaterReadyRecord): void | Promise<void>
-  clear(): void | Promise<void>
+  getReady(): UpdaterReadyRecord | undefined | Promise<UpdaterReadyRecord | undefined>
+  setReady(value: UpdaterReadyRecord): void | Promise<void>
+  clearReady(): void | Promise<void>
+  getDismissed(): UpdaterDismissedRecord | undefined | Promise<UpdaterDismissedRecord | undefined>
+  setDismissed(value: UpdaterDismissedRecord): void | Promise<void>
+  clearDismissed(): void | Promise<void>
 }
 
 export function createUpdaterController(input: {
@@ -45,14 +50,13 @@ export function createUpdaterController(input: {
       const result = await input.backend.checkForUpdates()
       const version = result?.updateInfo?.version
       if (!result?.isUpdateAvailable || !version || version === input.currentVersion) {
-        await input.persistence.clear()
+        await input.persistence.clearReady()
         return transition({ status: "up-to-date" })
       }
 
-      transition({ status: "downloading", version })
-      await input.backend.downloadUpdate()
-      await input.persistence.set({ version })
-      return transition({ status: "ready", version })
+      const dismissed = await input.persistence.getDismissed()
+      if (dismissed?.version === version) return transition({ status: "dismissed", version })
+      return transition({ status: "update-available", version })
     })()
       .catch((error) =>
         transition({ status: "error", message: error instanceof Error ? error.message : String(error) }),
@@ -63,6 +67,36 @@ export function createUpdaterController(input: {
     return pending
   }
 
+  const download = async () => {
+    if (state.status !== "update-available" && state.status !== "dismissed") {
+      throw new Error("Update is not available to download")
+    }
+    const version = state.version
+    await input.persistence.clearDismissed()
+    transition({ status: "downloading", version })
+    const unsubscribe = input.backend.onDownloadProgress?.((percent) => {
+      if (state.status !== "downloading") return
+      transition({ status: "downloading", version, percent })
+    })
+    try {
+      await input.backend.downloadUpdate()
+      await input.persistence.setReady({ version })
+      transition({ status: "ready", version })
+    } catch (error) {
+      transition({ status: "error", message: error instanceof Error ? error.message : String(error) })
+      throw error
+    } finally {
+      unsubscribe?.()
+    }
+  }
+
+  const dismiss = async () => {
+    if (state.status !== "update-available") throw new Error("Update is not available to dismiss")
+    const version = state.version
+    await input.persistence.setDismissed({ version })
+    transition({ status: "dismissed", version })
+  }
+
   return {
     getState: () => state,
     subscribe(listener: (state: UpdaterState) => void) {
@@ -71,11 +105,18 @@ export function createUpdaterController(input: {
       return () => listeners.delete(listener)
     },
     async start() {
-      const ready = await input.persistence.get()
-      if (ready?.version === input.currentVersion) await input.persistence.clear()
+      const ready = await input.persistence.getReady()
+      if (ready?.version === input.currentVersion) {
+        await input.persistence.clearReady()
+      } else if (ready) {
+        transition({ status: "ready", version: ready.version })
+        return
+      }
       return check()
     },
     check,
+    download,
+    dismiss,
     async install() {
       if (state.status !== "ready") throw new Error("Update is not ready to install")
       const version = state.version

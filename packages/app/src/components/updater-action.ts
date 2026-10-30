@@ -9,12 +9,16 @@ export function updaterAction(state: UpdaterState | undefined) {
   switch (state.status) {
     case "checking":
       return { label: "settings.updates.action.checking" as const }
+    case "update-available":
+      return { label: "titlebar.update" as const, run: "download" as const }
     case "downloading":
       return { label: "settings.updates.action.downloading" as const }
     case "ready":
       return { label: "toast.update.action.installRestart" as const, run: "install" as const }
     case "installing":
       return { label: "settings.updates.action.installing" as const }
+    case "dismissed":
+      return { label: "titlebar.update" as const, run: "download" as const }
     case "disabled":
       // Still clickable: explain that auto-update is off (dev / unpackaged builds).
       return { label: "settings.updates.action.checkNow" as const, run: "unavailable" as const }
@@ -33,6 +37,7 @@ export function useUpdaterAction() {
     async run() {
       const run = action().run
       if (run === "install") return platform.updater?.install()
+      if (run === "download") return platform.updater?.download()
       if (run === "unavailable") {
         showToast({
           title: language.t("settings.updates.toast.unavailable.title"),

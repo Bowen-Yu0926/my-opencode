@@ -1,14 +1,19 @@
 import { app, dialog } from "electron"
 import pkg from "electron-updater"
 import { UPDATER_ENABLED } from "./constants"
-import { createUpdaterController, type UpdaterReadyRecord } from "./updater-controller"
+import {
+  createUpdaterController,
+  type UpdaterDismissedRecord,
+  type UpdaterReadyRecord,
+} from "./updater-controller"
 import { getLogger } from "./logging"
 import { getStore } from "./store"
 import { setAppQuitting } from "./windows"
 import { nativeT } from "./native-translations"
 
 const { autoUpdater } = pkg
-const key = "ready"
+const readyKey = "ready"
+const dismissedKey = "dismissed"
 
 export function setupAutoUpdater(stop: () => Promise<void>) {
   const logger = getLogger()
@@ -32,6 +37,11 @@ export function setupAutoUpdater(stop: () => Promise<void>) {
     backend: {
       checkForUpdates: () => autoUpdater.checkForUpdates(),
       downloadUpdate: () => autoUpdater.downloadUpdate(),
+      onDownloadProgress: (cb) => {
+        const handler = (progress: { percent: number }) => cb(progress.percent)
+        autoUpdater.on("download-progress", handler)
+        return () => autoUpdater.off("download-progress", handler)
+      },
       quitAndInstall: () => {
         // quitAndInstall closes all windows before emitting before-quit, so
         // flag the quit first to keep window ids persisted for restore.
@@ -47,13 +57,20 @@ export function setupAutoUpdater(stop: () => Promise<void>) {
       },
     },
     persistence: {
-      get() {
-        const value = store.get(key)
+      getReady() {
+        const value = store.get(readyKey)
         if (!value || typeof value !== "object" || !("version" in value) || typeof value.version !== "string") return
         return { version: value.version } satisfies UpdaterReadyRecord
       },
-      set: (value) => store.set(key, value),
-      clear: () => store.delete(key),
+      setReady: (value) => store.set(readyKey, value),
+      clearReady: () => store.delete(readyKey),
+      getDismissed() {
+        const value = store.get(dismissedKey)
+        if (!value || typeof value !== "object" || !("version" in value) || typeof value.version !== "string") return
+        return { version: value.version } satisfies UpdaterDismissedRecord
+      },
+      setDismissed: (value) => store.set(dismissedKey, value),
+      clearDismissed: () => store.delete(dismissedKey),
     },
     stop,
     log: (message, data) => logger.log(message, data),
@@ -78,6 +95,18 @@ export async function showUpdaterDialog(controller: ReturnType<typeof setupAutoU
       message: nativeT("desktop.updater.dialog.upToDate.message"),
       title: nativeT("desktop.updater.dialog.upToDate.title"),
     })
+    return
+  }
+  if (state.status === "update-available" || state.status === "dismissed") {
+    const response = await dialog.showMessageBox({
+      type: "info",
+      message: nativeT("desktop.updater.dialog.available.message", { version: state.version }),
+      title: nativeT("desktop.updater.dialog.available.title"),
+      buttons: [nativeT("desktop.updater.dialog.download"), nativeT("desktop.updater.dialog.later")],
+      defaultId: 0,
+      cancelId: 1,
+    })
+    if (response.response === 0) await controller.download()
     return
   }
   if (state.status !== "ready") return

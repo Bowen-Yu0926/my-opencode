@@ -53,6 +53,9 @@ export const dict = {
   "desktop.updater.dialog.checkFailed.title": "更新错误",
   "desktop.updater.dialog.upToDate.message": "你使用的是最新版本。",
   "desktop.updater.dialog.upToDate.title": "无可用更新",
+  "desktop.updater.dialog.available.message": "发现新版本 OpenCode {{version}}。",
+  "desktop.updater.dialog.available.title": "发现新版本",
+  "desktop.updater.dialog.download": "下载",
   "desktop.updater.dialog.ready.message": "已下载更新 {{version}}。是否立即重启？",
   "desktop.updater.dialog.ready.title": "更新已就绪",
   "desktop.updater.dialog.restart": "重启",
@@ -857,6 +860,8 @@ export const dict = {
   "terminal.connectTicket.statusError": "PTY 连接票证失败，状态为 {{status}}",
 
   "titlebar.update": "更新",
+  "titlebar.update.dismiss": "忽略",
+  "titlebar.update.downloading": "下载中 {{percent}}%",
   "titlebar.updateVersion": "更新 {{version}}",
 
   "common.closeTab": "关闭标签页",

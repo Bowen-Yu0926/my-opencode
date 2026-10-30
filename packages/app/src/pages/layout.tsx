@@ -154,13 +154,24 @@ export default function LegacyLayout(props: ParentProps) {
 
   const updateVersion = () => {
     const state = platform.updater?.state()
-    if (state?.status !== "ready") return
+    if (state?.status !== "update-available" && state?.status !== "downloading" && state?.status !== "ready")
+      return
     return state.version
   }
+  const updateStatus = () => platform.updater?.state()?.status
+  const updatePercent = () => {
+    const state = platform.updater?.state()
+    return state?.status === "downloading" ? state.percent : undefined
+  }
+  const downloadUpdate = () => void platform.updater?.download()
+  const dismissUpdate = () => void platform.updater?.dismiss()
   const installUpdate = () => void platform.updater?.install()
   const titlebarUpdate: TitlebarUpdate = {
     version: updateVersion,
-    installing: () => platform.updater?.state().status === "installing",
+    status: updateStatus,
+    percent: updatePercent,
+    download: downloadUpdate,
+    dismiss: dismissUpdate,
     install: installUpdate,
   }
 

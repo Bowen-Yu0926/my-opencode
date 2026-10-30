@@ -26,6 +26,8 @@ export type WslServersAPI = WslServersPlatform
 export type UpdaterAPI = {
   subscribe: (cb: (state: UpdaterState) => void) => Promise<() => void>
   check: () => Promise<UpdaterState>
+  download: () => Promise<void>
+  dismiss: () => Promise<void>
   install: () => Promise<void>
 }
 

@@ -14,10 +14,17 @@ export default function NewLayout(props: ParentProps) {
   const update: TitlebarUpdate = {
     version: () => {
       const state = platform.updater?.state()
-      if (state?.status !== "ready") return
+      if (state?.status !== "update-available" && state?.status !== "downloading" && state?.status !== "ready")
+        return
       return state.version
     },
-    installing: () => platform.updater?.state().status === "installing",
+    status: () => platform.updater?.state()?.status,
+    percent: () => {
+      const state = platform.updater?.state()
+      return state?.status === "downloading" ? state.percent : undefined
+    },
+    download: () => void platform.updater?.download(),
+    dismiss: () => void platform.updater?.dismiss(),
     install: () => void platform.updater?.install(),
   }
 
