@@ -1,5 +1,6 @@
 import type { Event, Session, SessionV2Info, V2SessionListResponse } from "@opencode-ai/sdk/v2/client"
 import type { QueryClient } from "@tanstack/solid-query"
+import { createStore } from "solid-js/store"
 import { trimSessions } from "./session-trim"
 import { pathKey } from "@/utils/path-key"
 
@@ -85,7 +86,7 @@ export function createHomeSessionIndexCache(queryClient: QueryClient, server: st
   const indexKey = homeSessionIndexKey(server)
   const eventsKey = homeSessionEventsKey(server)
   let connected = false
-  const removed = new Set<string>()
+  const [removed, setRemoved] = createStore<{ ids: string[] }>({ ids: [] })
 
   return {
     indexKey,
@@ -99,7 +100,7 @@ export function createHomeSessionIndexCache(queryClient: QueryClient, server: st
     },
     sessions(index: HomeSessionIndex | undefined, events: HomeSessionEvents | undefined) {
       const sessions = homeSessionIndexSessions(index, events)
-      return removed.size === 0 ? sessions : sessions.filter((session) => !removed.has(session.id))
+      return removed.ids.length === 0 ? sessions : sessions.filter((session) => !removed.ids.includes(session.id))
     },
     apply(event: HomeSessionEvent) {
       if (!queryClient.getQueryState(indexKey)) return
@@ -119,7 +120,7 @@ export function createHomeSessionIndexCache(queryClient: QueryClient, server: st
       queryClient.setQueryData<HomeSessionEvents>(eventsKey, { sequence: next.sequence, entries: [] })
     },
     remove(sessionID: string) {
-      removed.add(sessionID)
+      setRemoved("ids", (ids) => (ids.includes(sessionID) ? ids : [...ids, sessionID]))
       if (!queryClient.getQueryState(indexKey)) return
       queryClient.setQueryData<HomeSessionIndex>(indexKey, (index) => {
         if (!index) return index
