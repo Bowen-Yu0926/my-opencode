@@ -1101,6 +1101,7 @@ export const dict = {
   "settings.skills.moveFailed": "移动技能失败",
   "settings.skills.openFolder": "打开文件夹",
   "settings.skills.openFailed": "打开文件夹失败",
+  "settings.skills.viewDetail": "查看详情",
 
   "settings.permissions.title": "权限",
   "settings.permissions.description": "控制服务器默认可以使用哪些工具。",

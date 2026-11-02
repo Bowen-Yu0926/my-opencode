@@ -1118,6 +1118,7 @@ export const dict = {
   "settings.skills.moveFailed": "Failed to move skill",
   "settings.skills.openFolder": "Open folder",
   "settings.skills.openFailed": "Failed to open folder",
+  "settings.skills.viewDetail": "View details",
 
   "settings.permissions.title": "Permissions",
   "settings.permissions.description": "Control what tools the server can use by default.",

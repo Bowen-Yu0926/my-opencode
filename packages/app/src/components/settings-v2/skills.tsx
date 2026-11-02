@@ -1,7 +1,8 @@
 import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 import { Tag } from "@opencode-ai/ui/v2/badge-v2"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
-import { DialogV2, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode-ai/ui/v2/dialog-v2"
+import { DialogV2, DialogBody, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode-ai/ui/v2/dialog-v2"
+import { Markdown } from "@opencode-ai/session-ui/markdown"
 import { showToast } from "@/utils/toast"
 import { createMemo, createResource, type Accessor, type Component, For, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
@@ -28,26 +29,7 @@ const SOURCE_KEYS: Record<SkillSource, string> = {
   url: "settings.skills.source.url",
 }
 
-const SKILL_INTROS: Record<string, string> = {
-  "afrexai-qa-test-plan": "QA 测试计划与覆盖率矩阵生成",
-  "api-test-automation": "API 接口测试自动化（REST/GraphQL）",
-  "cli-anything-photoshop": "命令行操控 Photoshop（图层/选区/图像处理）",
-  "cli-anything-wps": "命令行操控 WPS（PPT/文字/表格）",
-  "cli-anything-zotero": "命令行操控 Zotero 文献管理",
-  "e2e-testing-patterns": "E2E 端到端测试（Playwright/Cypress）",
-  effect: "Effect v4 TypeScript 开发",
-  "executable-testcases": "可执行测试用例生成与回归",
-  "ppt-master": "AI 生成与美化 PPT 演示文稿",
-  "rtl-aware-development": "桌面端 RTL 布局适配",
-  "superpowers-tdd": "TDD 测试驱动开发（红-绿-重构）",
-  "tech-test-automation": "自动化测试专家包（TDD/单元/E2E/API）",
-  "test-case-generator": "生成标准 Excel 测试用例",
-  "test-patterns": "跨语言测试编写与运行",
-}
-
 const intro = (item: SkillItem) => {
-  const custom = SKILL_INTROS[item.name]
-  if (custom) return custom
   const raw = item.description
   if (!raw) return undefined
   return raw.length > 120 ? `${raw.slice(0, 120)}…` : raw
@@ -89,6 +71,27 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
     void platform
       .openPath(item.location.replace(/[\\/]SKILL\.md$/, ""))
       .catch(() => showToast({ title: language.t("settings.skills.openFailed") }))
+  }
+
+  const viewDetail = (item: SkillItem) => {
+    dialog.show(() => (
+      <DialogV2 size="x-large" variant="settings">
+        <DialogHeader>
+          <DialogTitleGroup
+            title={item.name}
+            description={`${language.t("settings.skills.location")} ${item.location}`}
+          />
+        </DialogHeader>
+        <DialogBody class="overflow-y-auto">
+          <Markdown text={item.content} class="text-14-regular" />
+        </DialogBody>
+        <DialogFooter>
+          <ButtonV2 variant="ghost" autofocus onClick={() => dialog.close()}>
+            {language.t("common.close")}
+          </ButtonV2>
+        </DialogFooter>
+      </DialogV2>
+    ))
   }
 
   const confirmRemove = (item: SkillItem) => {
@@ -155,6 +158,9 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
                         </p>
                       </div>
                     </div>
+                    <ButtonV2 size="normal" variant="ghost-muted" onClick={() => viewDetail(item)}>
+                      {language.t("settings.skills.viewDetail")}
+                    </ButtonV2>
                     <Show when={platform.platform === "desktop" && !!platform.openPath}>
                       <ButtonV2 size="normal" variant="ghost-muted" onClick={() => openSkillFolder(item)}>
                         {language.t("settings.skills.openFolder")}
