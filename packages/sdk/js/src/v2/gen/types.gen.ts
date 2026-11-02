@@ -2402,6 +2402,22 @@ export type SkillNotFoundError = {
   }
 }
 
+export type PluginInfo = {
+  spec: string
+  name: string
+  source: "file" | "npm"
+  scope: "global" | "local"
+  description?: string
+  descriptionOverridden?: boolean
+}
+
+export type PluginNotFoundError = {
+  name: "PluginNotFoundError"
+  data: {
+    message: string
+  }
+}
+
 export type LspStatus = {
   id: string
   name: string
@@ -8577,6 +8593,102 @@ export type SkillSetDescriptionResponses = {
 }
 
 export type SkillSetDescriptionResponse = SkillSetDescriptionResponses[keyof SkillSetDescriptionResponses]
+
+export type PluginRemoveData = {
+  body?: never
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    spec: string
+  }
+  url: "/plugin"
+}
+
+export type PluginRemoveErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * PluginNotFoundError
+   */
+  404: PluginNotFoundError
+}
+
+export type PluginRemoveError = PluginRemoveErrors[keyof PluginRemoveErrors]
+
+export type PluginRemoveResponses = {
+  /**
+   * Plugin removed
+   */
+  200: PluginInfo
+}
+
+export type PluginRemoveResponse = PluginRemoveResponses[keyof PluginRemoveResponses]
+
+export type AppPluginsData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/plugin"
+}
+
+export type AppPluginsErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type AppPluginsError = AppPluginsErrors[keyof AppPluginsErrors]
+
+export type AppPluginsResponses = {
+  /**
+   * List of plugins
+   */
+  200: Array<PluginInfo>
+}
+
+export type AppPluginsResponse = AppPluginsResponses[keyof AppPluginsResponses]
+
+export type PluginSetDescriptionData = {
+  body?: {
+    description: string
+  }
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    spec: string
+  }
+  url: "/plugin/description"
+}
+
+export type PluginSetDescriptionErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * PluginNotFoundError
+   */
+  404: PluginNotFoundError
+}
+
+export type PluginSetDescriptionError = PluginSetDescriptionErrors[keyof PluginSetDescriptionErrors]
+
+export type PluginSetDescriptionResponses = {
+  /**
+   * Updated plugin description
+   */
+  200: PluginInfo
+}
+
+export type PluginSetDescriptionResponse = PluginSetDescriptionResponses[keyof PluginSetDescriptionResponses]
 
 export type LspStatusData = {
   body?: never

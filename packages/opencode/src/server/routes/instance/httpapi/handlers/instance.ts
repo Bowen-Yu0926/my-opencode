@@ -6,10 +6,17 @@ import { Global } from "@opencode-ai/core/global"
 import { LSP } from "@/lsp/lsp"
 import { Vcs } from "@/project/vcs"
 import { Skill } from "@/skill"
+import { PluginManage } from "@/plugin/manage"
 import { Effect } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
-import { ApiSkillMoveError, ApiSkillNotFoundError, ApiSkillRemoveError, ApiVcsApplyError } from "../groups/instance"
+import {
+  ApiPluginNotFoundError,
+  ApiSkillMoveError,
+  ApiSkillNotFoundError,
+  ApiSkillRemoveError,
+  ApiVcsApplyError,
+} from "../groups/instance"
 import { markInstanceForDisposal } from "../lifecycle"
 
 export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance", (handlers) =>
@@ -19,6 +26,7 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
     const format = yield* Format.Service
     const lsp = yield* LSP.Service
     const skill = yield* Skill.Service
+    const plugin = yield* PluginManage.Service
     const vcs = yield* Vcs.Service
 
     const dispose = Effect.fn("InstanceHttpApi.dispose")(function* () {
@@ -124,6 +132,37 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
       )
     })
 
+    const getPlugin = Effect.fn("InstanceHttpApi.plugin")(function* () {
+      return yield* plugin.list()
+    })
+
+    const removePlugin = Effect.fn("InstanceHttpApi.pluginRemove")(function* (ctx: { query: { spec: string } }) {
+      return yield* plugin.remove(ctx.query.spec).pipe(
+        Effect.mapError(
+          (error) =>
+            new ApiPluginNotFoundError({
+              name: "PluginNotFoundError",
+              data: { message: error.message },
+            }),
+        ),
+      )
+    })
+
+    const setPluginDescription = Effect.fn("InstanceHttpApi.pluginDescription")(function* (ctx: {
+      query: { spec: string }
+      payload: { description: string }
+    }) {
+      return yield* plugin.setDescription(ctx.query.spec, ctx.payload.description).pipe(
+        Effect.mapError(
+          (error) =>
+            new ApiPluginNotFoundError({
+              name: "PluginNotFoundError",
+              data: { message: error.message },
+            }),
+        ),
+      )
+    })
+
     const getLsp = Effect.fn("InstanceHttpApi.lsp")(function* () {
       return yield* lsp.status()
     })
@@ -146,6 +185,9 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
       .handle("skillRemove", removeSkill)
       .handle("skillMove", moveSkill)
       .handle("skillDescription", setSkillDescription)
+      .handle("plugin", getPlugin)
+      .handle("pluginRemove", removePlugin)
+      .handle("pluginDescription", setPluginDescription)
       .handle("lsp", getLsp)
       .handle("formatter", getFormatter)
   }),

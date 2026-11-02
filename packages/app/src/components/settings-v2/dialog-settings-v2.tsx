@@ -9,6 +9,7 @@ import { SettingsKeybinds } from "../settings-keybinds"
 import { SettingsProvidersV2 } from "./providers"
 import { SettingsModelsV2 } from "./models"
 import { SettingsSkillsV2 } from "./skills"
+import { SettingsPluginsV2 } from "./plugins"
 import "./settings-v2.css"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
@@ -97,6 +98,10 @@ export const DialogSettings: Component<{
                       <Icon name="sliders" />
                       {language.t("settings.skills.title")}
                     </TabsV2.Trigger>
+                    <TabsV2.Trigger value="plugins">
+                      <Icon name="puzzle" />
+                      {language.t("settings.plugins.title")}
+                    </TabsV2.Trigger>
                   </div>
                 </div>
               </div>
@@ -121,6 +126,9 @@ export const DialogSettings: Component<{
         </TabsV2.Content>
         <TabsV2.Content value="skills" class="settings-v2-panel">
           <SettingsSkillsV2 directory={directory} />
+        </TabsV2.Content>
+        <TabsV2.Content value="plugins" class="settings-v2-panel">
+          <SettingsPluginsV2 directory={directory} />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

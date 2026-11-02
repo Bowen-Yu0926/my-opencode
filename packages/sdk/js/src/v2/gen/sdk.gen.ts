@@ -8,6 +8,8 @@ import type {
   AppAgentsResponses,
   AppLogErrors,
   AppLogResponses,
+  AppPluginsErrors,
+  AppPluginsResponses,
   AppSkillsErrors,
   AppSkillsResponses,
   Auth as Auth3,
@@ -130,6 +132,10 @@ import type {
   PermissionRuleset,
   PermissionV2Reply,
   PermissionV2Source,
+  PluginRemoveErrors,
+  PluginRemoveResponses,
+  PluginSetDescriptionErrors,
+  PluginSetDescriptionResponses,
   ProjectCommands,
   ProjectCurrentErrors,
   ProjectCurrentResponses,
@@ -620,6 +626,36 @@ export class App extends HeyApiClient {
     )
     return (options?.client ?? this.client).get<AppSkillsResponses, AppSkillsErrors, ThrowOnError>({
       url: "/skill",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * List plugins
+   *
+   * Get a list of all configured plugins with their source, scope, and description override.
+   */
+  public plugins<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<AppPluginsResponses, AppPluginsErrors, ThrowOnError>({
+      url: "/plugin",
       ...options,
       ...params,
     })
@@ -2372,6 +2408,83 @@ export class Skill extends HeyApiClient {
     )
     return (options?.client ?? this.client).put<SkillSetDescriptionResponses, SkillSetDescriptionErrors, ThrowOnError>({
       url: "/skill/description",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
+export class Plugin extends HeyApiClient {
+  /**
+   * Remove a plugin
+   *
+   * Uninstall a plugin by removing it from the config plugin array without deleting local files or npm packages.
+   */
+  public remove<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      spec: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "spec" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<PluginRemoveResponses, PluginRemoveErrors, ThrowOnError>({
+      url: "/plugin",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Set plugin description override
+   *
+   * Set a user-provided description for a plugin. Empty string clears the override.
+   */
+  public setDescription<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      spec: string
+      description?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "spec" },
+            { in: "body", key: "description" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).put<
+      PluginSetDescriptionResponses,
+      PluginSetDescriptionErrors,
+      ThrowOnError
+    >({
+      url: "/plugin/description",
       ...options,
       ...params,
       headers: {
@@ -7355,6 +7468,11 @@ export class OpencodeClient extends HeyApiClient {
   private _skill?: Skill
   get skill(): Skill {
     return (this._skill ??= new Skill({ client: this.client }))
+  }
+
+  private _plugin?: Plugin
+  get plugin(): Plugin {
+    return (this._plugin ??= new Plugin({ client: this.client }))
   }
 
   private _lsp?: Lsp

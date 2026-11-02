@@ -4,6 +4,7 @@ import { Format } from "@/format"
 import { LSP } from "@/lsp/lsp"
 import { Vcs } from "@/project/vcs"
 import { Skill } from "@/skill"
+import { PluginManage } from "@/plugin/manage"
 import { Schema } from "effect"
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
 import { Authorization } from "../middleware/authorization"
@@ -64,6 +65,14 @@ export class ApiSkillNotFoundError extends Schema.ErrorClass<ApiSkillNotFoundErr
   { httpApiStatus: 404 },
 ) {}
 
+export class ApiPluginNotFoundError extends Schema.ErrorClass<ApiPluginNotFoundError>("PluginNotFoundError")(
+  {
+    name: Schema.Literal("PluginNotFoundError"),
+    data: Schema.Struct({ message: Schema.String }),
+  },
+  { httpApiStatus: 404 },
+) {}
+
 export const InstancePaths = {
   dispose: "/instance/dispose",
   path: "/path",
@@ -75,6 +84,7 @@ export const InstancePaths = {
   command: "/command",
   agent: "/agent",
   skill: "/skill",
+  plugin: "/plugin",
   lsp: "/lsp",
   formatter: "/formatter",
 } as const
@@ -222,6 +232,39 @@ export const InstanceApi = HttpApi.make("instance")
             identifier: "skill.setDescription",
             summary: "Set skill description override",
             description: "Set a user-provided description for a skill. Empty string clears the override.",
+          }),
+        ),
+        HttpApiEndpoint.get("plugin", InstancePaths.plugin, {
+          query: WorkspaceRoutingQuery,
+          success: described(Schema.Array(PluginManage.Info), "List of plugins"),
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "app.plugins",
+            summary: "List plugins",
+            description: "Get a list of all configured plugins with their source, scope, and description override.",
+          }),
+        ),
+        HttpApiEndpoint.delete("pluginRemove", InstancePaths.plugin, {
+          query: Schema.Struct({ ...WorkspaceRoutingQueryFields, spec: Schema.String }),
+          success: described(PluginManage.Info, "Plugin removed"),
+          error: ApiPluginNotFoundError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "plugin.remove",
+            summary: "Remove a plugin",
+            description: "Uninstall a plugin by removing it from the config plugin array without deleting local files or npm packages.",
+          }),
+        ),
+        HttpApiEndpoint.put("pluginDescription", `${InstancePaths.plugin}/description`, {
+          query: Schema.Struct({ ...WorkspaceRoutingQueryFields, spec: Schema.String }),
+          payload: Schema.Struct({ description: Schema.String }),
+          success: described(PluginManage.Info, "Updated plugin description"),
+          error: ApiPluginNotFoundError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "plugin.setDescription",
+            summary: "Set plugin description override",
+            description: "Set a user-provided description for a plugin. Empty string clears the override.",
           }),
         ),
         HttpApiEndpoint.get("lsp", InstancePaths.lsp, {
