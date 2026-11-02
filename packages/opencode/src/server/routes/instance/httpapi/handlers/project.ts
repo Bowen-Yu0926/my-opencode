@@ -4,7 +4,7 @@ import { ProjectV2 } from "@opencode-ai/core/project"
 import { Effect } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
-import { ProjectNotFoundError } from "../errors"
+import { ProjectNotFoundError, InvalidRequestError } from "../errors"
 import { markInstanceForReload } from "../lifecycle"
 
 export const projectHandlers = HttpApiBuilder.group(InstanceHttpApi, "project", (handlers) =>
@@ -43,6 +43,14 @@ export const projectHandlers = HttpApiBuilder.group(InstanceHttpApi, "project", 
             new ProjectNotFoundError({
               projectID: error.projectID,
               message: `Project not found: ${error.projectID}`,
+            }),
+          ),
+        ),
+        Effect.catchTag("Project.DirectoryNotFoundError", (error) =>
+          Effect.fail(
+            new InvalidRequestError({
+              message: `Directory not found: ${error.directory}`,
+              field: "directory",
             }),
           ),
         ),

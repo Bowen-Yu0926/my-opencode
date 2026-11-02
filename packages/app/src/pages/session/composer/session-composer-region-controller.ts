@@ -5,6 +5,7 @@ import { createStore } from "solid-js/store"
 import type { PromptInputState } from "@/components/prompt-input"
 import { useSync } from "@/context/sync"
 import { getSessionHandoff, setSessionHandoff } from "@/pages/session/handoff"
+import { createDeferredMeasure } from "@/utils/deferred-resize"
 import type { SessionComposerController } from "./session-composer-state"
 
 export type SessionComposerFollowupDock = {
@@ -97,9 +98,13 @@ export function createSessionComposerRegionController(input: {
   createEffect(() => {
     const el = store.body
     if (!el) return
-    const update = () => setStore("height", el.getBoundingClientRect().height)
+    const measure = createDeferredMeasure()
+    const update = () => {
+      measure.schedule(el.getBoundingClientRect().height, (height) => setStore("height", height))
+    }
     createResizeObserver(el, update)
     update()
+    onCleanup(() => measure.dispose())
   })
 
   onCleanup(clear)

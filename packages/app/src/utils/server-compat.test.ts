@@ -48,6 +48,8 @@ function setup(
     current: createApiForServer({ server, fetch: fetcher }),
     legacy: (directory) => createSdkForServer({ server, fetch: fetcher, directory, throwOnError: true }),
     directory: "/repo",
+    fetch: fetcher,
+    server,
   })
   return { api, requests }
 }
@@ -162,6 +164,16 @@ describe("createCompatibleApi", () => {
     await api.session.list({ parentID: null, search: "session", limit: 50 })
 
     expect(new URL(requests[0]!.url).pathname).toBe("/experimental/session")
+  })
+
+  test("routes project update through the experimental HttpApi", async () => {
+    const { api, requests } = setup("v2")
+    await api.project.update({ projectID: "proj_1", name: "Renamed", directory: "/new/dir" })
+
+    const url = new URL(requests[0]!.url)
+    expect(url.pathname).toBe("/project/proj_1")
+    expect(requests[0]!.method).toBe("PATCH")
+    expect(await requests[0]!.json()).toEqual({ name: "Renamed", directory: "/new/dir" })
   })
 
   /*

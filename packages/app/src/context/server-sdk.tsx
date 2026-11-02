@@ -171,6 +171,7 @@ type ServerSDKBase = {
   protocol: Promise<ServerProtocol>
   protocolKind: Accessor<ServerProtocol | undefined>
   url: string
+  fetch: typeof globalThis.fetch | undefined
   client: ReturnType<typeof createSdkForServer>
   api: CompatibleApi
   currentApi: ServerApi
@@ -346,7 +347,7 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
       throwOnError: true,
       directory,
     })
-  const api = createCompatibleApi({ protocol, current: currentApi, legacy })
+  const api = createCompatibleApi({ protocol, current: currentApi, legacy, fetch: platform.fetch, server: server.http })
 
   return {
     server,
@@ -354,6 +355,7 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
     protocol,
     protocolKind,
     url: server.http.url,
+    fetch: platform.fetch,
     client: sdk,
     api,
     currentApi,
@@ -432,6 +434,8 @@ function createDirSdkContext(directory: string, serverSDK: ServerSDKBase) {
       current: serverSDK.currentApi,
       legacy: (next) => serverSDK.createClient({ directory: next ?? directory, throwOnError: true }),
       directory,
+      fetch: serverSDK.fetch,
+      server: serverSDK.server.http,
     }),
     event: emitter,
     get url() {

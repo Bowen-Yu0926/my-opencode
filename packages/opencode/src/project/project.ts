@@ -74,6 +74,7 @@ export const UpdateInput = Schema.Struct({
   name: Schema.optional(Schema.String),
   icon: Schema.optional(Project.Icon),
   commands: Schema.optional(Project.Commands),
+  directory: Schema.optional(Schema.String),
 })
 export type UpdateInput = Types.DeepMutable<Schema.Schema.Type<typeof UpdateInput>>
 
@@ -81,12 +82,20 @@ export const UpdatePayload = Schema.Struct({
   name: Schema.optional(Schema.String),
   icon: Schema.optional(Project.Icon),
   commands: Schema.optional(Project.Commands),
+  directory: Schema.optional(Schema.String),
 }).annotate({ identifier: "ProjectUpdateInput" })
 export type UpdatePayload = Types.DeepMutable<Schema.Schema.Type<typeof UpdatePayload>>
 
 export class NotFoundError extends Schema.TaggedErrorClass<NotFoundError>()("Project.NotFoundError", {
   projectID: ProjectV2.ID,
 }) {}
+
+export class DirectoryNotFoundError extends Schema.TaggedErrorClass<DirectoryNotFoundError>()(
+  "Project.DirectoryNotFoundError",
+  {
+    directory: Schema.String,
+  },
+) {}
 
 // ---------------------------------------------------------------------------
 // Effect service
@@ -103,7 +112,7 @@ export interface Interface {
   readonly discover: (input: Info) => Effect.Effect<void>
   readonly list: () => Effect.Effect<Info[]>
   readonly get: (id: ProjectV2.ID) => Effect.Effect<Info | undefined>
-  readonly update: (input: UpdateInput) => Effect.Effect<Info, NotFoundError>
+  readonly update: (input: UpdateInput) => Effect.Effect<Info, NotFoundError | DirectoryNotFoundError>
   readonly initGit: (input: { directory: string; project: Info }) => Effect.Effect<Info>
   readonly setInitialized: (id: ProjectV2.ID) => Effect.Effect<void>
   readonly sandboxes: (id: ProjectV2.ID) => Effect.Effect<string[]>
@@ -342,6 +351,7 @@ const layer = Layer.effect(
       const url = `data:${mime};base64,${base64}`
       yield* update({ projectID: input.id, icon: { url } }).pipe(
         Effect.catchTag("Project.NotFoundError", () => Effect.void),
+        Effect.catchTag("Project.DirectoryNotFoundError", () => Effect.void),
       )
     })
 
@@ -355,6 +365,14 @@ const layer = Layer.effect(
     })
 
     const update = Effect.fn("Project.update")(function* (input: UpdateInput) {
+      let resolved: string | undefined
+      if (input.directory) {
+        resolved = FSUtil.resolve(input.directory)
+        if (!(yield* fs.isDir(resolved))) {
+          return yield* new DirectoryNotFoundError({ directory: input.directory })
+        }
+      }
+
       const result = yield* db
         .update(ProjectTable)
         .set({
@@ -363,6 +381,7 @@ const layer = Layer.effect(
           icon_url_override: input.icon?.override,
           icon_color: input.icon?.color,
           commands: input.commands,
+          ...(resolved ? { worktree: AbsolutePath.make(resolved) } : {}),
           time_updated: Date.now(),
         })
         .where(eq(ProjectTable.id, input.projectID))
@@ -370,6 +389,7 @@ const layer = Layer.effect(
         .get()
         .pipe(Effect.orDie)
       if (!result) return yield* new NotFoundError({ projectID: input.projectID })
+      if (resolved) yield* saveProjectDirectory({ projectID: input.projectID, directory: resolved })
       const data = fromRow(result)
       yield* emitUpdated(data)
       return data

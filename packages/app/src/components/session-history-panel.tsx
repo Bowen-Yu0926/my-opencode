@@ -103,6 +103,7 @@ export function createHomeSessionSource() {
     layout.home.setSelection({ server: key, directory })
     const active = ctx()
     if (active) {
+      active.sync.session.remember(session)
       active.projects.open(directory)
       active.projects.touch(directory)
       active.sync.child(directory)

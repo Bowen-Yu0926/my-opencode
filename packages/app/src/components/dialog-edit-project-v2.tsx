@@ -10,11 +10,24 @@ import { useLanguage } from "@/context/language"
 import { getProjectAvatarVariant, type LocalProject } from "@/context/layout"
 import { ServerConnection } from "@/context/server"
 import { getProjectAvatarSource } from "@/pages/layout/helpers"
+import { useDirectoryPicker } from "./directory-picker"
 import { createEditProjectModel } from "./edit-project"
 
 export function DialogEditProjectV2(props: { project: LocalProject; server: ServerConnection.Any }) {
   const language = useLanguage()
   const model = createEditProjectModel(props)
+  const pickDirectory = useDirectoryPicker()
+
+  function chooseDirectory() {
+    pickDirectory({
+      server: props.server,
+      title: language.t("dialog.project.edit.directory.select"),
+      onSelect: (result) => {
+        if (typeof result !== "string") return
+        model.setStore("directory", result)
+      },
+    })
+  }
 
   return (
     <Dialog fit>
@@ -34,6 +47,23 @@ export function DialogEditProjectV2(props: { project: LocalProject; server: Serv
               placeholder={model.folderName()}
               onInput={(event) => model.setStore("name", event.currentTarget.value)}
             />
+          </Field>
+
+          <Field>
+            <Field.Label>{language.t("dialog.project.edit.directory")}</Field.Label>
+            <div class="flex w-full items-center gap-2">
+              <TextInputV2
+                appearance="large"
+                class="!w-full cursor-pointer"
+                leadingIcon={<Icon name="folder" />}
+                readOnly
+                value={model.store.directory}
+                onClick={chooseDirectory}
+              />
+              <ButtonV2 type="button" variant="neutral" onClick={chooseDirectory}>
+                {language.t("dialog.project.edit.directory.select")}
+              </ButtonV2>
+            </div>
           </Field>
 
           <div class="flex w-full flex-col gap-2">

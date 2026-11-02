@@ -267,6 +267,8 @@ export function WorkspaceFileTreePanel() {
       ctx.projects.open(directory)
       ctx.projects.touch(directory)
     }
+    // Active project tree must bootstrap so status leaves "loading" and
+    // file.list / session APIs can progress for the selected worktree.
     serverSync().child(directory)
   })
 

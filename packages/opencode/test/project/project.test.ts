@@ -2,10 +2,11 @@ import { describe, expect } from "bun:test"
 import { Project } from "@/project/project"
 import { $ } from "bun"
 import path from "path"
+import { FSUtil } from "@opencode-ai/core/fs-util"
 import { tmpdirScoped } from "../fixture/fixture"
 import { GlobalBus } from "../../src/bus/global"
 import { Database } from "@opencode-ai/core/database/database"
-import { ProjectTable } from "@opencode-ai/core/project/sql"
+import { ProjectDirectoryTable, ProjectTable } from "@opencode-ai/core/project/sql"
 import { SessionTable } from "@opencode-ai/core/session/sql"
 import { WorkspaceTable } from "@opencode-ai/core/control-plane/workspace.sql"
 import { eq } from "drizzle-orm"
@@ -565,6 +566,54 @@ describe("Project.update", () => {
 
       const fromDb = yield* project.get(result.project.id)
       expect(fromDb?.commands?.start).toBe("npm run dev")
+    }),
+  )
+
+  it.live("should update worktree when directory is provided", () =>
+    Effect.gen(function* () {
+      const project = yield* Project.Service
+      const tmp = yield* tmpdirScoped({ git: true })
+      const result = yield* project.fromDirectory(tmp)
+
+      const directory = path.join(tmp, "nested")
+      yield* Effect.promise(() => Bun.write(path.join(directory, "placeholder.txt"), "x"))
+
+      const updated = yield* project.update({
+        projectID: result.project.id,
+        directory,
+      })
+
+      expect(updated.worktree).toBe(FSUtil.resolve(directory))
+
+      const fromDb = yield* project.get(result.project.id)
+      expect(fromDb?.worktree).toBe(FSUtil.resolve(directory))
+
+      const { db } = yield* Database.Service
+      const registered = yield* db
+        .select({ directory: ProjectDirectoryTable.directory })
+        .from(ProjectDirectoryTable)
+        .where(eq(ProjectDirectoryTable.project_id, result.project.id))
+        .all()
+        .pipe(Effect.orDie)
+      expect(registered.map((row) => FSUtil.resolve(row.directory))).toContain(FSUtil.resolve(directory))
+    }),
+  )
+
+  it.live("should fail when directory does not exist", () =>
+    Effect.gen(function* () {
+      const project = yield* Project.Service
+      const tmp = yield* tmpdirScoped({ git: true })
+      const result = yield* project.fromDirectory(tmp)
+
+      const missing = path.join(tmp, "does-not-exist")
+      const exit = yield* project
+        .update({ projectID: result.project.id, directory: missing })
+        .pipe(Effect.exit)
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.squash(exit.cause)
+        expect(error).toMatchObject({ _tag: "Project.DirectoryNotFoundError", directory: missing })
+      }
     }),
   )
 

@@ -588,6 +588,8 @@ export const dict = {
   "dialog.project.edit.worktree.startup": "工作区启动脚本",
   "dialog.project.edit.worktree.startup.description": "创建新工作区 (worktree) 后运行。",
   "dialog.project.edit.worktree.startup.placeholder": "例如 bun install",
+  "dialog.project.edit.directory": "目录",
+  "dialog.project.edit.directory.select": "选择文件夹",
 
   "dialog.usageExceeded.dontShowAgain": "不再显示",
 

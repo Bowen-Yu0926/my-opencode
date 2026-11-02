@@ -21,6 +21,7 @@ const it = testEffect(
 )
 // Windows forbids both * and : in directory names.
 const nonWindowsIt = process.platform === "win32" ? it.live.skip : it.live
+const windowsIt = process.platform === "win32" ? it.instance : it.instance.skip
 
 // Git always outputs /-separated paths internally. Snapshot.patch() joins them
 // with path.join (which produces \ on Windows) then normalizes back to /.
@@ -112,6 +113,23 @@ it.instance(
     Effect.gen(function* () {
       yield* rm(`${tmp.path}/a.txt`)
       expect((yield* snapshot.patch(before)).files).toContain(fwd(tmp.path, "a.txt"))
+    }),
+  ),
+  { git: true },
+)
+
+windowsIt(
+  "skips Windows reserved device names when tracking",
+  withTrackedSnapshot(({ tmp, snapshot, before }) =>
+    Effect.gen(function* () {
+      yield* write(`${tmp.path}/ok.txt`, "ok")
+      // Extended path avoids Win32 reserved-name rejection when creating the poison file.
+      yield* Effect.promise(() => fs.writeFile(`\\\\?\\${path.join(tmp.path, "nul")}`, "poison"))
+      const after = yield* snapshot.track()
+      expect(after).toBeTruthy()
+      const patch = yield* snapshot.patch(before)
+      expect(patch.files).toContain(fwd(tmp.path, "ok.txt"))
+      expect(patch.files.some((file) => /(^|\/)nul$/i.test(file))).toBe(false)
     }),
   ),
   { git: true },

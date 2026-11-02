@@ -1,3 +1,15 @@
+const WINDOWS_RESERVED_DEVICE = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
+
+/** Windows device names (nul/con/...) break Git index/stat when used as path segments. */
+export function isWindowsReservedPath(relpath: string, platform = process.platform) {
+  if (platform !== "win32") return false
+  return relpath.split(/[/\\]/).some((segment) => {
+    if (!segment || segment === "." || segment === "..") return false
+    const stem = segment.includes(".") ? segment.slice(0, segment.indexOf(".")) : segment
+    return WINDOWS_RESERVED_DEVICE.test(stem)
+  })
+}
+
 export function getFilename(path: string | undefined) {
   if (!path) return ""
   const trimmed = path.replace(/[/\\]+$/, "")

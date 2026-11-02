@@ -2,7 +2,7 @@ import { Project } from "@/project/project"
 import { ProjectV2 } from "@opencode-ai/core/project"
 import { Schema } from "effect"
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
-import { ProjectNotFoundError } from "../errors"
+import { ProjectNotFoundError, InvalidRequestError } from "../errors"
 import { Authorization } from "../middleware/authorization"
 import { InstanceContextMiddleware } from "../middleware/instance-context"
 import { WorkspaceRoutingMiddleware, WorkspaceRoutingQuery } from "../middleware/workspace-routing"
@@ -13,6 +13,7 @@ const UpdatePayload = Schema.Struct({
   name: Schema.optional(Schema.String),
   icon: Schema.optional(Project.Info.fields.icon),
   commands: Schema.optional(Project.Info.fields.commands),
+  directory: Schema.optional(Schema.String),
 })
 
 export const ProjectApi = HttpApi.make("project")
@@ -54,12 +55,12 @@ export const ProjectApi = HttpApi.make("project")
           query: WorkspaceRoutingQuery,
           payload: UpdatePayload,
           success: described(Project.Info, "Updated project information"),
-          error: [HttpApiError.BadRequest, ProjectNotFoundError],
+          error: [HttpApiError.BadRequest, ProjectNotFoundError, InvalidRequestError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "project.update",
             summary: "Update project",
-            description: "Update project properties such as name, icon, and commands.",
+            description: "Update project properties such as name, icon, commands, and directory.",
           }),
         ),
         HttpApiEndpoint.get("directories", `${root}/:projectID/directories`, {

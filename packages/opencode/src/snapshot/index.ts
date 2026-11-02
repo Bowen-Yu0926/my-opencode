@@ -7,6 +7,7 @@ import { AppProcess } from "@opencode-ai/core/process"
 import { InstanceState } from "@/effect/instance-state"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Hash } from "@opencode-ai/core/util/hash"
+import { isWindowsReservedPath } from "@opencode-ai/core/util/path"
 import { Config } from "@/config/config"
 import { Global } from "@opencode-ai/core/global"
 import { Info } from "@opencode-ai/schema/file-diff"
@@ -179,11 +180,21 @@ const layer: Layer.Layer<Service, never, FSUtil.Service | AppProcess.Service | C
           return file
         })
 
+        // Keep Windows device names out of ls-files --others; Git cannot index them.
+        const windowsDeviceExcludes =
+          process.platform === "win32"
+            ? ["nul", "con", "prn", "aux"]
+                .concat(Array.from({ length: 9 }, (_, i) => `com${i + 1}`))
+                .concat(Array.from({ length: 9 }, (_, i) => `lpt${i + 1}`))
+                .flatMap((name) => [name, `${name}.*`])
+            : []
+
         const sync = Effect.fnUntraced(function* (list: string[] = []) {
           const file = yield* excludes()
           const target = path.join(state.gitdir, "info", "exclude")
           const text = [
             file ? (yield* read(file)).trimEnd() : "",
+            ...windowsDeviceExcludes,
             ...list.map((item) => `/${item.replaceAll("\\", "/")}`),
           ]
             .filter(Boolean)
@@ -271,7 +282,7 @@ const layer: Layer.Layer<Service, never, FSUtil.Service | AppProcess.Service | C
             yield* drop(ignoredFiles)
           }
 
-          const allow = all.filter((item) => !ignored.has(item))
+          const allow = all.filter((item) => !ignored.has(item) && !isWindowsReservedPath(item))
           if (!allow.length) return
 
           const large = new Set(

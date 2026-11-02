@@ -207,7 +207,7 @@ export default function LegacyLayout(props: ParentProps) {
     active: () => state.hoverProject,
     el: () => state.nav?.querySelector<HTMLElement>("[data-component='sidebar-rail']") ?? state.nav,
     onActivate: (directory) => {
-      serverSync().child(directory)
+      serverSync().child(directory, { bootstrap: false })
       setState("hoverProject", directory)
     },
   })
@@ -625,7 +625,7 @@ export default function LegacyLayout(props: ParentProps) {
 
     const result: Session[] = []
     for (const dir of dirs) {
-      const [dirStore] = serverSync().child(dir, { bootstrap: true })
+      const [dirStore] = serverSync().child(dir, { bootstrap: false })
       const dirSessions = sortedRootSessions(dirStore, now)
       result.push(...dirSessions)
     }
@@ -875,29 +875,49 @@ export default function LegacyLayout(props: ParentProps) {
 
   async function archiveSession(session: Session) {
     if ((await serverSDK().protocol) !== "v1") return
-    const [store, setStore] = serverSync().child(session.directory)
+    const [store, setStore] = serverSync().child(session.directory, { bootstrap: false })
     const sessions = store.session ?? []
     const index = sessions.findIndex((s) => s.id === session.id)
     const nextSession = sessions[index + 1] ?? sessions[index - 1]
+    const snapshot = index >= 0 ? sessions[index] : undefined
+    const wasActive = session.id === params.id
 
-    await serverSDK().client.session.update({
-      sessionID: session.id,
-      directory: session.directory,
-      time: { archived: Date.now() },
-    })
     setStore(
       produce((draft) => {
         const match = Binary.search(draft.session, session.id, (s) => s.id)
         if (match.found) draft.session.splice(match.index, 1)
       }),
     )
-    if (session.id === params.id) {
+    if (wasActive) {
       if (nextSession) {
         navigate(`/${params.dir}/session/${nextSession.id}`)
       } else {
         navigate(`/${params.dir}/session`)
       }
     }
+
+    await serverSDK()
+      .client.session.update({
+        sessionID: session.id,
+        directory: session.directory,
+        time: { archived: Date.now() },
+      })
+      .catch((err) => {
+        if (snapshot) {
+          setStore(
+            produce((draft) => {
+              const match = Binary.search(draft.session, session.id, (s) => s.id)
+              if (match.found) return
+              draft.session.splice(Math.max(0, index), 0, snapshot)
+            }),
+          )
+        }
+        if (wasActive) navigate(`/${params.dir}/session/${session.id}`)
+        showToast({
+          title: language.t("common.archive"),
+          description: errorMessage(err, language.t("common.requestFailed")),
+        })
+      })
   }
 
   command.register("layout", () => {

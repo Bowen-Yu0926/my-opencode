@@ -2,7 +2,7 @@ import { DataProvider } from "@opencode-ai/session-ui/context"
 import { showToast } from "@/utils/toast"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { useLocation, useNavigate, useParams } from "@solidjs/router"
-import { type Accessor, createEffect, createMemo, createResource, onCleanup, type ParentProps, Show } from "solid-js"
+import { type Accessor, createEffect, createMemo, onCleanup, type ParentProps, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { LocalProvider } from "@/context/local"
 import { SDKProvider } from "@/context/sdk"
@@ -42,13 +42,13 @@ export function DirectoryDataProvider(
     navigate(`/${base64Encode(next)}${path}${location.search}${location.hash}`, { replace: true })
   })
 
-  createResource(
-    () => params.id,
-    (id) =>
-      sync()
-        .session.sync(id)
-        .catch(() => {}),
-  )
+  createEffect(() => {
+    const id = params.id
+    if (!id) return
+    void sync()
+      .session.sync(id)
+      .catch(() => {})
+  })
 
   createEffect(() => {
     const sessionID = params.id

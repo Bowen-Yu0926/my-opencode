@@ -7,11 +7,12 @@ import { useSpring } from "@opencode-ai/ui/motion-spring"
 import { TextReveal } from "@opencode-ai/ui/text-reveal"
 import { TextStrikethrough } from "@opencode-ai/ui/text-strikethrough"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { Index, Show, createEffect, createMemo } from "solid-js"
+import { Index, Show, createEffect, createMemo, onCleanup } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import { createStore } from "solid-js/store"
 import { useLanguage } from "@/context/language"
 import { useSettings } from "@/context/settings"
+import { createDeferredMeasure } from "@/utils/deferred-resize"
 
 const doneToken = "\u0000done\u0000"
 const totalToken = "\u0000total\u0000"
@@ -88,11 +89,13 @@ export function SessionTodoDock(props: {
   createEffect(() => {
     const el = contentRef
     if (!el) return
+    const measure = createDeferredMeasure()
     const update = () => {
-      setStore("height", (height) => Math.max(height, el.scrollHeight))
+      measure.schedule(el.scrollHeight, (height) => setStore("height", (prev) => Math.max(prev, height)))
     }
     update()
     createResizeObserver(el, update)
+    onCleanup(() => measure.dispose())
   })
 
   return (

@@ -107,23 +107,12 @@ export interface Interface {
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/ProjectCopy") {}
 
-export const refreshAfterBoot = Effect.gen(function* () {
-  const location = yield* Location.Service
-  const copies = yield* Service
-  yield* Effect.gen(function* () {
-    yield* Effect.logInfo("project copy refresh started", { projectID: location.project.id })
-    const result = yield* copies.refresh({ projectID: location.project.id })
-    yield* Effect.logInfo("project copy refresh done", {
-      projectID: location.project.id,
-      updated: result.updated,
-      removed: result.removed,
-    })
-  }).pipe(
-    Effect.catchCause((cause) => Effect.logWarning("project copy refresh failed", { cause })),
-    Effect.forkScoped,
-    Effect.asVoid,
-  )
-})
+// Post-boot refresh fans out git worktree discovery across every project
+ // directory and can starve the sidecar event loop for minutes on large /
+ // nested Windows trees (health and session/file APIs stop responding).
+ // Keep discovery on-demand via ProjectCopy.refresh instead of auto-running
+ // it during every Location boot.
+export const refreshAfterBoot = Effect.void
 
 const layer = Layer.effect(
   Service,
@@ -214,10 +203,13 @@ const layer = Layer.effect(
 
     const refresh = Effect.fn("ProjectCopy.refresh")(function* (input: RefreshInput) {
       const stored = yield* directories.list(input.projectID)
+      if (stored.length === 0) {
+        return { updated: [] as AbsolutePath[], removed: [] as AbsolutePath[] }
+      }
       const checked = yield* Effect.forEach(
         stored,
         (item) => fs.isDir(item.directory).pipe(Effect.map((exists) => ({ ...item, exists }))),
-        { concurrency: "unbounded" },
+        { concurrency: 8 },
       )
       const sourceDirectories = checked
         .filter((item) => item.strategy === undefined && item.exists)
@@ -225,22 +217,34 @@ const layer = Layer.effect(
       const discovered = yield* Effect.forEach(
         sourceDirectories,
         (sourceDirectory) =>
-          Effect.forEach(strategies(), (strategy) =>
-            strategy.list(sourceDirectory).pipe(
-              Effect.catchTag("ProjectCopy.DirectoryUnavailableError", () => Effect.succeed([])),
-              Effect.map((items) =>
-                items.map((item) => ({
-                  directory: item.directory,
-                  strategy: item.type === "copy" ? strategy.id : undefined,
-                })),
+          Effect.forEach(
+            strategies(),
+            (strategy) =>
+              strategy.list(sourceDirectory).pipe(
+                Effect.catchTag("ProjectCopy.DirectoryUnavailableError", () => Effect.succeed([])),
+                Effect.map((items) =>
+                  items.map((item) => ({
+                    directory: item.directory,
+                    strategy: item.type === "copy" ? strategy.id : undefined,
+                  })),
+                ),
               ),
-            ),
+            { concurrency: 8 },
           ),
-        { concurrency: "unbounded" },
+        { concurrency: 8 },
       ).pipe(
         Effect.map((sets) => new Map(sets.flat(2).map((item) => [item.directory, item] as const)).values().toArray()),
       )
       const removed = checked.filter((item) => !item.exists).map((item) => item.directory)
+      const storedKeys = new Set(stored.map((item) => `${item.directory}\0${item.strategy ?? ""}`))
+      const discoveredKeys = new Set(discovered.map((item) => `${item.directory}\0${item.strategy ?? ""}`))
+      if (
+        removed.length === 0 &&
+        storedKeys.size === discoveredKeys.size &&
+        [...discoveredKeys].every((key) => storedKeys.has(key))
+      ) {
+        return { updated: [] as AbsolutePath[], removed: [] as AbsolutePath[] }
+      }
       const result = yield* db
         .transaction((tx) =>
           Effect.all({

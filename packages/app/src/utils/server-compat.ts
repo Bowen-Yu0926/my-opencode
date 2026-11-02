@@ -1,5 +1,6 @@
-import type { ServerApi } from "./server"
+import { authTokenFromCredentials, type ServerApi } from "./server"
 import type { ServerProtocol } from "./server-protocol"
+import type { ServerConnection } from "@/context/server"
 import type { AgentPartInput, FilePartInput, OpencodeClient, Session, TextPartInput } from "@opencode-ai/sdk/v2/client"
 import type {
   Project,
@@ -35,9 +36,20 @@ type CompatiblePermissionApi = Omit<ServerApi["permission"], "reply"> & {
     input: Parameters<ServerApi["permission"]["reply"]>[0] & { location?: { directory?: string } },
   ) => ReturnType<ServerApi["permission"]["reply"]>
 }
-export type CompatibleApi = Omit<ServerApi, "session" | "permission"> & {
+type ProjectUpdateInput = {
+  projectID: string
+  name?: string
+  icon?: Project["icon"]
+  commands?: Project["commands"]
+  directory?: string
+}
+type CompatibleProjectApi = ServerApi["project"] & {
+  update: (input: ProjectUpdateInput) => Promise<Project>
+}
+export type CompatibleApi = Omit<ServerApi, "session" | "permission" | "project"> & {
   readonly session: CompatibleSessionApi
   readonly permission: CompatiblePermissionApi
+  readonly project: CompatibleProjectApi
 }
 type LegacyPrompt = {
   agent?: string
@@ -51,6 +63,8 @@ type CompatibleInput = {
   current: ServerApi
   legacy: LegacyFor
   directory?: string
+  fetch?: typeof globalThis.fetch
+  server: ServerConnection.HttpBase
 }
 
 function mime(uri: string) {
@@ -85,9 +99,13 @@ function sessionInfo(session: Session): SessionInfo {
 
 export function createCompatibleApi(input: CompatibleInput): CompatibleApi {
   const v1 = createV1Api(input)
+  const current = {
+    ...input.current,
+    project: { ...input.current.project, update: projectUpdate(input) },
+  }
   return lazyApi(
-    input.protocol.then((protocol) => (protocol === "v1" ? v1 : input.current)),
-    input.current,
+    input.protocol.then((protocol) => (protocol === "v1" ? v1 : current)),
+    current,
   )
 }
 
@@ -120,6 +138,31 @@ function lazyApi<T extends object>(implementation: Promise<T>, shape: T): T {
       return nested
     },
   })
+}
+
+function projectUpdate(input: CompatibleInput) {
+  return async (value: ProjectUpdateInput) => {
+    const headers: Record<string, string> = { "content-type": "application/json" }
+    if (input.server.password) {
+      headers.Authorization = `Basic ${authTokenFromCredentials({ username: input.server.username, password: input.server.password })}`
+    }
+    if (input.directory) headers["x-opencode-directory"] = encodeURIComponent(input.directory)
+    const response = await (input.fetch ?? globalThis.fetch)(
+      new URL(`/project/${encodeURIComponent(value.projectID)}`, input.server.url),
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          name: value.name,
+          icon: value.icon,
+          commands: value.commands,
+          directory: value.directory,
+        }),
+      },
+    )
+    if (!response.ok) throw new Error(`Failed to update project: ${response.status}`)
+    return (await response.json()) as Project
+  }
 }
 
 function createV1Api(input: CompatibleInput): CompatibleApi {
@@ -308,15 +351,7 @@ function createV1Api(input: CompatibleInput): CompatibleApi {
         if (!result.data) throw new Error("Project not found")
         return { id: result.data.id, directory: result.data.worktree } satisfies ProjectCurrent
       },
-      // async update(value: Parameters<ServerApi["project"]["update"]>[0]) {
-      //   const project = (await legacy().project.list()).data?.find((item) => item.id === value.projectID)
-      //   const result = await legacy({ directory: project?.worktree }).project.update({
-      //     ...value,
-      //     directory: project?.worktree,
-      //   })
-      //   if (!result.data) throw new Error(`Project not found: ${value.projectID}`)
-      //   return result.data as Project
-      // },
+      update: projectUpdate(input),
       async directories(value: Parameters<ServerApi["project"]["directories"]>[0]) {
         const result = await legacy(value.location).worktree.list()
         return (result.data ?? []).map((item) => ({ directory: item }))

@@ -8,7 +8,6 @@ import { ProjectAvatar } from "@opencode-ai/ui/v2/project-avatar-v2"
 import { createHomeSessionSource, ProjectSessionList } from "@/components/session-history-panel"
 import { useLanguage } from "@/context/language"
 import { useServer, ServerConnection } from "@/context/server"
-import { useTabs } from "@/context/tabs"
 import { useLayout, getProjectAvatarVariant } from "@/context/layout"
 import { usePlatform } from "@/context/platform"
 import { useCommand } from "@/context/command"
@@ -31,7 +30,6 @@ const NAV_ROW =
 export function WorkspaceFilePanel() {
   const language = useLanguage()
   const server = useServer()
-  const tabs = useTabs()
   const layout = useLayout()
   const platform = usePlatform()
   const command = useCommand()
@@ -139,11 +137,10 @@ export function WorkspaceFilePanel() {
     setExpanded((current) => (current && pathKey(current) === pathKey(worktree) ? undefined : worktree))
   }
 
-  function createSession() {
+  function addProject() {
     const conn = focusedConn()
-    const directory = activeDirectory()
-    if (!conn || !directory) return
-    void tabs.newDraft({ server: ServerConnection.key(conn), directory }, "")
+    if (!conn) return
+    homeProjects.project.choose(conn)
   }
 
   const projectMenuID = (worktree: string) => `workspace-panel:${worktree}`
@@ -198,14 +195,14 @@ export function WorkspaceFilePanel() {
               onClick={() => pane.close()}
             />
           </TooltipV2>
-          <TooltipV2 placement="bottom" value={language.t("command.session.new")}>
+          <TooltipV2 placement="bottom" value={language.t("session.new.project.new")}>
             <IconButtonV2
-              data-action="workspace-panel-new-session"
+              data-action="workspace-panel-new-project"
               variant="ghost-muted"
               size="small"
-              icon={<IconV2 name="plus-soft" />}
-              aria-label={language.t("command.session.new")}
-              onClick={createSession}
+              icon={<IconV2 name="folder-add-left" />}
+              aria-label={language.t("session.new.project.new")}
+              onClick={addProject}
             />
           </TooltipV2>
         </div>
@@ -364,7 +361,7 @@ export function WorkspaceFilePanel() {
                         data-action="workspace-file-panel-project-new-session"
                         variant="ghost-muted"
                         size="small"
-                        icon={<IconV2 name="plus-soft" />}
+              icon={<IconV2 name="plus" />}
                         aria-label={language.t("command.session.new")}
                         onClick={() => {
                           const conn = focusedConn()

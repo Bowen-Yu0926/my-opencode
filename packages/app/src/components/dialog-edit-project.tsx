@@ -8,6 +8,7 @@ import { Avatar } from "@opencode-ai/ui/avatar"
 import { useLanguage } from "@/context/language"
 import { getProjectAvatarSource } from "@/pages/layout/helpers"
 import { ServerConnection } from "@/context/server"
+import { useDirectoryPicker } from "./directory-picker"
 import { createEditProjectModel } from "./edit-project"
 
 const AVATAR_COLOR_KEYS = ["pink", "mint", "orange", "purple", "cyan", "lime"] as const
@@ -15,6 +16,18 @@ const AVATAR_COLOR_KEYS = ["pink", "mint", "orange", "purple", "cyan", "lime"] a
 export function DialogEditProject(props: { project: LocalProject; server: ServerConnection.Any }) {
   const language = useLanguage()
   const model = createEditProjectModel(props)
+  const pickDirectory = useDirectoryPicker()
+
+  function chooseDirectory() {
+    pickDirectory({
+      server: props.server,
+      title: language.t("dialog.project.edit.directory.select"),
+      onSelect: (result) => {
+        if (typeof result !== "string") return
+        model.setStore("directory", result)
+      },
+    })
+  }
 
   return (
     <Dialog title={language.t("dialog.project.edit.title")} class="w-full max-w-[480px] mx-auto">
@@ -28,6 +41,21 @@ export function DialogEditProject(props: { project: LocalProject; server: Server
             value={model.store.name}
             onChange={(v) => model.setStore("name", v)}
           />
+
+          <div class="flex items-end gap-2">
+            <div class="flex-1 cursor-pointer" onClick={chooseDirectory}>
+              <TextField
+                type="text"
+                label={language.t("dialog.project.edit.directory")}
+                value={model.store.directory}
+                readOnly
+                onChange={(v) => model.setStore("directory", v)}
+              />
+            </div>
+            <Button type="button" variant="ghost" icon="folder" onClick={chooseDirectory}>
+              {language.t("dialog.project.edit.directory.select")}
+            </Button>
+          </div>
 
           <div class="flex flex-col gap-2">
             <label class="text-12-medium text-text-weak">{language.t("dialog.project.edit.icon")}</label>

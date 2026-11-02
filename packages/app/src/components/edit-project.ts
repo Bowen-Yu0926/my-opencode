@@ -19,6 +19,7 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
     color: props.project.icon?.color,
     iconOverride: props.project.icon?.override,
     startup: props.project.commands?.start ?? "",
+    directory: props.project.worktree,
     dragOver: false,
     iconHover: false,
   })
@@ -69,25 +70,18 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
     mutationFn: async () => {
       const name = store.name.trim() === folderName() ? "" : store.name.trim()
       const start = store.startup.trim()
+      const nextDirectory = store.directory.trim()
+      const directory = nextDirectory && nextDirectory !== props.project.worktree ? nextDirectory : undefined
 
       if (props.project.id && props.project.id !== "global") {
-        if ((await serverCtx().sdk.protocol) !== "v1") return
-        const project = await serverCtx()
-          .sdk.client.project.update({
-            projectID: props.project.id,
-            directory: props.project.worktree,
-            name,
-            icon: { color: store.color || "", override: store.iconOverride || "" },
-            commands: { start },
-          })
-          .then((result) => result.data)
+        const project = await serverCtx().sdk.api.project.update({
+          projectID: props.project.id,
+          name,
+          icon: { color: store.color || "", override: store.iconOverride || "" },
+          commands: { start },
+          ...(directory ? { directory } : {}),
+        })
         if (!project) return
-        // const project = await serverCtx().sdk.api.project.update({
-        //   projectID: props.project.id,
-        //   name,
-        //   icon: { color: store.color || "", override: store.iconOverride || "" },
-        //   commands: { start },
-        // })
         serverCtx().sync.set("project", (items) =>
           items.map((item) => (item.id === project.id ? normalizeProjectInfo(project) : item)),
         )

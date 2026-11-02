@@ -36,6 +36,7 @@ import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 import { createAutoScroll } from "@opencode-ai/ui/hooks"
 import { previewSelectedLines } from "@opencode-ai/session-ui/pierre/selection-bridge"
 import { Button } from "@opencode-ai/ui/button"
+import { createDeferredMeasure } from "@/utils/deferred-resize"
 import { showToast } from "@/utils/toast"
 import { base64Encode, checksum } from "@opencode-ai/core/util/encode"
 import { useLocation, useNavigate, useParams, useSearchParams } from "@solidjs/router"
@@ -469,10 +470,12 @@ export default function Page() {
   const desktopSidePanelOpen = createMemo(() => desktopSessionResizeOpen() || desktopFileTreeOpen())
   let panelRow: HTMLDivElement | undefined
   const [panelRowWidth, setPanelRowWidth] = createSignal<number>()
+  const panelRowMeasure = createDeferredMeasure()
   createResizeObserver(
     () => panelRow,
-    ({ width }) => setPanelRowWidth(width),
+    ({ width }) => panelRowMeasure.schedule(width, setPanelRowWidth),
   )
+  onCleanup(() => panelRowMeasure.dispose())
   const splitReview = createMemo(
     () => (newSessionDesign() ? desktopV2ReviewOpen() : desktopReviewOpen()) && layout.review.diffStyle() === "split",
   )
@@ -552,7 +555,6 @@ export default function Page() {
   const lastUserMessage = timeline.lastUserMessage
   const messages = timeline.messages
   const messagesReady = timeline.ready
-  const sessionSync = timeline.resource
   const userMessages = timeline.userMessages
   const visibleUserMessages = timeline.visibleUserMessages
 
@@ -1581,14 +1583,18 @@ export default function Page() {
     scrollMark += 1
   }
 
+  const contentMeasure = createDeferredMeasure()
   createResizeObserver(
     () => content,
-    () => {
-      const el = scroller
-      if (el) scheduleScrollState(el)
-      fill()
+    ({ height }) => {
+      contentMeasure.schedule(height, () => {
+        const el = scroller
+        if (el) scheduleScrollState(el)
+        fill()
+      })
     },
   )
+  onCleanup(() => contentMeasure.dispose())
 
   let captureHistoryAnchor = () => {}
   let restoreHistoryAnchor = (_done: boolean) => {}
@@ -1969,27 +1975,29 @@ export default function Page() {
     void sendFollowup(sessionID, item.id)
   })
 
+  const promptDockMeasure = createDeferredMeasure()
   createResizeObserver(
     () => promptDock,
     ({ height }) => {
-      const next = Math.ceil(height)
+      promptDockMeasure.schedule(Math.ceil(height), (next) => {
+        if (next === dockHeight) return
 
-      if (next === dockHeight) return
+        const el = scroller
+        const delta = next - dockHeight
+        const stick = el
+          ? !autoScroll.userScrolled() || el.scrollHeight - el.clientHeight - el.scrollTop < 10 + Math.max(0, delta)
+          : false
 
-      const el = scroller
-      const delta = next - dockHeight
-      const stick = el
-        ? !autoScroll.userScrolled() || el.scrollHeight - el.clientHeight - el.scrollTop < 10 + Math.max(0, delta)
-        : false
+        dockHeight = next
 
-      dockHeight = next
+        if (stick) scrollToEnd()
 
-      if (stick) scrollToEnd()
-
-      if (el) scheduleScrollState(el)
-      fill()
+        if (el) scheduleScrollState(el)
+        fill()
+      })
     },
   )
+  onCleanup(() => promptDockMeasure.dispose())
 
   const { clearMessageHash, scrollToMessage } = useSessionHashScroll({
     sessionKey,
@@ -2088,7 +2096,6 @@ export default function Page() {
 
   const sessionPanelContent = () => (
     <>
-      {sessionSync() ?? ""}
       <Show when={!isDesktop() && !!params.id && settings.general.newLayoutDesigns() && !mobileTabsBottom()}>
         {mobileTabs(true)}
       </Show>
@@ -2109,7 +2116,16 @@ export default function Page() {
             </div>
           </Match>
           <Match when={params.id}>
-            <Show when={messagesReady() ? params.id : undefined} keyed>
+            <Show
+              when={messagesReady() ? params.id : undefined}
+              keyed
+              fallback={
+                <div class="px-4 py-4 text-13-regular text-text-weak">
+                  {language.t("common.loading")}
+                  {language.t("common.loading.ellipsis")}
+                </div>
+              }
+            >
               {(_id) => (
                 <MessageTimeline
                   actions={actions}

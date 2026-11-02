@@ -22,6 +22,19 @@ type TreeStore = ReturnType<typeof createFileTreeStore>
 const sharedTrees = new Map<string, TreeStore>()
 const sharedTreeRefs = new Map<string, number>()
 const TRANSIENT_RETRY_LIMIT = 3
+const LIST_TIMEOUT_MS = 45_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string) {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  return Promise.race([
+    promise.finally(() => {
+      if (timer !== undefined) clearTimeout(timer)
+    }),
+    new Promise<T>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    }),
+  ])
+}
 
 export function acquireSharedFileTree(key: string, factory: () => TreeStore): TreeStore {
   const hit = sharedTrees.get(key)
@@ -104,8 +117,7 @@ export function createFileTreeStore(options: TreeStoreOptions) {
     const directory = options.scope()
     const isCurrent = () => generation.get(dir) === token && options.scope() === directory
 
-    const promise = options
-      .list(dir)
+    const promise = withTimeout(options.list(dir), LIST_TIMEOUT_MS, "file.list")
       .then((nodes) => {
         if (!isCurrent()) return
         transientAttempts.delete(dir)
@@ -156,7 +168,10 @@ export function createFileTreeStore(options: TreeStoreOptions) {
       .catch((e) => {
         if (!isCurrent()) return
 
-        if (isTransientServerError(e)) {
+        // Cold Instance bootstrap can starve /file past the client timeout;
+        // a warm retry usually returns in <1s, so treat timeouts as transient.
+        const timedOut = e instanceof Error && /timed out after \d+ms/i.test(e.message)
+        if (isTransientServerError(e) || timedOut) {
           const attempt = (transientAttempts.get(dir) ?? 0) + 1
           transientAttempts.set(dir, attempt)
           if (attempt <= TRANSIENT_RETRY_LIMIT) {
