@@ -8,7 +8,7 @@ import { Config } from "@/config/config"
 import { ConfigPlugin } from "@/config/plugin"
 import { isRecord } from "@/util/record"
 import { internalPluginNames } from "./index"
-import { parsePluginSpecifier, pluginSource } from "./shared"
+import { parsePluginSpecifier, pluginSource, resolvePluginTarget } from "./shared"
 
 export const Info = Schema.Struct({
   spec: Schema.String,
@@ -124,6 +124,15 @@ const layer = Layer.effect(
       if (!target) {
         return yield* new NotFoundError({ spec, available: origins.map((origin) => ConfigPlugin.pluginSpecifier(origin.spec)) })
       }
+      // Delete the program files too: local plugins drop their source file/directory,
+      // npm plugins drop their cached package directory.
+      if (pluginSource(spec) === "file") {
+        yield* fsys.remove(fileURLToPath(spec), { recursive: true, force: true }).pipe(Effect.orDie)
+      } else {
+        const resolved = yield* Effect.promise(() => resolvePluginTarget(spec))
+        yield* fsys.remove(path.dirname(path.dirname(resolved)), { recursive: true, force: true }).pipe(Effect.orDie)
+      }
+
       const remaining = origins.filter((origin) => ConfigPlugin.pluginSpecifier(origin.spec) !== spec)
       const next = { ...cfg, plugin: remaining.map((origin) => origin.spec), plugin_origins: remaining }
       if (target.scope === "global") yield* config.updateGlobal(next)
