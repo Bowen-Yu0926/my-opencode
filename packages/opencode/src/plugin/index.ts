@@ -64,14 +64,38 @@ export function experimentalWebSocketsEnabled(input: { enabled: boolean; channel
   return input.enabled || ["local", "dev", "beta"].includes(input.channel ?? InstallationChannel)
 }
 
+// Friendly, stable display names for the built-in plugins, in the same order as
+// the plugin functions in `internalPlugins`. These are also used as the `spec`
+// identity in plugin management.
+const BUILTIN_PLUGIN_NAMES = [
+  "Codex Auth",
+  "Copilot Auth",
+  "Modal",
+  "Gitlab Auth",
+  "Poe Auth",
+  "Cloudflare Workers",
+  "Cloudflare AI Gateway",
+  "Azure",
+  "DigitalOcean",
+  "Snowflake Cortex",
+  "Xai",
+  "Cerebras",
+]
+
+export function internalPluginNames(): string[] {
+  return BUILTIN_PLUGIN_NAMES
+}
+
 // Built-in plugins that are directly imported (not installed from npm)
-function internalPlugins(flags: RuntimeFlags.Info): PluginInstance[] {
-  return [
-    // Temporary rollout: pre-release builds use WebSockets by default; releases require explicit opt-in.
-    (input) =>
-      CodexAuthPlugin(input, {
-        experimentalWebSockets: experimentalWebSocketsEnabled({ enabled: flags.experimentalWebSockets }),
-      }),
+function internalPlugins(flags: RuntimeFlags.Info): Array<{ name: string; plugin: PluginInstance }> {
+  // Temporary rollout: pre-release builds use WebSockets by default; releases require explicit opt-in.
+  const codexAuth: PluginInstance = (input) =>
+    CodexAuthPlugin(input, {
+      experimentalWebSockets: experimentalWebSocketsEnabled({ enabled: flags.experimentalWebSockets }),
+    })
+
+  const plugins: PluginInstance[] = [
+    codexAuth,
     CopilotAuthPlugin,
     ModalPlugin,
     GitlabAuthPlugin,
@@ -84,6 +108,8 @@ function internalPlugins(flags: RuntimeFlags.Info): PluginInstance[] {
     XaiAuthPlugin,
     CerebrasPlugin,
   ]
+
+  return plugins.map((plugin, index) => ({ name: BUILTIN_PLUGIN_NAMES[index], plugin }))
 }
 
 function isServerPlugin(value: unknown): value is PluginInstance {
@@ -168,12 +194,12 @@ const layer = Layer.effect(
           $: typeof Bun === "undefined" ? undefined : Bun.$,
         }
 
-        for (const plugin of flags.disableDefaultPlugins ? [] : internalPlugins(flags)) {
+        for (const { name, plugin } of flags.disableDefaultPlugins ? [] : internalPlugins(flags)) {
           const init = yield* Effect.tryPromise({
             try: () => plugin(input),
             catch: errorMessage,
           }).pipe(
-            Effect.tapError((error) => Effect.logError("failed to load internal plugin", { name: plugin.name, error })),
+            Effect.tapError((error) => Effect.logError("failed to load internal plugin", { name, error })),
             Effect.option,
           )
           if (init._tag === "Some") hooks.push(init.value)

@@ -73,6 +73,14 @@ export class ApiPluginNotFoundError extends Schema.ErrorClass<ApiPluginNotFoundE
   { httpApiStatus: 404 },
 ) {}
 
+export class ApiPluginBuiltinError extends Schema.ErrorClass<ApiPluginBuiltinError>("PluginBuiltinError")(
+  {
+    name: Schema.Literal("PluginBuiltinError"),
+    data: Schema.Struct({ message: Schema.String }),
+  },
+  { httpApiStatus: 400 },
+) {}
+
 export const InstancePaths = {
   dispose: "/instance/dispose",
   path: "/path",
@@ -247,7 +255,7 @@ export const InstanceApi = HttpApi.make("instance")
         HttpApiEndpoint.delete("pluginRemove", InstancePaths.plugin, {
           query: Schema.Struct({ ...WorkspaceRoutingQueryFields, spec: Schema.String }),
           success: described(PluginManage.Info, "Plugin removed"),
-          error: ApiPluginNotFoundError,
+          error: [ApiPluginNotFoundError, ApiPluginBuiltinError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "plugin.remove",

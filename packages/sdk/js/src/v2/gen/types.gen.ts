@@ -2405,14 +2405,22 @@ export type SkillNotFoundError = {
 export type PluginInfo = {
   spec: string
   name: string
-  source: "file" | "npm"
+  source: "file" | "npm" | "builtin"
   scope: "global" | "local"
+  bundled: boolean
   description?: string
   descriptionOverridden?: boolean
 }
 
 export type PluginNotFoundError = {
   name: "PluginNotFoundError"
+  data: {
+    message: string
+  }
+}
+
+export type PluginBuiltinError = {
+  name: "PluginBuiltinError"
   data: {
     message: string
   }
@@ -8607,9 +8615,9 @@ export type PluginRemoveData = {
 
 export type PluginRemoveErrors = {
   /**
-   * Bad request
+   * PluginBuiltinError | InvalidRequestError
    */
-  400: BadRequestError
+  400: PluginBuiltinError | InvalidRequestError
   /**
    * PluginNotFoundError
    */
@@ -9109,6 +9117,7 @@ export type ProjectUpdateData = {
     name?: string
     icon?: ProjectIcon
     commands?: ProjectCommands
+    directory?: string
   }
   path: {
     projectID: string

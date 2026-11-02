@@ -1123,6 +1123,8 @@ export const dict = {
   "settings.plugins.removeSucceeded": "插件已删除",
   "settings.plugins.source.file": "文件",
   "settings.plugins.source.npm": "npm",
+  "settings.plugins.source.builtin": "内置",
+  "settings.plugins.bundled": "系统预置",
   "settings.plugins.scope.global": "全局",
   "settings.plugins.scope.local": "本地",
   "settings.plugins.editDescription": "编辑简介",

@@ -2929,16 +2929,17 @@ export class Project extends HeyApiClient {
   /**
    * Update project
    *
-   * Update project properties such as name, icon, and commands.
+   * Update project properties such as name, icon, commands, and directory.
    */
   public update<ThrowOnError extends boolean = false>(
     parameters: {
       projectID: string
-      directory?: string
+      query_directory?: string
       workspace?: string
       name?: string
       icon?: ProjectIcon
       commands?: ProjectCommands
+      body_directory?: string
     },
     options?: Options<never, ThrowOnError>,
   ) {
@@ -2948,11 +2949,20 @@ export class Project extends HeyApiClient {
         {
           args: [
             { in: "path", key: "projectID" },
-            { in: "query", key: "directory" },
+            {
+              in: "query",
+              key: "query_directory",
+              map: "directory",
+            },
             { in: "query", key: "workspace" },
             { in: "body", key: "name" },
             { in: "body", key: "icon" },
             { in: "body", key: "commands" },
+            {
+              in: "body",
+              key: "body_directory",
+              map: "directory",
+            },
           ],
         },
       ],

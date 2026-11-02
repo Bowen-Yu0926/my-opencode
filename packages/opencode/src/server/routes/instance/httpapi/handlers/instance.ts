@@ -11,6 +11,7 @@ import { Effect } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
 import {
+  ApiPluginBuiltinError,
   ApiPluginNotFoundError,
   ApiSkillMoveError,
   ApiSkillNotFoundError,
@@ -138,12 +139,11 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
 
     const removePlugin = Effect.fn("InstanceHttpApi.pluginRemove")(function* (ctx: { query: { spec: string } }) {
       return yield* plugin.remove(ctx.query.spec).pipe(
-        Effect.mapError(
-          (error) =>
-            new ApiPluginNotFoundError({
-              name: "PluginNotFoundError",
-              data: { message: error.message },
-            }),
+        Effect.catchTag("PluginManage.BuiltinError", (error) =>
+          Effect.fail(new ApiPluginBuiltinError({ name: "PluginBuiltinError", data: { message: error.message } })),
+        ),
+        Effect.catchTag("PluginManage.NotFoundError", (error) =>
+          Effect.fail(new ApiPluginNotFoundError({ name: "PluginNotFoundError", data: { message: error.message } })),
         ),
       )
     })

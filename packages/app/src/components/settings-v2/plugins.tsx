@@ -10,7 +10,7 @@ import { useServerSDK } from "@/context/server-sdk"
 import { SettingsListV2 } from "./parts/list"
 import "./settings-v2.css"
 
-type PluginSource = "file" | "npm"
+type PluginSource = "file" | "npm" | "builtin"
 type PluginScope = "global" | "local"
 
 type PluginInfo = {
@@ -18,6 +18,7 @@ type PluginInfo = {
   name: string
   source: PluginSource
   scope: PluginScope
+  bundled?: boolean
   description?: string
   descriptionOverridden?: boolean
 }
@@ -25,6 +26,7 @@ type PluginInfo = {
 const SOURCE_KEYS: Record<PluginSource, string> = {
   file: "settings.plugins.source.file",
   npm: "settings.plugins.source.npm",
+  builtin: "settings.plugins.source.builtin",
 }
 
 const SCOPE_KEYS: Record<PluginScope, string> = {
@@ -177,7 +179,12 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
                       <div class="settings-v2-provider-copy">
                         <div class="settings-v2-provider-main">
                           <span class="settings-v2-provider-name truncate">{item.name}</span>
-                          <Tag>{sourceLabel(item.source)}</Tag>
+                          <Show when={item.bundled}>
+                            <Tag variant="accent">{language.t("settings.plugins.bundled")}</Tag>
+                          </Show>
+                          <Show when={item.source !== "builtin"}>
+                            <Tag>{sourceLabel(item.source)}</Tag>
+                          </Show>
                           <Tag>{scopeLabel(item.scope)}</Tag>
                           <Show when={item.descriptionOverridden}>
                             <Tag variant="accent">{language.t("settings.plugins.customized")}</Tag>
@@ -191,7 +198,12 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
                     <ButtonV2 size="normal" variant="ghost-muted" icon="edit" onClick={() => editDescription(item)}>
                       {language.t("settings.plugins.editDescription")}
                     </ButtonV2>
-                    <ButtonV2 size="normal" variant="ghost-muted" onClick={() => confirmRemove(item)}>
+                    <ButtonV2
+                      size="normal"
+                      variant="ghost-muted"
+                      disabled={item.bundled === true}
+                      onClick={() => confirmRemove(item)}
+                    >
                       {language.t("settings.plugins.remove")}
                     </ButtonV2>
                   </div>

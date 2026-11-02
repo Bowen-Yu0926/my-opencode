@@ -1140,6 +1140,8 @@ export const dict = {
   "settings.plugins.removeSucceeded": "Plugin removed",
   "settings.plugins.source.file": "File",
   "settings.plugins.source.npm": "npm",
+  "settings.plugins.source.builtin": "Built-in",
+  "settings.plugins.bundled": "Bundled",
   "settings.plugins.scope.global": "Global",
   "settings.plugins.scope.local": "Local",
   "settings.plugins.editDescription": "Edit description",
