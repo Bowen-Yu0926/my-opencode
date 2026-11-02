@@ -301,7 +301,7 @@ export const NewSessionItem = (props: {
       }}
     >
       <div class="shrink-0 size-6 flex items-center justify-center">
-        <IconV2 name="edit" size="small" class="text-icon-weak" />
+        <IconV2 name="plus" size="small" class="text-icon-weak" />
       </div>
       <span class="text-14-regular text-text-strong min-w-0 flex-1 truncate">{label}</span>
     </A>

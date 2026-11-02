@@ -217,7 +217,7 @@ const WorkspaceActions = (props: {
     <Show when={!props.touch()}>
       <Tooltip value={props.language.t("command.session.new")} placement="top">
         <IconButtonV2
-          icon={<IconV2 name="edit" size="small" />}
+          icon={<IconV2 name="plus" size="small" />}
           variant="ghost"
           size="small"
           class="size-6 rounded-md opacity-0 pointer-events-none group-hover/workspace:opacity-100 group-hover/workspace:pointer-events-auto group-focus-within/workspace:opacity-100 group-focus-within/workspace:pointer-events-auto"

@@ -87,7 +87,7 @@ export function HomeSessionsView(props: HomeSessionsViewProps) {
                 data-action="home-new-session"
                 variant="ghost-muted"
                 size="normal"
-                icon="edit"
+                icon="plus"
                 class="pointer-events-auto h-7 px-2 [font-weight:530]"
                 onClick={props.onCreateSession}
               >
@@ -527,7 +527,7 @@ function HomeSessionsEmpty(props: { onNewSession?: () => void; language: ReturnT
       </p>
       <Show when={props.onNewSession}>
         {(onNewSession) => (
-          <ButtonV2 data-action="home-new-session" variant="neutral" size="normal" icon="edit" onClick={onNewSession()}>
+          <ButtonV2 data-action="home-new-session" variant="neutral" size="normal" icon="plus" onClick={onNewSession()}>
             {props.language.t("command.session.new")}
           </ButtonV2>
         )}
