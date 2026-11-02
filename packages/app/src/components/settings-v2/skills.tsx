@@ -2,9 +2,10 @@ import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 import { Tag } from "@opencode-ai/ui/v2/badge-v2"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { DialogV2, DialogBody, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode-ai/ui/v2/dialog-v2"
+import { TextareaV2 } from "@opencode-ai/ui/v2/textarea-v2"
 import { Markdown } from "@opencode-ai/session-ui/markdown"
 import { showToast } from "@/utils/toast"
-import { createMemo, createResource, type Accessor, type Component, For, Show } from "solid-js"
+import { createMemo, createResource, createSignal, type Accessor, type Component, For, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { useServerSDK } from "@/context/server-sdk"
 import { usePlatform } from "@/context/platform"
@@ -16,6 +17,7 @@ type SkillSource = "builtin" | "global" | "project" | "config" | "url"
 type SkillItem = {
   name: string
   description?: string
+  descriptionOverridden?: boolean
   location: string
   content: string
   source: SkillSource
@@ -94,6 +96,66 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
     ))
   }
 
+  const setSkillDescription = (item: SkillItem, description: string) => {
+    const cleared = description.trim() === ""
+    void serverSdk()
+      .client.skill.setDescription({ name: item.name, directory: props.directory(), description })
+      .then(() => {
+        dialog.close()
+        void refetch()
+        showToast({
+          variant: "success",
+          title: language.t(
+            cleared ? "settings.skills.descriptionResetSucceeded" : "settings.skills.descriptionSaveSucceeded",
+          ),
+        })
+      })
+      .catch(() =>
+        showToast({
+          title: language.t(
+            cleared ? "settings.skills.descriptionResetFailed" : "settings.skills.descriptionSaveFailed",
+          ),
+        }),
+      )
+  }
+
+  const editDescription = (item: SkillItem) => {
+    const [value, setValue] = createSignal(item.description ?? "")
+
+    dialog.show(() => (
+      <DialogV2 fit variant="settings">
+        <DialogHeader>
+          <DialogTitleGroup
+            title={language.t("settings.skills.editDescription")}
+            description={item.name}
+          />
+        </DialogHeader>
+        <DialogBody class="overflow-y-auto">
+          <TextareaV2
+            autofocus
+            rows={5}
+            value={value()}
+            placeholder={language.t("settings.skills.descriptionPlaceholder")}
+            onInput={(event) => setValue(event.currentTarget.value)}
+          />
+        </DialogBody>
+        <DialogFooter>
+          <Show when={item.descriptionOverridden}>
+            <ButtonV2 variant="ghost" onClick={() => setSkillDescription(item, "")}>
+              {language.t("settings.skills.resetDescription")}
+            </ButtonV2>
+          </Show>
+          <ButtonV2 variant="ghost" onClick={() => dialog.close()}>
+            {language.t("common.cancel")}
+          </ButtonV2>
+          <ButtonV2 onClick={() => setSkillDescription(item, value())}>
+            {language.t("common.save")}
+          </ButtonV2>
+        </DialogFooter>
+      </DialogV2>
+    ))
+  }
+
   const confirmRemove = (item: SkillItem) => {
     dialog.show(() => (
       <DialogV2 fit>
@@ -149,6 +211,9 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
                         <div class="settings-v2-provider-main">
                           <span class="settings-v2-provider-name truncate">{item.name}</span>
                           <Tag>{sourceLabel(item.source)}</Tag>
+                          <Show when={item.descriptionOverridden}>
+                            <Tag variant="accent">{language.t("settings.skills.customized")}</Tag>
+                          </Show>
                         </div>
                         <Show when={intro(item)}>
                           <p class="settings-v2-provider-description">{intro(item)}</p>
@@ -160,6 +225,9 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
                     </div>
                     <ButtonV2 size="normal" variant="ghost-muted" onClick={() => viewDetail(item)}>
                       {language.t("settings.skills.viewDetail")}
+                    </ButtonV2>
+                    <ButtonV2 size="normal" variant="ghost-muted" icon="edit" onClick={() => editDescription(item)}>
+                      {language.t("settings.skills.editDescription")}
                     </ButtonV2>
                     <Show when={platform.platform === "desktop" && !!platform.openPath}>
                       <ButtonV2 size="normal" variant="ghost-muted" onClick={() => openSkillFolder(item)}>

@@ -233,6 +233,8 @@ import type {
   SkillMoveResponses,
   SkillRemoveErrors,
   SkillRemoveResponses,
+  SkillSetDescriptionErrors,
+  SkillSetDescriptionResponses,
   SubtaskPartInput,
   SyncHistoryListErrors,
   SyncHistoryListResponses,
@@ -2338,6 +2340,45 @@ export class Skill extends HeyApiClient {
       url: "/skill/move",
       ...options,
       ...params,
+    })
+  }
+
+  /**
+   * Set skill description override
+   *
+   * Set a user-provided description for a skill. Empty string clears the override.
+   */
+  public setDescription<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      name: string
+      description?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "name" },
+            { in: "body", key: "description" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).put<SkillSetDescriptionResponses, SkillSetDescriptionErrors, ThrowOnError>({
+      url: "/skill/description",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
     })
   }
 }

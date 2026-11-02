@@ -2395,6 +2395,13 @@ export type SkillMoveError = {
   }
 }
 
+export type SkillNotFoundError = {
+  name: "SkillNotFoundError"
+  data: {
+    message: string
+  }
+}
+
 export type LspStatus = {
   id: string
   name: string
@@ -8448,6 +8455,7 @@ export type SkillRemoveResponses = {
   200: {
     name: string
     description?: string
+    descriptionOverridden?: boolean
     location: string
     content: string
     source: "builtin" | "global" | "project" | "config" | "url"
@@ -8482,6 +8490,7 @@ export type AppSkillsResponses = {
   200: Array<{
     name: string
     description?: string
+    descriptionOverridden?: boolean
     location: string
     content: string
     source: "builtin" | "global" | "project" | "config" | "url"
@@ -8518,6 +8527,7 @@ export type SkillMoveResponses = {
   200: {
     name: string
     description?: string
+    descriptionOverridden?: boolean
     location: string
     content: string
     source: "builtin" | "global" | "project" | "config" | "url"
@@ -8525,6 +8535,48 @@ export type SkillMoveResponses = {
 }
 
 export type SkillMoveResponse = SkillMoveResponses[keyof SkillMoveResponses]
+
+export type SkillSetDescriptionData = {
+  body?: {
+    description: string
+  }
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    name: string
+  }
+  url: "/skill/description"
+}
+
+export type SkillSetDescriptionErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * SkillNotFoundError
+   */
+  404: SkillNotFoundError
+}
+
+export type SkillSetDescriptionError = SkillSetDescriptionErrors[keyof SkillSetDescriptionErrors]
+
+export type SkillSetDescriptionResponses = {
+  /**
+   * Updated skill description
+   */
+  200: {
+    name: string
+    description?: string
+    descriptionOverridden?: boolean
+    location: string
+    content: string
+    source: "builtin" | "global" | "project" | "config" | "url"
+  }
+}
+
+export type SkillSetDescriptionResponse = SkillSetDescriptionResponses[keyof SkillSetDescriptionResponses]
 
 export type LspStatusData = {
   body?: never

@@ -9,7 +9,7 @@ import { Skill } from "@/skill"
 import { Effect } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
-import { ApiSkillMoveError, ApiSkillRemoveError, ApiVcsApplyError } from "../groups/instance"
+import { ApiSkillMoveError, ApiSkillNotFoundError, ApiSkillRemoveError, ApiVcsApplyError } from "../groups/instance"
 import { markInstanceForDisposal } from "../lifecycle"
 
 export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance", (handlers) =>
@@ -109,6 +109,21 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
       )
     })
 
+    const setSkillDescription = Effect.fn("InstanceHttpApi.skillDescription")(function* (ctx: {
+      query: { name: string }
+      payload: { description: string }
+    }) {
+      return yield* skill.setDescription(ctx.query.name, ctx.payload.description).pipe(
+        Effect.mapError(
+          (error) =>
+            new ApiSkillNotFoundError({
+              name: "SkillNotFoundError",
+              data: { message: error.message },
+            }),
+        ),
+      )
+    })
+
     const getLsp = Effect.fn("InstanceHttpApi.lsp")(function* () {
       return yield* lsp.status()
     })
@@ -130,6 +145,7 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
       .handle("skill", getSkill)
       .handle("skillRemove", removeSkill)
       .handle("skillMove", moveSkill)
+      .handle("skillDescription", setSkillDescription)
       .handle("lsp", getLsp)
       .handle("formatter", getFormatter)
   }),

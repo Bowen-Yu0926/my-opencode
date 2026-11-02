@@ -56,6 +56,14 @@ export class ApiSkillMoveError extends Schema.ErrorClass<ApiSkillMoveError>("Ski
   { httpApiStatus: 400 },
 ) {}
 
+export class ApiSkillNotFoundError extends Schema.ErrorClass<ApiSkillNotFoundError>("SkillNotFoundError")(
+  {
+    name: Schema.Literal("SkillNotFoundError"),
+    data: Schema.Struct({ message: Schema.String }),
+  },
+  { httpApiStatus: 404 },
+) {}
+
 export const InstancePaths = {
   dispose: "/instance/dispose",
   path: "/path",
@@ -202,6 +210,18 @@ export const InstanceApi = HttpApi.make("instance")
             identifier: "skill.move",
             summary: "Move a skill",
             description: "Move a skill between the global skills directory and the current project's skills directory.",
+          }),
+        ),
+        HttpApiEndpoint.put("skillDescription", `${InstancePaths.skill}/description`, {
+          query: Schema.Struct({ ...WorkspaceRoutingQueryFields, name: Schema.String }),
+          payload: Schema.Struct({ description: Schema.String }),
+          success: described(Skill.Info, "Updated skill description"),
+          error: ApiSkillNotFoundError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "skill.setDescription",
+            summary: "Set skill description override",
+            description: "Set a user-provided description for a skill. Empty string clears the override.",
           }),
         ),
         HttpApiEndpoint.get("lsp", InstancePaths.lsp, {

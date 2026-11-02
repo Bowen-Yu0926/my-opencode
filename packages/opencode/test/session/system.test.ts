@@ -85,6 +85,8 @@ const it = testEffect(
             Effect.fail(new Skill.NotFoundError({ name, available: skills.map((skill) => skill.name) })),
           move: (name) =>
             Effect.fail(new Skill.NotFoundError({ name, available: skills.map((skill) => skill.name) })),
+          setDescription: (name) =>
+            Effect.fail(new Skill.NotFoundError({ name, available: skills.map((skill) => skill.name) })),
         }),
       ),
     ],

@@ -37,6 +37,7 @@ const CUSTOMIZE_OPENCODE_SKILL_BODY = SkillPlugin.CustomizeOpencodeContent
 export const Info = Schema.Struct({
   name: Schema.String,
   description: Schema.optional(Schema.String),
+  descriptionOverridden: Schema.optional(Schema.Boolean),
   location: Schema.String,
   content: Schema.String,
   source: Schema.Literals(["builtin", "global", "project", "config", "url"]),
@@ -128,13 +129,28 @@ export interface Interface {
   readonly available: (agent?: Agent.Info) => Effect.Effect<Info[]>
   readonly remove: (name: string) => Effect.Effect<Info, RemoveError | NotFoundError>
   readonly move: (name: string, to: "global" | "project") => Effect.Effect<Info, MoveError | NotFoundError>
+  readonly setDescription: (name: string, description: string) => Effect.Effect<Info, NotFoundError>
 }
+
+const skillDescriptionsFile = (global: Global.Interface) => path.join(global.data, "skill-descriptions.json")
+
+const readOverrides = Effect.fnUntraced(function* (fsys: FSUtil.Interface, global: Global.Interface) {
+  const text = yield* fsys.readFileStringSafe(skillDescriptionsFile(global)).pipe(Effect.catch(() => Effect.succeed(undefined)))
+  if (!text) return {}
+  try {
+    const parsed = JSON.parse(text)
+    return isRecord(parsed) ? (parsed as Record<string, string>) : {}
+  } catch {
+    return {}
+  }
+})
 
 const add = Effect.fnUntraced(function* (
   state: State,
   match: string,
   source: Info["source"],
   events: EventV2Bridge.Service["Service"],
+  overrides: Record<string, string>,
 ) {
   const md = yield* Effect.tryPromise({
     try: () => ConfigMarkdown.parse(match),
@@ -164,9 +180,11 @@ const add = Effect.fnUntraced(function* (
   }
 
   state.dirs.add(path.dirname(match))
+  const overridden = overrides[md.data.name]
   state.skills[md.data.name] = {
     name: md.data.name,
-    description: md.data.description,
+    description: overridden ?? md.data.description,
+    descriptionOverridden: overridden !== undefined,
     location: match,
     content: md.content,
     source,
@@ -273,8 +291,11 @@ const loadSkills = Effect.fnUntraced(function* (
   state: State,
   discovered: DiscoveryState,
   events: EventV2Bridge.Service["Service"],
+  fsys: FSUtil.Interface,
+  global: Global.Interface,
 ) {
-  yield* Effect.forEach(discovered.matches, (match) => add(state, match, discovered.sources.get(match) ?? "project", events), {
+  const overrides = yield* readOverrides(fsys, global)
+  yield* Effect.forEach(discovered.matches, (match) => add(state, match, discovered.sources.get(match) ?? "project", events, overrides), {
     concurrency: "unbounded",
     discard: true,
   })
@@ -319,7 +340,7 @@ const layer = Layer.effect(
           content: CUSTOMIZE_OPENCODE_SKILL_BODY,
           source: "builtin",
         }
-        yield* loadSkills(s, yield* InstanceState.get(discovered), events)
+        yield* loadSkills(s, yield* InstanceState.get(discovered), events, fsys, global)
         return s
       }),
     )
@@ -387,7 +408,29 @@ const layer = Layer.effect(
       return s.skills[name]
     })
 
-    return Service.of({ get, require, all, dirs, available, remove, move })
+    const setDescription = Effect.fn("Skill.setDescription")(function* (name: string, description: string) {
+      const s = yield* InstanceState.get(state)
+      const info = s.skills[name]
+      if (!info) return yield* new NotFoundError({ name, available: Object.keys(s.skills).toSorted() })
+      const overrides = yield* readOverrides(fsys, global)
+      const trimmed = description.trim()
+      if (trimmed) overrides[name] = trimmed
+      else delete overrides[name]
+      yield* fsys.writeFileString(skillDescriptionsFile(global), JSON.stringify(overrides, null, 2)).pipe(Effect.orDie)
+
+      if (trimmed) {
+        s.skills[name] = { ...info, description: trimmed, descriptionOverridden: true }
+      } else {
+        const fallback = yield* Effect.tryPromise(() => ConfigMarkdown.parse(info.location)).pipe(
+          Effect.map((md) => (isSkillFrontmatter(md.data) ? md.data.description : undefined)),
+          Effect.catch(() => Effect.succeed(undefined)),
+        )
+        s.skills[name] = { ...info, description: fallback, descriptionOverridden: false }
+      }
+      return s.skills[name]
+    })
+
+    return Service.of({ get, require, all, dirs, available, remove, move, setDescription })
   }),
 )
 
