@@ -38,7 +38,7 @@ export const SettingsModelsV2: Component = () => {
     isCustomProviderConfig(serverSync().data.config.provider?.[providerID])
 
   const editProvider = (providerID: string) => {
-    dialog.show(() => (
+    dialog.push(() => (
       <DialogCustomProvider onBack={dialog.close} mode="edit" providerID={providerID} />
     ))
   }

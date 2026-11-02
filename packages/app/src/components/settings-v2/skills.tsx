@@ -48,7 +48,10 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
     (input) => serverSdk().client.app.skills({ directory: input.directory }),
   )
 
-  const list = createMemo<SkillItem[]>(() => (skills()?.data ?? []).filter((item) => item.source !== "builtin"))
+  const isBundled = (item: SkillItem) =>
+    item.source === "builtin" || item.location.replace(/\\/g, "/").includes("/.opencode/skills/")
+
+  const list = createMemo<SkillItem[]>(() => (skills()?.data ?? []).filter((item) => !isBundled(item)))
 
   const removable = (item: SkillItem) => item.source !== "builtin" && item.source !== "url"
 
@@ -76,7 +79,7 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
   }
 
   const viewDetail = (item: SkillItem) => {
-    dialog.show(() => (
+    dialog.push(() => (
       <DialogV2 size="x-large" variant="settings">
         <DialogHeader>
           <DialogTitleGroup
@@ -122,7 +125,7 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
   const editDescription = (item: SkillItem) => {
     const [value, setValue] = createSignal(item.description ?? "")
 
-    dialog.show(() => (
+    dialog.push(() => (
       <DialogV2 fit variant="settings">
         <DialogHeader>
           <DialogTitleGroup
@@ -157,7 +160,7 @@ export const SettingsSkillsV2: Component<{ directory: Accessor<string | undefine
   }
 
   const confirmRemove = (item: SkillItem) => {
-    dialog.show(() => (
+    dialog.push(() => (
       <DialogV2 fit>
         <DialogHeader hideClose>
           <DialogTitleGroup
