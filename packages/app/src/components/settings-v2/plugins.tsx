@@ -2,6 +2,7 @@ import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 import { Tag } from "@opencode-ai/ui/v2/badge-v2"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { DialogV2, DialogBody, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode-ai/ui/v2/dialog-v2"
+import { SegmentedControlItemV2, SegmentedControlV2 } from "@opencode-ai/ui/v2/segmented-control-v2"
 import { TextareaV2 } from "@opencode-ai/ui/v2/textarea-v2"
 import { showToast } from "@/utils/toast"
 import { createMemo, createResource, createSignal, type Accessor, type Component, For, Show } from "solid-js"
@@ -12,6 +13,7 @@ import "./settings-v2.css"
 
 type PluginSource = "file" | "npm" | "builtin"
 type PluginScope = "global" | "local"
+type PluginTab = "custom" | "builtin"
 
 type PluginInfo = {
   spec: string
@@ -34,6 +36,8 @@ const SCOPE_KEYS: Record<PluginScope, string> = {
   local: "settings.plugins.scope.local",
 }
 
+const isBuiltin = (item: PluginInfo) => item.bundled === true || item.source === "builtin"
+
 const intro = (item: PluginInfo) => {
   const raw = item.description
   if (!raw) return undefined
@@ -44,6 +48,7 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
   const dialog = useDialog()
   const language = useLanguage()
   const serverSdk = useServerSDK()
+  const [tab, setTab] = createSignal<PluginTab>("custom")
 
   const [plugins, { refetch }] = createResource(
     () => ({ directory: props.directory() }),
@@ -51,6 +56,9 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
   )
 
   const list = createMemo<PluginInfo[]>(() => plugins()?.data ?? [])
+  const builtinList = createMemo(() => list().filter(isBuiltin))
+  const customList = createMemo(() => list().filter((item) => !isBuiltin(item)))
+  const visible = createMemo(() => (tab() === "builtin" ? builtinList() : customList()))
 
   const sourceLabel = (source: PluginSource) => language.t(SOURCE_KEYS[source])
   const scopeLabel = (scope: PluginScope) => language.t(SCOPE_KEYS[scope])
@@ -154,8 +162,18 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
 
   return (
     <>
-      <div class="settings-v2-tab-header">
+      <div class="settings-v2-tab-header settings-v2-tab-header--stacked">
         <h2 class="settings-v2-tab-title">{language.t("settings.plugins.title")}</h2>
+        <SegmentedControlV2
+          value={tab()}
+          onChange={(value) => {
+            if (value === "builtin" || value === "custom") setTab(value)
+          }}
+          aria-label={language.t("settings.plugins.title")}
+        >
+          <SegmentedControlItemV2 value="custom">{language.t("settings.plugins.tab.custom")}</SegmentedControlItemV2>
+          <SegmentedControlItemV2 value="builtin">{language.t("settings.plugins.tab.builtin")}</SegmentedControlItemV2>
+        </SegmentedControlV2>
       </div>
 
       <div class="settings-v2-tab-body settings-v2-providers">
@@ -168,24 +186,28 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
           }
         >
           <Show
-            when={list().length > 0}
-            fallback={<div class="settings-v2-provider-empty">{language.t("settings.plugins.empty")}</div>}
+            when={visible().length > 0}
+            fallback={
+              <div class="settings-v2-provider-empty">
+                {language.t(tab() === "custom" ? "settings.plugins.empty.custom" : "settings.plugins.empty.builtin")}
+              </div>
+            }
           >
             <SettingsListV2>
-              <For each={list()}>
+              <For each={visible()}>
                 {(item) => (
                   <div class="settings-v2-provider-row group">
                     <div class="settings-v2-provider-lead">
                       <div class="settings-v2-provider-copy">
                         <div class="settings-v2-provider-main">
                           <span class="settings-v2-provider-name truncate">{item.name}</span>
-                          <Show when={item.bundled}>
+                          <Show when={tab() === "builtin" && item.bundled}>
                             <Tag variant="accent">{language.t("settings.plugins.bundled")}</Tag>
                           </Show>
-                          <Show when={item.source !== "builtin"}>
+                          <Show when={tab() === "custom"}>
                             <Tag>{sourceLabel(item.source)}</Tag>
+                            <Tag>{scopeLabel(item.scope)}</Tag>
                           </Show>
-                          <Tag>{scopeLabel(item.scope)}</Tag>
                           <Show when={item.descriptionOverridden}>
                             <Tag variant="accent">{language.t("settings.plugins.customized")}</Tag>
                           </Show>
@@ -201,7 +223,7 @@ export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefin
                     <ButtonV2
                       size="normal"
                       variant="ghost-muted"
-                      disabled={item.bundled === true}
+                      disabled={isBuiltin(item)}
                       onClick={() => confirmRemove(item)}
                     >
                       {language.t("settings.plugins.remove")}

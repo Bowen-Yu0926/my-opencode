@@ -2,15 +2,17 @@ import { getFilename } from "@opencode-ai/core/util/path"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useMutation } from "@tanstack/solid-query"
 import { normalizeProjectInfo } from "@/context/global-sync/utils"
-import { createMemo } from "solid-js"
+import { batch, createMemo } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useGlobal } from "@/context/global"
-import { type LocalProject } from "@/context/layout"
+import { type LocalProject, useLayout } from "@/context/layout"
 import { ServerConnection } from "@/context/server"
+import { pathKey } from "@/utils/path-key"
 
 export function createEditProjectModel(props: { project: LocalProject; server: ServerConnection.Any }) {
   const dialog = useDialog()
   const global = useGlobal()
+  const layout = useLayout()
   const serverCtx = createMemo(() => global.ensureServerCtx(props.server))
   const folderName = createMemo(() => getFilename(props.project.worktree))
   const defaultName = createMemo(() => props.project.name || folderName())
@@ -71,7 +73,8 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
       const name = store.name.trim() === folderName() ? "" : store.name.trim()
       const start = store.startup.trim()
       const nextDirectory = store.directory.trim()
-      const directory = nextDirectory && nextDirectory !== props.project.worktree ? nextDirectory : undefined
+      const directory =
+        nextDirectory && pathKey(nextDirectory) !== pathKey(props.project.worktree) ? nextDirectory : undefined
 
       if (props.project.id && props.project.id !== "global") {
         const project = await serverCtx().sdk.api.project.update({
@@ -82,10 +85,18 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
           ...(directory ? { directory } : {}),
         })
         if (!project) return
-        serverCtx().sync.set("project", (items) =>
-          items.map((item) => (item.id === project.id ? normalizeProjectInfo(project) : item)),
-        )
-        serverCtx().sync.project.icon(props.project.worktree, store.iconOverride || undefined)
+        const next = normalizeProjectInfo(project)
+        batch(() => {
+          serverCtx().sync.set("project", (items) => items.map((item) => (item.id === next.id ? next : item)))
+          if (pathKey(props.project.worktree) !== pathKey(next.worktree)) {
+            serverCtx().projects.relocate(props.project.worktree, next.worktree)
+            const selection = layout.home.selection()
+            if (selection.directory && pathKey(selection.directory) === pathKey(props.project.worktree)) {
+              layout.home.setSelection({ server: selection.server, directory: next.worktree })
+            }
+          }
+          serverCtx().sync.project.icon(next.worktree, store.iconOverride || undefined)
+        })
         dialog.close()
         return
       }

@@ -1,11 +1,8 @@
-import { Component, Show, createMemo, type Accessor } from "solid-js"
-import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
+import { Component, createMemo, type Accessor } from "solid-js"
 import { SelectV2 } from "@opencode-ai/ui/v2/select-v2"
 import { Switch } from "@opencode-ai/ui/v2/switch-v2"
 import { TextInputV2 } from "@opencode-ai/ui/v2/text-input-v2"
 import { useLanguage } from "@/context/language"
-import { usePlatform } from "@/context/platform"
-import { useUpdaterAction } from "../updater-action"
 import { useSettings } from "@/context/settings"
 import { SettingsListV2 } from "./parts/list"
 import { SettingsRowV2 } from "./parts/row"
@@ -207,16 +204,13 @@ export const SettingsGeneralV2: Component<{
   directory?: Accessor<string | undefined>
 }> = (props) => {
   const language = useLanguage()
-  const platform = usePlatform()
   const settings = useSettings()
-  const updater = useUpdaterAction()
   const permissionScope = createPermissionScopeController({
     sessionID: () => props.sessionID,
     directory: () => props.directory?.() ?? undefined,
   })
   const shell = createShellSettingsController()
   const appearance = createAppearanceSettingsController()
-  const desktop = createMemo(() => platform.platform === "desktop")
 
   return (
     <>
@@ -272,28 +266,6 @@ export const SettingsGeneralV2: Component<{
         </div>
 
         <AppearanceSection controller={appearance} />
-
-        <Show when={desktop()}>
-          <div class="settings-v2-section">
-            <h3 class="settings-v2-section-title">{language.t("settings.general.section.updates")}</h3>
-
-            <SettingsListV2>
-              <SettingsRowV2
-                title={language.t("settings.updates.row.check.title")}
-                description={language.t("settings.updates.row.check.description")}
-              >
-                <ButtonV2
-                  size="normal"
-                  variant="neutral"
-                  disabled={!updater.action().run}
-                  onClick={() => void updater.run()}
-                >
-                  {language.t(updater.action().label)}
-                </ButtonV2>
-              </SettingsRowV2>
-            </SettingsListV2>
-          </div>
-        </Show>
       </div>
     </>
   )

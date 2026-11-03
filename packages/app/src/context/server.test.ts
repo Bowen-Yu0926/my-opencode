@@ -151,6 +151,48 @@ describe("createServerProjects", () => {
     })
   })
 
+  test("relocate updates opened worktree in place and remaps last/recentlyClosed", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("/old")
+      projects.open("/other")
+      projects.collapse("/old")
+      projects.touch("/old")
+      projects.close("/old")
+      projects.open("/old")
+
+      projects.relocate("/old", "/new")
+      expect(projects.list()).toEqual([
+        { worktree: "/new", expanded: true },
+        { worktree: "/other", expanded: true },
+      ])
+      expect(projects.last()).toBe("/new")
+
+      projects.close("/new")
+      expect(projects.recentlyClosed()[0]).toBe("/new")
+      projects.relocate("/new", "/newer")
+      expect(projects.recentlyClosed()[0]).toBe("/newer")
+      dispose()
+    })
+  })
+
+  test("relocate drops the old entry when the destination is already open", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("/a")
+      projects.open("/b")
+      projects.relocate("/a", "/b")
+      expect(projects.list()).toEqual([{ worktree: "/b", expanded: true }])
+      dispose()
+    })
+  })
+
   test("retains recently closed history beyond the visible display limit", () => {
     createRoot((dispose) => {
       const [scope] = createSignal(ServerScope.local)

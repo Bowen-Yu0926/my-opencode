@@ -20,10 +20,12 @@ import { loadHomeSessionIndex, retainHomeSessions, type HomeSessionEvents } from
 import { projectDirectories, sessionsForActiveProject } from "@/pages/layout/helpers"
 import { pathKey } from "@/utils/path-key"
 import { sessionTitle } from "@/utils/session-title"
+import { getCompactRelativeTime } from "@/utils/time"
 import { showToast } from "@/utils/toast"
 
 const LIMIT = 50
 const PROJECT_LIMIT = 12
+const PROJECT_PREVIEW = 5
 
 function groupByDay(sessions: Session[], language: ReturnType<typeof useLanguage>): { title: string; sessions: Session[] }[] {
   const now = DateTime.local()
@@ -275,23 +277,28 @@ export function ProjectSessionList(props: {
   worktree: string
   sandboxes?: string[]
   limit?: number
+  preview?: number
   source: HomeSessionSource
 }) {
+  const language = useLanguage()
+  const [expanded, setExpanded] = createSignal(false)
   const directories = createMemo(() => [props.worktree, ...(props.sandboxes ?? [])].map(pathKey))
+  const preview = () => props.preview ?? PROJECT_PREVIEW
+  const cap = () => props.limit ?? PROJECT_LIMIT
 
-  const sessions = createMemo(() => {
+  const all = createMemo(() => {
     const keys = directories()
     const scoped = props.source.allSessions().filter((session) => keys.includes(pathKey(session.directory)))
-    return retainHomeSessions(scoped, props.limit ?? PROJECT_LIMIT, Date.now()).slice(
-      0,
-      props.limit ?? PROJECT_LIMIT,
-    )
+    return retainHomeSessions(scoped, cap(), Date.now()).slice(0, cap())
   })
+
+  const sessions = createMemo(() => (expanded() ? all() : all().slice(0, preview())))
+  const moreCount = createMemo(() => Math.max(0, all().length - preview()))
 
   return (
     <Show when={!props.source.loading()}>
-      <Show when={sessions().length > 0}>
-        <div class="mb-0.5 ml-[18px] flex flex-col gap-px border-l border-v2-border-border-muted pl-2" data-component="project-session-list">
+      <Show when={all().length > 0}>
+        <div class="mb-1 ml-1 flex flex-col gap-px pl-5" data-component="project-session-list">
           <For each={sessions()}>
             {(session) => (
               <SessionRow
@@ -305,6 +312,16 @@ export function ProjectSessionList(props: {
               />
             )}
           </For>
+          <Show when={!expanded() && moreCount() > 0}>
+            <button
+              type="button"
+              data-action="project-session-more"
+              class="mt-0.5 flex h-6 w-fit items-center rounded-full bg-v2-overlay-simple-overlay-hover px-2.5 text-[12px] leading-4 text-v2-text-text-muted [font-weight:440] transition-colors hover:bg-v2-overlay-simple-overlay-pressed hover:text-v2-text-text-base"
+              onClick={() => setExpanded(true)}
+            >
+              {language.t("sidebar.session.more")}
+            </button>
+          </Show>
         </div>
       </Show>
     </Show>
@@ -325,6 +342,7 @@ function SessionRow(props: {
   const title = createMemo(() => sessionTitle(props.session.title) || props.session.id)
   const time = createMemo(() => {
     const ms = props.session.time.updated ?? props.session.time.created
+    if (props.compact) return getCompactRelativeTime(ms, language.t)
     return DateTime.fromMillis(ms).toLocaleString({ hour: "numeric", minute: "2-digit" })
   })
   const [editing, setEditing] = createSignal(false)
@@ -448,7 +466,7 @@ function SessionRow(props: {
             classList={{
               "flex w-full min-w-0 items-center border-0 bg-transparent text-left transition-[background-color,color,box-shadow] duration-140 ease-out focus-visible:outline-none":
                 true,
-              "h-7 gap-1.5 rounded-[8px] px-1.5 pr-6 text-v2-text-text-muted [font-weight:440] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
+              "h-7 gap-1.5 rounded-[8px] px-1.5 text-v2-text-text-muted [font-weight:440] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
                 !!props.compact,
               "h-9 gap-2 rounded-[8px] px-1.5 pr-9 text-v2-text-text-muted [font-weight:530] hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover":
                 !props.compact,
@@ -475,7 +493,7 @@ function SessionRow(props: {
                 when={props.isWorking()}
                 fallback={
                   <span
-                    class="size-1 shrink-0 rounded-full bg-v2-border-border-strong"
+                    class="size-1.5 shrink-0 rounded-full bg-v2-border-border-strong"
                     classList={{ "bg-v2-background-bg-accent": props.open }}
                     aria-hidden="true"
                   />
@@ -484,6 +502,7 @@ function SessionRow(props: {
                 <Spinner class="size-3 shrink-0" />
               </Show>
               <span class="min-w-0 flex-1 truncate text-[13px] leading-5 tracking-[-0.01em]">{title()}</span>
+              <span class="shrink-0 text-[11px] leading-4 text-v2-text-text-faint [font-weight:400]">{time()}</span>
             </Show>
           </MenuV2.Context.Trigger>
           <MenuV2.Context.Portal>
@@ -506,21 +525,23 @@ function SessionRow(props: {
             </MenuV2.Context.Content>
           </MenuV2.Context.Portal>
         </MenuV2.Context>
-        <div class="absolute right-0.5 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity duration-100 group-hover/session:opacity-100 focus-within:opacity-100">
-          <TooltipV2 class="flex shrink-0 items-center" placement="right" value={language.t("common.rename")}>
-            <IconButtonV2
-              variant="ghost-muted"
-              size="small"
-              icon={<IconV2 name="edit" />}
-              aria-label={language.t("common.rename")}
-              onClick={(event) => {
-                event.preventDefault()
-                event.stopPropagation()
-                startRename()
-              }}
-            />
-          </TooltipV2>
-        </div>
+        <Show when={!props.compact}>
+          <div class="absolute right-0.5 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity duration-100 group-hover/session:opacity-100 focus-within:opacity-100">
+            <TooltipV2 class="flex shrink-0 items-center" placement="right" value={language.t("common.rename")}>
+              <IconButtonV2
+                variant="ghost-muted"
+                size="small"
+                icon={<IconV2 name="edit" />}
+                aria-label={language.t("common.rename")}
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  startRename()
+                }}
+              />
+            </TooltipV2>
+          </div>
+        </Show>
       </Show>
     </div>
   )

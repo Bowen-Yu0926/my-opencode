@@ -151,6 +151,41 @@ export function createServerProjects<T extends ServerProjectState>(input: {
       next.splice(toIndex, 0, item)
       setStore("projects", input.scope(), next)
     },
+    // Keep opened-project identity in sync when a project's worktree path changes.
+    // Left-rail lists are keyed by worktree and enrich() prefers the local path, so
+    // updating sync metadata alone leaves the sidebar showing the old directory.
+    relocate(from: string, to: string) {
+      const fromKey = pathKey(from)
+      const toKey = pathKey(to)
+      if (!toKey || fromKey === toKey) return
+
+      const scope = input.scope()
+      const list = current()
+      const index = list.findIndex((project) => pathKey(project.worktree) === fromKey)
+      if (index !== -1) {
+        if (list.some((project) => pathKey(project.worktree) === toKey)) {
+          setStore(
+            "projects",
+            scope,
+            list.filter((project) => pathKey(project.worktree) !== fromKey),
+          )
+        } else {
+          setStore("projects", scope, index, "worktree", to)
+        }
+      }
+
+      const last = input.store.lastProject[scope]
+      if (last && pathKey(last) === fromKey) setStore("lastProject", scope, to)
+
+      const closed = currentClosed()
+      if (closed.some((worktree) => pathKey(worktree) === fromKey)) {
+        setStore(
+          "recentlyClosed",
+          scope,
+          closed.map((worktree) => (pathKey(worktree) === fromKey ? to : worktree)),
+        )
+      }
+    },
     last() {
       return input.store.lastProject[input.scope()]
     },

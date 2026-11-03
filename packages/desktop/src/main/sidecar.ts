@@ -1,5 +1,6 @@
 import * as http from "node:http"
 import * as tls from "node:tls"
+import { applyChannelDatabaseEnv } from "./channel-db"
 
 type NodeHttpWithEnvProxy = typeof http & {
   setGlobalProxyFromEnv: () => void
@@ -86,6 +87,9 @@ function prepareSidecarEnv(password: string, userDataPath: string) {
     OPENCODE_SERVER_PASSWORD: password,
     XDG_STATE_HOME: process.env.XDG_STATE_HOME ?? userDataPath,
   })
+  // Unpackaged / CHANNEL=dev UI uses ai.opencode.desktop.dev, but the sidecar node
+  // bundle may be built as prod/latest and would otherwise open the shared opencode.db.
+  applyChannelDatabaseEnv(process.env, userDataPath)
 }
 
 function ensureLoopbackNoProxy() {
