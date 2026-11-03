@@ -42,6 +42,11 @@ jobs:
             exit 1
           fi
 
+      # plugin exports point at dist/, which is gitignored and must be built on CI.
+      - name: Build plugin
+        working-directory: packages/plugin
+        run: bun run build
+
       - name: Build
         working-directory: packages/desktop
         run: bun run build
