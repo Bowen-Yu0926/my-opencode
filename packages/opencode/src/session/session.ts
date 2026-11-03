@@ -39,7 +39,7 @@ import { SessionID, MessageID, PartID } from "./schema"
 import type { Provider } from "@/provider/provider"
 import { Global } from "@opencode-ai/core/global"
 import { Effect, Layer, Option, Context, Schema, Types } from "effect"
-import { NonNegativeInt, optional } from "@opencode-ai/core/schema"
+import { AbsolutePath, NonNegativeInt, optional } from "@opencode-ai/core/schema"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
@@ -266,6 +266,12 @@ export const CreateInput = Schema.optional(
     metadata: Schema.optional(Metadata),
     permission: Schema.optional(PermissionV1.Ruleset),
     workspaceID: Schema.optional(WorkspaceV2.ID),
+    location: Schema.optional(
+      Schema.Struct({
+        directory: Schema.String,
+        workspaceID: Schema.optional(WorkspaceV2.ID),
+      }),
+    ),
   }),
 )
 export type CreateInput = Types.DeepMutable<Schema.Schema.Type<typeof CreateInput>>
@@ -421,6 +427,7 @@ export interface Interface {
     metadata?: typeof Metadata.Type
     permission?: PermissionV1.Ruleset
     workspaceID?: WorkspaceV2.ID
+    location?: { directory: string; workspaceID?: WorkspaceV2.ID }
   }) => Effect.Effect<Info>
   readonly fork: (input: { sessionID: SessionID; messageID?: MessageID }) => Effect.Effect<Info, NotFound>
   readonly touch: (sessionID: SessionID) => Effect.Effect<void>
@@ -532,7 +539,11 @@ const layer: Layer.Layer<
       }
       yield* Effect.logInfo("created", result)
 
-      yield* events.publish(SessionV1.Event.Created, { sessionID: result.id, info: result })
+      yield* events.publish(
+        SessionV1.Event.Created,
+        { sessionID: result.id, info: result },
+        { location: { directory: AbsolutePath.make(result.directory) } },
+      )
 
       return result
     })
@@ -619,7 +630,11 @@ const layer: Layer.Layer<
           yield* remove(child.id)
         }
 
-        yield* events.publish(SessionV1.Event.Deleted, { sessionID, info: session })
+        yield* events.publish(
+          SessionV1.Event.Deleted,
+          { sessionID, info: session },
+          { location: { directory: AbsolutePath.make(session.directory) } },
+        )
         yield* events.remove(sessionID)
       } catch (error) {
         yield* Effect.logError("failed to remove session", { sessionID, error })
@@ -672,19 +687,21 @@ const layer: Layer.Layer<
       metadata?: typeof Metadata.Type
       permission?: PermissionV1.Ruleset
       workspaceID?: WorkspaceV2.ID
+      location?: { directory: string; workspaceID?: WorkspaceV2.ID }
     }) {
       const ctx = yield* InstanceState.context
       const workspace = yield* InstanceState.workspaceID
+      const directory = input?.location?.directory ?? ctx.directory
       return yield* createNext({
         parentID: input?.parentID,
-        directory: ctx.directory,
-        path: sessionPath(ctx.worktree, ctx.directory),
+        directory,
+        path: sessionPath(ctx.worktree, directory),
         title: input?.title,
         agent: input?.agent,
         model: input?.model,
         metadata: input?.metadata,
         permission: input?.permission,
-        workspaceID: input?.workspaceID ?? workspace,
+        workspaceID: input?.location?.workspaceID ?? input?.workspaceID ?? workspace,
       })
     })
 

@@ -74,6 +74,15 @@ describe("session.created event", () => {
     }),
   )
 
+  it.instance("uses location.directory from create input for the created session", () =>
+    Effect.gen(function* () {
+      const session = yield* SessionNs.Service
+      const info = yield* session.create({ location: { directory: "/custom/directory" } })
+      expect(info.directory).toBe("/custom/directory")
+      yield* session.remove(info.id)
+    }),
+  )
+
   it.instance("session.created event should be emitted before session.updated", () =>
     Effect.gen(function* () {
       const session = yield* SessionNs.Service
