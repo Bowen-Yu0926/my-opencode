@@ -61,12 +61,18 @@ const readOverrides = Effect.fnUntraced(function* (fsys: FSUtil.Interface, globa
 
 // When the derived `plugin_origins` metadata is missing (older configs), fall back to the raw
 // `plugin` array and treat every entry as global so management still works.
+// `plugin_origins` can also drift from `plugin` (e.g. a merge that replaced the array without
+// re-deriving origins), so always reconcile against the raw `plugin` array to avoid silently
+// dropping user-installed plugins.
 function effectiveOrigins(cfg: {
   plugin?: ConfigPlugin.Origin["spec"][]
   plugin_origins?: ConfigPlugin.Origin[]
 }): ConfigPlugin.Origin[] {
-  if (cfg.plugin_origins?.length) return cfg.plugin_origins
-  return (cfg.plugin ?? []).map((spec) => ({ spec, source: "", scope: "global" as const }))
+  const origins = cfg.plugin_origins ?? []
+  const seen = new Set(origins.map((origin) => ConfigPlugin.pluginSpecifier(origin.spec)))
+  const missing = (cfg.plugin ?? []).filter((spec) => !seen.has(ConfigPlugin.pluginSpecifier(spec)))
+  if (missing.length === 0) return origins
+  return [...origins, ...missing.map((spec) => ({ spec, source: "", scope: "global" as const }))]
 }
 
 function pluginName(spec: string) {
