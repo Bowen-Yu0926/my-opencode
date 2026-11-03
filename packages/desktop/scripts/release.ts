@@ -4,11 +4,12 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import path from "node:path"
 
-// 本地发布脚本：bump 版本 -> build -> 打包并发布到 GitHub release（Windows）
+// 本地发布脚本：bump 版本 -> 提交 -> 推送 tag，由 GitHub Actions 打包并发布
 // 用法：
 //   bun scripts/release.ts            # 自动 bump patch（2.0.32 -> 2.0.33）
 //   bun scripts/release.ts 2.1.0      # 手动指定版本号
 const desktopDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+const repoRoot = path.resolve(desktopDir, "../..")
 const pkgPath = path.join(desktopDir, "package.json")
 
 function bumpPatch(version: string) {
@@ -25,29 +26,26 @@ if (next === current) {
   process.exit(1)
 }
 
+const status = await $`git status --porcelain`.cwd(repoRoot).text()
+if (status.trim()) {
+  console.error("工作区有未提交改动，请先提交或清理后再发布。")
+  process.exit(1)
+}
+
 console.log(`版本 ${current} -> ${next}`)
 pkg.version = next
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
-// GitHub 要求 published release 的 tag 必须已存在，先创建并推送 tag
-const repoRoot = path.resolve(desktopDir, "../..")
-console.log(`创建并推送 git tag v${next}...`)
-await $`git tag v${next}`.cwd(repoRoot)
-await $`git push origin v${next}`.cwd(repoRoot)
+const message = `chore(desktop): bump to ${next}`
+await $`git add packages/desktop/package.json`.cwd(repoRoot)
+await $`git commit -m ${message}`.cwd(repoRoot)
+await $`git push origin HEAD`.cwd(repoRoot)
 
-const token =
-  process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN ?? (await $`gh auth token`.text()).trim()
-if (!token) {
-  console.error("无法获取 GitHub token：请先 gh auth login，或手动设置 GH_TOKEN")
-  process.exit(1)
-}
-process.env.GH_TOKEN = token
+const tag = `v${next}`
+console.log(`创建并推送 git tag ${tag}...`)
+await $`git tag ${tag}`.cwd(repoRoot)
+await $`git push origin ${tag}`.cwd(repoRoot)
 
-console.log("构建中（prebuild + electron-vite build）...")
-await $`bun run build`.cwd(desktopDir)
-
-console.log("打包并发布到 GitHub release...")
-await $`bun run package:win:publish`.cwd(desktopDir)
-
-console.log(`\n完成：v${next} 已发布。`)
-console.log(`旧版客户端（v${current}）下次启动会自动检测到更新并提示。`)
+console.log(`\n完成：已推送 ${tag}。`)
+console.log("GitHub Actions「desktop-release」会打包 Windows 安装包并发布到 GitHub Release。")
+console.log(`查看进度：https://github.com/Bowen-Yu0926/my-opencode/actions`)
