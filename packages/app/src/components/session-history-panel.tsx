@@ -6,6 +6,7 @@ import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
+import { Spinner } from "@opencode-ai/ui/spinner"
 import { DialogFooter, DialogHeader, DialogTitleGroup, DialogV2 } from "@opencode-ai/ui/v2/dialog-v2"
 import { MenuV2 } from "@opencode-ai/ui/v2/menu-v2"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
@@ -189,6 +190,12 @@ export function createHomeSessionSource() {
   const isOpen = (session: Session) =>
     !!server.current && sessionHasOpenTab(tabs.store, ServerConnection.key(server.current!), session)
 
+  const isWorking = (session: Session) => {
+    const active = ctx()
+    if (!active) return false
+    return active.sync.session.data.session_working(session.id)
+  }
+
   return {
     language,
     loading: () => sessionLoad.isLoading,
@@ -198,6 +205,7 @@ export function createHomeSessionSource() {
     rename,
     remove,
     isOpen,
+    isWorking,
   }
 }
 
@@ -244,6 +252,7 @@ export function SessionHistoryList() {
                     <SessionRow
                       session={session}
                       open={source.isOpen(session)}
+                      isWorking={() => source.isWorking(session)}
                       onOpen={() => source.open(session)}
                       onRename={(title) => source.rename(session, title)}
                       onDelete={() => source.remove(session)}
@@ -289,6 +298,7 @@ export function ProjectSessionList(props: {
                 compact
                 session={session}
                 open={props.source.isOpen(session)}
+                isWorking={() => props.source.isWorking(session)}
                 onOpen={() => props.source.open(session)}
                 onRename={(title) => props.source.rename(session, title)}
                 onDelete={() => props.source.remove(session)}
@@ -305,6 +315,7 @@ function SessionRow(props: {
   session: Session
   open: boolean
   compact?: boolean
+  isWorking: () => boolean
   onOpen: () => void
   onRename: (title: string) => Promise<void>
   onDelete: () => Promise<void>
@@ -450,16 +461,28 @@ function SessionRow(props: {
               when={props.compact}
               fallback={
                 <div class="flex min-w-0 flex-1 flex-col gap-px">
-                  <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">{title()}</span>
+                  <span class="flex min-w-0 items-center gap-1.5">
+                    <Show when={props.isWorking()}>
+                      <Spinner class="size-3 shrink-0" />
+                    </Show>
+                    <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">{title()}</span>
+                  </span>
                   <span class="text-[12px] leading-3 text-v2-text-text-faint [font-weight:400]">{time()}</span>
                 </div>
               }
             >
-              <span
-                class="size-1 shrink-0 rounded-full bg-v2-border-border-strong"
-                classList={{ "bg-v2-background-bg-accent": props.open }}
-                aria-hidden="true"
-              />
+              <Show
+                when={props.isWorking()}
+                fallback={
+                  <span
+                    class="size-1 shrink-0 rounded-full bg-v2-border-border-strong"
+                    classList={{ "bg-v2-background-bg-accent": props.open }}
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <Spinner class="size-3 shrink-0" />
+              </Show>
               <span class="min-w-0 flex-1 truncate text-[13px] leading-5 tracking-[-0.01em]">{title()}</span>
             </Show>
           </MenuV2.Context.Trigger>
