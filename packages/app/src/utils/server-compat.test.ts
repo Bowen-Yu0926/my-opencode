@@ -176,6 +176,24 @@ describe("createCompatibleApi", () => {
     expect(await requests[0]!.json()).toEqual({ name: "Renamed", directory: "/new/dir" })
   })
 
+  test("routes V1 session remove through the legacy session delete", async () => {
+    const { api, requests } = setup("v1")
+    await api.session.remove({ sessionID: "ses_1", directory: "/repo" })
+
+    const url = new URL(requests[0]!.url)
+    expect(url.pathname).toBe("/session/ses_1")
+    expect(requests[0]!.method).toBe("DELETE")
+  })
+
+  test("routes V2 session remove through the legacy session delete", async () => {
+    const { api, requests } = setup("v2")
+    await api.session.remove({ sessionID: "ses_1", directory: "/repo" })
+
+    const url = new URL(requests[0]!.url)
+    expect(url.pathname).toBe("/session/ses_1")
+    expect(requests[0]!.method).toBe("DELETE")
+  })
+
   /*
   test("projects the V1 default branch", async () => {
     const { api } = setup("v1", { vcs: { branch: "feature", default_branch: "dev" } })

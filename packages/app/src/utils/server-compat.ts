@@ -101,6 +101,7 @@ export function createCompatibleApi(input: CompatibleInput): CompatibleApi {
   const v1 = createV1Api(input)
   const current = {
     ...input.current,
+    session: { ...input.current.session, rename: v1.session.rename, remove: v1.session.remove },
     project: { ...input.current.project, update: projectUpdate(input) },
   }
   return lazyApi(
