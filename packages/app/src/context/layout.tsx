@@ -603,7 +603,7 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
           const sdk = serverSdk()
           if ((await sdk.protocol) !== "v1") return
           return sdk.client.project
-            .update({ projectID, directory: worktree, icon: { color } })
+            .update({ projectID, query_directory: worktree, icon: { color } })
             .then((response) => response.data)
             .then((result) => {
               if (!result) return

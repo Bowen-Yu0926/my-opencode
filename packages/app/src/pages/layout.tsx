@@ -1278,7 +1278,7 @@ export default function LegacyLayout(props: ParentProps) {
       const sdk = serverSDK()
       if ((await sdk.protocol) !== "v1") return
       const result = await sdk.client.project
-        .update({ projectID: project.id, directory: project.worktree, name })
+        .update({ projectID: project.id, query_directory: project.worktree, name })
         .then((response) => response.data)
       if (!result) return
       // const result = await serverSDK().api.project.update({ projectID: project.id, name })
