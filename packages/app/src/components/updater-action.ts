@@ -16,7 +16,7 @@ export function updaterAction(state: UpdaterState | undefined) {
     case "ready":
       return { label: "toast.update.action.installRestart" as const, run: "install" as const }
     case "installing":
-      return { label: "settings.updates.action.installing" as const }
+      return { label: "settings.updates.action.installing" as const, run: "busy" as const }
     case "dismissed":
       return { label: "titlebar.update" as const, run: "download" as const }
     case "disabled":
@@ -36,8 +36,23 @@ export function useUpdaterAction() {
     action,
     async run() {
       const run = action().run
-      if (run === "install") return platform.updater?.install()
-      if (run === "download") return platform.updater?.download()
+      if (run === "busy") return
+      try {
+        if (run === "install") {
+          await platform.updater?.install()
+          return
+        }
+        if (run === "download") {
+          await platform.updater?.download()
+          return
+        }
+      } catch (error) {
+        showToast({
+          title: language.t("settings.updates.toast.installFailed.title"),
+          description: error instanceof Error ? error.message : language.t("settings.updates.toast.installFailed.description"),
+        })
+        return
+      }
       if (run === "unavailable") {
         showToast({
           title: language.t("settings.updates.toast.unavailable.title"),

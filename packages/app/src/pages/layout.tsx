@@ -154,7 +154,12 @@ export default function LegacyLayout(props: ParentProps) {
 
   const updateVersion = () => {
     const state = platform.updater?.state()
-    if (state?.status !== "update-available" && state?.status !== "downloading" && state?.status !== "ready")
+    if (
+      state?.status !== "update-available" &&
+      state?.status !== "downloading" &&
+      state?.status !== "ready" &&
+      state?.status !== "installing"
+    )
       return
     return state.version
   }
@@ -163,9 +168,16 @@ export default function LegacyLayout(props: ParentProps) {
     const state = platform.updater?.state()
     return state?.status === "downloading" ? state.percent : undefined
   }
-  const downloadUpdate = () => void platform.updater?.download()
-  const dismissUpdate = () => void platform.updater?.dismiss()
-  const installUpdate = () => void platform.updater?.install()
+  const reportUpdateError = (error: unknown) => {
+    showToast({
+      title: language.t("settings.updates.toast.installFailed.title"),
+      description:
+        error instanceof Error ? error.message : language.t("settings.updates.toast.installFailed.description"),
+    })
+  }
+  const downloadUpdate = () => void platform.updater?.download().catch(reportUpdateError)
+  const dismissUpdate = () => void platform.updater?.dismiss().catch(reportUpdateError)
+  const installUpdate = () => void platform.updater?.install().catch(reportUpdateError)
   const titlebarUpdate: TitlebarUpdate = {
     version: updateVersion,
     status: updateStatus,
@@ -2196,8 +2208,10 @@ export default function LegacyLayout(props: ParentProps) {
     <div class="relative bg-background-base flex-1 min-h-0 min-w-0 flex flex-col select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
       {autoselecting() ?? ""}
       <Titlebar update={titlebarUpdate} />
-      <Show when={updateVersion() !== undefined}>
-        <UpdateAvailableToast version={updateVersion() ?? ""} install={installUpdate} language={language} />
+      <Show when={updateStatus() === "ready" && updateVersion()}>
+        {(version) => (
+          <UpdateAvailableToast version={version()} install={installUpdate} language={language} />
+        )}
       </Show>
       <div class="flex-1 min-h-0 min-w-0 flex">
         <div class="flex-1 min-h-0 relative">

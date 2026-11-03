@@ -1011,6 +1011,8 @@ export const dict = {
   "settings.updates.toast.unavailable.title": "Updates unavailable",
   "settings.updates.toast.unavailable.description":
     "Automatic updates only work in packaged release builds, not this development build.",
+  "settings.updates.toast.installFailed.title": "Update failed",
+  "settings.updates.toast.installFailed.description": "Could not install the update. Try downloading it again.",
   "sound.option.none": "None",
   "sound.option.alert01": "Alert 01",
   "sound.option.alert02": "Alert 02",

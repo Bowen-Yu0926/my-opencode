@@ -123,12 +123,17 @@ export function Titlebar(props: { update?: TitlebarUpdate; embedded?: boolean })
     const version = props.update?.version()
     const percent = props.update?.percent()
     return {
-      visible: status === "update-available" || status === "downloading" || status === "ready",
+      visible:
+        status === "update-available" ||
+        status === "downloading" ||
+        status === "ready" ||
+        status === "installing",
       status,
       percent,
       label: language.t("titlebar.update"),
       dismissLabel: language.t("titlebar.update.dismiss"),
       downloadLabel: language.t("titlebar.update.downloading", { percent: Math.round(percent ?? 0) }),
+      installingLabel: language.t("settings.updates.action.installing"),
       ariaLabel: language.t("toast.update.action.installRestart"),
       title: version ? language.t("titlebar.updateVersion", { version }) : undefined,
       onDownload: () => props.update?.download(),
@@ -387,6 +392,7 @@ type TitlebarUpdatePillState = {
   label: string
   dismissLabel: string
   downloadLabel: string
+  installingLabel: string
   ariaLabel: string
   title?: string
   onDownload: () => void
@@ -424,7 +430,7 @@ function TitlebarUpdateIconButton(props: { state: TitlebarUpdatePillState }) {
       class="group relative mr-3 h-5 w-5 shrink-0 rounded-full bg-v2-background-bg-deep transition-[width] duration-150 ease-out hover:z-30 focus-within:z-30 motion-reduce:transition-none"
       classList={{
         "hover:w-[96px] focus-within:w-[96px]": status === "update-available",
-        "hover:w-[104px] focus-within:w-[104px]": status === "downloading",
+        "hover:w-[104px] focus-within:w-[104px]": status === "downloading" || status === "installing",
         "hover:w-[124px] focus-within:w-[124px]": status === "ready",
       }}
     >
@@ -449,11 +455,16 @@ function TitlebarUpdateIconButton(props: { state: TitlebarUpdatePillState }) {
                 {props.state.dismissLabel}
               </button>
             </span>
-            <span class="ml-1.5 mr-px flex size-5 shrink-0 items-center justify-center">
+            <button
+              type="button"
+              class="ml-1.5 mr-px flex size-5 shrink-0 items-center justify-center focus-visible:outline-none"
+              aria-label={props.state.label}
+              onClick={props.state.onDownload}
+            >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path d="M7 11V3M3.5 7.63128L7 11L10.5 7.63128" stroke="currentColor" />
               </svg>
-            </span>
+            </button>
           </div>
         </Match>
         <Match when={status === "downloading"}>
@@ -500,6 +511,47 @@ function TitlebarUpdateIconButton(props: { state: TitlebarUpdatePillState }) {
               </svg>
             </span>
           </button>
+        </Match>
+        <Match when={status === "installing"}>
+          <div
+            class="absolute right-0 top-0 z-10 flex h-5 w-5 items-center justify-end overflow-hidden rounded-full bg-v2-icon-icon-accent/20 text-v2-icon-icon-accent transition-[width,background-color] duration-150 ease-out group-hover:w-[104px] group-hover:bg-[color-mix(in_srgb,var(--v2-icon-icon-accent)_20%,var(--v2-background-bg-deep))] group-focus-within:w-[104px] group-focus-within:bg-[color-mix(in_srgb,var(--v2-icon-icon-accent)_20%,var(--v2-background-bg-deep))] motion-reduce:transition-none"
+            aria-label={props.state.installingLabel}
+            aria-busy="true"
+          >
+            <span class="ml-[8px] mr-px shrink-0 text-[11px] text-v2-text-text-accent [font-weight:530] opacity-0 translate-x-2 motion-safe:transition-all duration-150 ease-out group-hover:opacity-100 group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:translate-x-0 motion-reduce:translate-x-0">
+              {props.state.installingLabel}
+            </span>
+            <span class="flex size-5 shrink-0 items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle
+                  cx="7"
+                  cy="7"
+                  r="5.5"
+                  stroke-width="1.5"
+                  style={{ stroke: "color-mix(in srgb, var(--v2-icon-icon-accent) 30%, transparent)" }}
+                />
+                <circle
+                  cx="7"
+                  cy="7"
+                  r="5.5"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-dasharray={`${ringCircumference * 0.25} ${ringCircumference}`}
+                  transform="rotate(-90 7 7)"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 7 7"
+                    to="360 7 7"
+                    dur="0.9s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </svg>
+            </span>
+          </div>
         </Match>
       </Switch>
     </div>

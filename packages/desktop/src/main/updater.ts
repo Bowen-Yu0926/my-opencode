@@ -42,17 +42,39 @@ export function setupAutoUpdater(stop: () => Promise<void>) {
         autoUpdater.on("download-progress", handler)
         return () => autoUpdater.off("download-progress", handler)
       },
-      quitAndInstall: () => {
+      quitAndInstall: async () => {
         // quitAndInstall closes all windows before emitting before-quit, so
         // flag the quit first to keep window ids persisted for restore.
         setAppQuitting()
+        const quitting = new Promise<void>((resolve) => {
+          app.once("before-quit", () => resolve())
+        })
         try {
-          autoUpdater.quitAndInstall()
+          // isSilent=false, isForceRunAfter=true: show NSIS UI and relaunch after install.
+          autoUpdater.quitAndInstall(false, true)
         } catch (error) {
           // The install failed and the app keeps running; clear the flag so
           // deliberate window closes prune ids again.
           setAppQuitting(false)
           throw error
+        }
+        // If the installer never starts, quitAndInstall returns while the app
+        // stays alive — surface that instead of looking like a no-op click.
+        let timer: ReturnType<typeof setTimeout> | undefined
+        try {
+          await Promise.race([
+            quitting.then(() => {
+              if (timer) clearTimeout(timer)
+            }),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => {
+                setAppQuitting(false)
+                reject(new Error("Update installer did not start"))
+              }, 5000)
+            }),
+          ])
+        } finally {
+          if (timer) clearTimeout(timer)
         }
       },
     },

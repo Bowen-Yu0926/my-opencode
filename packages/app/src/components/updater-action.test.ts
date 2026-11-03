@@ -28,6 +28,7 @@ describe("updaterAction", () => {
     })
     expect(updaterAction({ status: "installing", version: "2.0.0" })).toEqual({
       label: "settings.updates.action.installing",
+      run: "busy",
     })
   })
 })

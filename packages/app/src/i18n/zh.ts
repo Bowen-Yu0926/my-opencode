@@ -679,7 +679,7 @@ export const dict = {
   "toast.session.listFailed.title": "无法加载 {{project}} 的会话",
   "toast.update.title": "有可用更新",
   "toast.update.description": "OpenCode 有新版本 ({{version}}) 可安装。",
-  "toast.update.action.installRestart": "安装并重启",
+  "toast.update.action.installRestart": "更新并重启",
   "toast.update.action.notYet": "稍后",
 
   "error.page.title": "出了点问题",
@@ -991,6 +991,8 @@ export const dict = {
   "settings.updates.toast.latest.description": "你正在使用最新版本的 OpenCode。",
   "settings.updates.toast.unavailable.title": "无法检查更新",
   "settings.updates.toast.unavailable.description": "自动更新仅在正式安装包中可用，当前开发版不支持。",
+  "settings.updates.toast.installFailed.title": "更新失败",
+  "settings.updates.toast.installFailed.description": "无法安装更新，请重新下载后再试。",
 
   "sound.option.none": "无",
   "sound.option.alert01": "警报 01",

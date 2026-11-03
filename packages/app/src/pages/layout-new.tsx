@@ -3,18 +3,33 @@ import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
 import { TitlebarSessionTabs } from "@/components/titlebar-session-tabs"
 import { WorkspaceFilePanel } from "@/components/workspace-file-panel"
 import { WorkspaceFileTreePanel } from "@/components/workspace-file-tree-panel"
+import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
-import { setV2Toast, ToastRegion } from "@/utils/toast"
+import { setV2Toast, showToast, ToastRegion } from "@/utils/toast"
 
 export default function NewLayout(props: ParentProps) {
   const platform = usePlatform()
+  const language = useLanguage()
 
   createEffect(() => setV2Toast(true))
+
+  const reportUpdateError = (error: unknown) => {
+    showToast({
+      title: language.t("settings.updates.toast.installFailed.title"),
+      description:
+        error instanceof Error ? error.message : language.t("settings.updates.toast.installFailed.description"),
+    })
+  }
 
   const update: TitlebarUpdate = {
     version: () => {
       const state = platform.updater?.state()
-      if (state?.status !== "update-available" && state?.status !== "downloading" && state?.status !== "ready")
+      if (
+        state?.status !== "update-available" &&
+        state?.status !== "downloading" &&
+        state?.status !== "ready" &&
+        state?.status !== "installing"
+      )
         return
       return state.version
     },
@@ -23,9 +38,9 @@ export default function NewLayout(props: ParentProps) {
       const state = platform.updater?.state()
       return state?.status === "downloading" ? state.percent : undefined
     },
-    download: () => void platform.updater?.download(),
-    dismiss: () => void platform.updater?.dismiss(),
-    install: () => void platform.updater?.install(),
+    download: () => void platform.updater?.download().catch(reportUpdateError),
+    dismiss: () => void platform.updater?.dismiss().catch(reportUpdateError),
+    install: () => void platform.updater?.install().catch(reportUpdateError),
   }
 
   return (

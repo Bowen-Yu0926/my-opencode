@@ -46,7 +46,12 @@ export function WorkspaceFilePanel() {
   const updateStatus = createMemo(() => updateState()?.status)
   const updateVisible = createMemo(() => {
     const status = updateStatus()
-    return status === "update-available" || status === "downloading" || status === "ready"
+    return (
+      status === "update-available" ||
+      status === "downloading" ||
+      status === "ready" ||
+      status === "installing"
+    )
   })
   const updatePercent = createMemo(() => {
     const state = updateState()
@@ -59,6 +64,7 @@ export function WorkspaceFilePanel() {
       return language.t("titlebar.update.downloading", { percent: Math.round(state.percent ?? 0) })
     }
     if (state?.status === "ready") return language.t("toast.update.action.installRestart")
+    if (state?.status === "installing") return language.t("settings.updates.action.installing")
     if (state?.status === "update-available") {
       return language.t("titlebar.updateVersion", { version: state.version })
     }
@@ -442,7 +448,7 @@ export function WorkspaceFilePanel() {
                 class={`${NAV_ROW} text-v2-text-text-accent hover:text-v2-text-text-accent`}
                 title={updateTitle()}
                 aria-label={updateLabel()}
-                disabled={updateStatus() === "downloading"}
+                disabled={updateStatus() === "downloading" || updateStatus() === "installing"}
                 onClick={() => void updater.run()}
               >
                 <span
