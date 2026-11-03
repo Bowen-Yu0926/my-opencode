@@ -26,7 +26,8 @@ if (next === current) {
   process.exit(1)
 }
 
-const status = await $`git status --porcelain`.cwd(repoRoot).text()
+// Ignore untracked noise (e.g. local tooling folders); only block on tracked changes.
+const status = await $`git status --porcelain -uno`.cwd(repoRoot).text()
 if (status.trim()) {
   console.error("工作区有未提交改动，请先提交或清理后再发布。")
   process.exit(1)
