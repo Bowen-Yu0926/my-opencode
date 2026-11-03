@@ -104,6 +104,12 @@ export function createHomeSessionIndexCache(queryClient: QueryClient, server: st
     },
     apply(event: HomeSessionEvent) {
       if (!queryClient.getQueryState(indexKey)) return
+      if (event.type === "session.created" || event.type === "session.updated") {
+        setRemoved("ids", (ids) => {
+          if (!ids.includes(event.properties.info.id)) return ids
+          return ids.filter((id) => id !== event.properties.info.id)
+        })
+      }
       const next = appendHomeSessionEvent(queryClient.getQueryData<HomeSessionEvents>(eventsKey), event)
       if (queryClient.isFetching({ queryKey: indexKey, exact: true }) > 0) {
         queryClient.setQueryData(eventsKey, next)
@@ -111,12 +117,15 @@ export function createHomeSessionIndexCache(queryClient: QueryClient, server: st
       }
 
       const index = queryClient.getQueryData<HomeSessionIndex>(indexKey)
-      if (index) {
-        queryClient.setQueryData<HomeSessionIndex>(indexKey, {
-          sessions: homeSessionIndexSessions(index, next),
-          eventSequence: next.sequence,
-        })
+      if (!index) {
+        // Keep the event until the index finishes loading; clearing here would drop creates.
+        queryClient.setQueryData(eventsKey, next)
+        return
       }
+      queryClient.setQueryData<HomeSessionIndex>(indexKey, {
+        sessions: homeSessionIndexSessions(index, next),
+        eventSequence: next.sequence,
+      })
       queryClient.setQueryData<HomeSessionEvents>(eventsKey, { sequence: next.sequence, entries: [] })
     },
     remove(sessionID: string) {

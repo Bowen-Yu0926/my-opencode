@@ -182,4 +182,54 @@ describe("Home V2 session index", () => {
     expect(queryClient.getQueryData(cache.indexKey)).toBeUndefined()
     expect(cache.sessions({ sessions, eventSequence: 0 }, undefined).map((item) => item.id)).toEqual(["b"])
   })
+
+  test("queues create events while the Home index is fetching", async () => {
+    const queryClient = new QueryClient()
+    const cache = createHomeSessionIndexCache(queryClient, "server")
+    const created = {
+      id: "new",
+      title: "new",
+      directory: "/project",
+      time: { created: 2, updated: 2 },
+    } as Session
+    let resolve!: (value: { sessions: Session[]; eventSequence: number }) => void
+    const pending = new Promise<{ sessions: Session[]; eventSequence: number }>((next) => {
+      resolve = next
+    })
+    const fetch = queryClient.fetchQuery({
+      queryKey: cache.indexKey,
+      queryFn: () => pending,
+    })
+
+    cache.apply({
+      type: "session.created",
+      properties: { sessionID: created.id, info: created },
+    })
+
+    const events = queryClient.getQueryData<{ sequence: number; entries: Array<{ event: { type: string } }> }>(
+      cache.eventsKey,
+    )
+    expect(events?.sequence).toBe(1)
+    expect(events?.entries).toHaveLength(1)
+    expect(events?.entries[0]?.event.type).toBe("session.created")
+
+    resolve({ sessions: [], eventSequence: 0 })
+    await fetch
+  })
+
+  test("adds a created session into the loaded Home index", () => {
+    const queryClient = new QueryClient()
+    const cache = createHomeSessionIndexCache(queryClient, "server")
+    const existing = { id: "old", title: "old", directory: "/project", time: { created: 1, updated: 1 } } as Session
+    const created = { id: "new", title: "new", directory: "/project", time: { created: 2, updated: 2 } } as Session
+    queryClient.setQueryData(cache.indexKey, { sessions: [existing], eventSequence: 0 })
+
+    cache.apply({
+      type: "session.created",
+      properties: { sessionID: created.id, info: created },
+    })
+
+    const index = queryClient.getQueryData<{ sessions: Session[] }>(cache.indexKey)
+    expect(index?.sessions.map((item) => item.id)).toEqual(["old", "new"])
+  })
 })
