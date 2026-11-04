@@ -111,7 +111,19 @@ export function createFileTreeStore(options: TreeStoreOptions) {
     ensureDir(dir)
 
     const current = tree.dir[dir]
-    if (!opts?.force && current?.loaded) return Promise.resolve()
+    if (!opts?.force && current?.loaded) {
+      // prepareDir may have flipped loading=true on remount; clear it when we skip refetch.
+      if (current.loading) {
+        setTree(
+          "dir",
+          dir,
+          produce((draft) => {
+            draft.loading = false
+          }),
+        )
+      }
+      return Promise.resolve()
+    }
 
     const pending = inflight.get(dir)
     if (pending && !opts?.force) return pending

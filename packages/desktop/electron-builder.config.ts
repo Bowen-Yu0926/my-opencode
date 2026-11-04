@@ -106,6 +106,8 @@ const getBase = (appId: string): Configuration => ({
     perMachine: false,
     installerIcon: `resources/icons/icon.ico`,
     installerHeaderIcon: `resources/icons/icon.ico`,
+    // Detach Finish→Run via resources/installer.nsh so the wizard cannot hang.
+    include: "installer.nsh",
   },
   linux: {
     icon: `resources/icons`,

@@ -154,13 +154,18 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       // effect when listDir finishes; an empty root then force-reloads forever
       // and the UI sticks on "加载中…".
       const staleEmpty = untrack(() => shared.isLoaded("") && shared.children("").length === 0)
-      shared.prepareDir("")
+      const alreadyLoaded = untrack(() => shared.isLoaded(""))
+      if (!alreadyLoaded) shared.prepareDir("")
       let cancelled = false
       onCleanup(() => {
         cancelled = true
       })
-      void serverSync()
-        .whenDirectoryReady(directory)
+      const DIRECTORY_READY_TIMEOUT_MS = 8_000
+      const ready = Promise.race([
+        serverSync().whenDirectoryReady(directory),
+        new Promise<void>((resolve) => setTimeout(resolve, DIRECTORY_READY_TIMEOUT_MS)),
+      ])
+      void ready
         .then(() => {
           if (cancelled) return
           if (scope() !== directory) return

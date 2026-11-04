@@ -34,6 +34,26 @@ describe("createFileTreeStore", () => {
     expect(store.dirState("")?.error).toBeUndefined()
   })
 
+  test("prepareDir then skipped listDir clears loading on an already-loaded tree", async () => {
+    const store = createFileTreeStore({
+      scope: () => "/tmp/project",
+      normalizeDir: (input) => input.replace(/\/+$/, ""),
+      list: async () => [node("a.ts")],
+      onError: () => undefined,
+    })
+
+    await store.listDir("")
+    expect(store.dirState("")?.loaded).toBe(true)
+    expect(store.dirState("")?.loading).toBe(false)
+
+    // Remount / effect re-run marks loading, then listDir no-ops because loaded.
+    store.prepareDir("")
+    expect(store.dirState("")?.loading).toBe(true)
+    await store.listDir("")
+    expect(store.dirState("")?.loading).toBe(false)
+    expect(store.children("").map((item) => item.path)).toEqual(["a.ts"])
+  })
+
   test("settles after an empty list without staying loading", async () => {
     let calls = 0
     const store = createFileTreeStore({

@@ -9,10 +9,12 @@ export async function joinDirectoryBootstrap(input: {
   pending?: Promise<void>
   start: () => Promise<void>
 }) {
+  // partial/complete means the directory Instance is warm enough for file.list —
+  // do not wait for slow session/provider bootstrap that may hang indefinitely.
+  if (input.status !== "loading") return
   if (input.pending) {
     await input.pending
     return
   }
-  if (input.status !== "loading") return
   await input.start()
 }

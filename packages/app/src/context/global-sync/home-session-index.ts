@@ -8,14 +8,17 @@ import { isRetryableServerError } from "@/utils/server-errors"
 export const HOME_V2_SESSION_PAGE_LIMIT = 5_000
 export const HOME_SESSION_INDEX_RETRY_LIMIT = 3
 
-/** Do not race v2.session.list against a cold global bootstrap. */
-export function homeSessionIndexQueryEnabled(input: { hasContext: boolean; ready: boolean }) {
-  return input.hasContext && input.ready
+/**
+ * Enable as soon as a server context exists. Cold-start flakes are handled by
+ * shouldRetryHomeSessionIndex — do not gate forever on sync.ready or the sidebar
+ * stays on "加载中…" when bootstrap hangs.
+ */
+export function homeSessionIndexQueryEnabled(input: { hasContext: boolean; ready?: boolean }) {
+  return input.hasContext
 }
 
-/** Disabled queries report isLoading=false — treat not-ready as loading so the UI does not flash empty. */
-export function homeSessionIndexLoading(input: { ready: boolean; isLoading: boolean; isError: boolean }) {
-  if (!input.ready) return true
+/** Loading follows the query only — never spin forever waiting for sync.ready. */
+export function homeSessionIndexLoading(input: { ready?: boolean; isLoading: boolean; isError: boolean }) {
   if (input.isError) return false
   return input.isLoading
 }

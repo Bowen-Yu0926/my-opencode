@@ -240,20 +240,20 @@ describe("Home V2 session index", () => {
 })
 
 describe("Home session index query readiness", () => {
-  test("waits for sync.ready before enabling the index query", () => {
-    expect(homeSessionIndexQueryEnabled({ hasContext: true, ready: false })).toBe(false)
-    expect(homeSessionIndexQueryEnabled({ hasContext: false, ready: true })).toBe(false)
+  test("enables once a server context exists (retries cover cold bootstrap)", () => {
+    expect(homeSessionIndexQueryEnabled({ hasContext: false, ready: false })).toBe(false)
+    expect(homeSessionIndexQueryEnabled({ hasContext: true, ready: false })).toBe(true)
     expect(homeSessionIndexQueryEnabled({ hasContext: true, ready: true })).toBe(true)
   })
 
-  test("keeps the list in a loading state until sync is ready", () => {
+  test("loading follows the query, not a stuck sync.ready gate", () => {
     expect(
       homeSessionIndexLoading({
         ready: false,
         isLoading: false,
         isError: false,
       }),
-    ).toBe(true)
+    ).toBe(false)
     expect(
       homeSessionIndexLoading({
         ready: true,

@@ -44,4 +44,19 @@ describe("joinDirectoryBootstrap", () => {
     })
     expect(starts).toBe(1)
   })
+
+  test("does not wait on pending work once status is already warm", async () => {
+    let settled = false
+    const pending = new Promise<void>(() => {
+      // intentionally never resolves
+    })
+    await joinDirectoryBootstrap({
+      status: "partial",
+      pending,
+      start: async () => {
+        settled = true
+      },
+    })
+    expect(settled).toBe(false)
+  })
 })
