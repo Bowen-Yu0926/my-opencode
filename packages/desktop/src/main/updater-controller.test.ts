@@ -124,6 +124,24 @@ describe("updater controller", () => {
     expect(app.controller.getState()).toEqual({ status: "up-to-date" })
   })
 
+  test("clears a stale older ready target instead of offering a downgrade", async () => {
+    const app = setup({ currentVersion: "2.0.44", ready: { version: "2.0.37" }, updateVersion: "2.0.46" })
+
+    await app.controller.start()
+
+    expect(app.getReady()).toBeUndefined()
+    expect(app.calls).toEqual(["check"])
+    expect(app.controller.getState()).toEqual({ status: "update-available", version: "2.0.46" })
+  })
+
+  test("ignores update info that is not newer than the running version", async () => {
+    const app = setup({ currentVersion: "2.0.44", updateVersion: "2.0.37" })
+
+    await app.controller.start()
+
+    expect(app.controller.getState()).toEqual({ status: "up-to-date" })
+  })
+
   test("coalesces concurrent checks", async () => {
     const app = setup()
 

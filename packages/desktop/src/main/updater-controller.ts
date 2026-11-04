@@ -21,6 +21,28 @@ type UpdaterPersistence = {
   clearDismissed(): void | Promise<void>
 }
 
+/** True when candidate is a strictly newer dotted version than current (optional leading v). */
+export function isNewerDesktopVersion(candidate: string, current: string) {
+  const parse = (value: string) =>
+    value
+      .replace(/^v/i, "")
+      .split(".")
+      .map((part) => {
+        const match = part.match(/^\d+/)
+        return match ? Number(match[0]) : 0
+      })
+  const left = parse(candidate)
+  const right = parse(current)
+  const length = Math.max(left.length, right.length)
+  for (let index = 0; index < length; index++) {
+    const a = left[index] ?? 0
+    const b = right[index] ?? 0
+    if (a > b) return true
+    if (a < b) return false
+  }
+  return false
+}
+
 export function createUpdaterController(input: {
   enabled: boolean
   currentVersion: string
@@ -49,7 +71,7 @@ export function createUpdaterController(input: {
       transition({ status: "checking" })
       const result = await input.backend.checkForUpdates()
       const version = result?.updateInfo?.version
-      if (!result?.isUpdateAvailable || !version || version === input.currentVersion) {
+      if (!result?.isUpdateAvailable || !version || !isNewerDesktopVersion(version, input.currentVersion)) {
         await input.persistence.clearReady()
         return transition({ status: "up-to-date" })
       }
@@ -106,12 +128,11 @@ export function createUpdaterController(input: {
     },
     async start() {
       const ready = await input.persistence.getReady()
-      if (ready?.version === input.currentVersion) {
-        await input.persistence.clearReady()
-      } else if (ready) {
+      if (ready && isNewerDesktopVersion(ready.version, input.currentVersion)) {
         transition({ status: "ready", version: ready.version })
         return
       }
+      if (ready) await input.persistence.clearReady()
       return check()
     },
     check,

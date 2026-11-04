@@ -60,3 +60,12 @@ jobs:
           OPENCODE_CHANNEL: prod
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # electron-builder can race-create two Releases for the same tag; keep the
+      # one that has latest.yml so /releases/latest/download/latest.yml works.
+      - name: Consolidate GitHub release assets
+        working-directory: packages/desktop
+        run: bun scripts/consolidate-github-release.ts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
