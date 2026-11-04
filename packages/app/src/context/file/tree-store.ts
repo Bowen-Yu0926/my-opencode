@@ -1,6 +1,6 @@
 import { createStore, produce, reconcile } from "solid-js/store"
 import type { FileNode } from "@opencode-ai/sdk/v2"
-import { isTransientServerError } from "@/utils/server-errors"
+import { isRetryableFileListError, isTransientServerError } from "@/utils/server-errors"
 
 type DirectoryState = {
   expanded: boolean
@@ -23,6 +23,7 @@ const sharedTrees = new Map<string, TreeStore>()
 const sharedTreeRefs = new Map<string, number>()
 const TRANSIENT_RETRY_LIMIT = 3
 const LIST_TIMEOUT_MS = 45_000
+const retryDelayMs = (attempt: number) => Math.min(250 * 2 ** (attempt - 1), 2000)
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string) {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -89,6 +90,20 @@ export function createFileTreeStore(options: TreeStoreOptions) {
   const ensureDir = (path: string) => {
     if (tree.dir[path]) return
     setTree("dir", path, { expanded: false })
+  }
+
+  /** Show loading UI before the first list request (e.g. while directory bootstrap catches up). */
+  const prepareDir = (input: string) => {
+    const dir = options.normalizeDir(input)
+    ensureDir(dir)
+    setTree(
+      "dir",
+      dir,
+      produce((draft) => {
+        draft.loading = true
+        draft.error = undefined
+      }),
+    )
   }
 
   const listDir = (input: string, opts?: { force?: boolean }) => {
@@ -168,19 +183,18 @@ export function createFileTreeStore(options: TreeStoreOptions) {
       .catch((e) => {
         if (!isCurrent()) return
 
-        // Cold Instance bootstrap can starve /file past the client timeout;
-        // a warm retry usually returns in <1s, so treat timeouts as transient.
-        const timedOut = e instanceof Error && /timed out after \d+ms/i.test(e.message)
-        if (isTransientServerError(e) || timedOut) {
+        // Cold Instance bootstrap can starve /file with timeouts, connection
+        // resets, or 5xx before the directory is ready — retry with backoff.
+        if (isRetryableFileListError(e)) {
           const attempt = (transientAttempts.get(dir) ?? 0) + 1
           transientAttempts.set(dir, attempt)
           if (attempt <= TRANSIENT_RETRY_LIMIT) {
             // Keep loading=true while retrying so the UI does not go blank.
-            queueMicrotask(() => {
+            setTimeout(() => {
               if (generation.get(dir) !== token) return
               if (options.scope() !== directory) return
               void listDir(dir, { force: true })
-            })
+            }, retryDelayMs(attempt))
             return
           }
           transientAttempts.delete(dir)
@@ -245,6 +259,7 @@ export function createFileTreeStore(options: TreeStoreOptions) {
   }
 
   return {
+    prepareDir,
     listDir,
     refreshAll,
     expandDir,

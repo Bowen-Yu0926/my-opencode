@@ -6,6 +6,7 @@ import { useParams } from "@solidjs/router"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { getFilename } from "@opencode-ai/core/util/path"
 import { useSDK } from "./sdk"
+import { useServerSync } from "./server-sync"
 import { useSync } from "./sync"
 import { useLanguage } from "@/context/language"
 import { useLayout } from "@/context/layout"
@@ -62,6 +63,7 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
     if (!props.passive) useSync()
     const params = useParams()
     const serverSDK = useServerSDK()
+    const serverSync = useServerSync()
     const language = useLanguage()
     const layout = useLayout()
 
@@ -142,7 +144,7 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
     }
 
     createEffect(() => {
-      scope()
+      const directory = scope()
       inflight.clear()
       batch(() => {
         setStore("file", reconcile({}))
@@ -152,7 +154,24 @@ export const { use: useFile, provider: FileProvider } = createSimpleContext({
       // effect when listDir finishes; an empty root then force-reloads forever
       // and the UI sticks on "加载中…".
       const staleEmpty = untrack(() => shared.isLoaded("") && shared.children("").length === 0)
-      void shared.listDir("", staleEmpty ? { force: true } : undefined)
+      shared.prepareDir("")
+      let cancelled = false
+      onCleanup(() => {
+        cancelled = true
+      })
+      void serverSync()
+        .whenDirectoryReady(directory)
+        .then(() => {
+          if (cancelled) return
+          if (scope() !== directory) return
+          void shared.listDir("", staleEmpty ? { force: true } : undefined)
+        })
+        .catch(() => {
+          if (cancelled) return
+          if (scope() !== directory) return
+          // Bootstrap failed; still attempt list — retries cover cold-start flakes.
+          void shared.listDir("", staleEmpty ? { force: true } : undefined)
+        })
     })
 
     const viewCache = createFileViewCache(serverSDK().scope)

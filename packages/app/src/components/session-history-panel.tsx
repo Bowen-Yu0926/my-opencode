@@ -16,7 +16,15 @@ import { useLayout } from "@/context/layout"
 import { ServerConnection, useServer } from "@/context/server"
 import { useLanguage } from "@/context/language"
 import { sessionHasOpenTab, useTabs } from "@/context/tabs"
-import { loadHomeSessionIndex, retainHomeSessions, type HomeSessionEvents } from "@/context/global-sync/home-session-index"
+import {
+  homeSessionIndexLoading,
+  homeSessionIndexQueryEnabled,
+  homeSessionIndexRetryDelay,
+  loadHomeSessionIndex,
+  retainHomeSessions,
+  shouldRetryHomeSessionIndex,
+  type HomeSessionEvents,
+} from "@/context/global-sync/home-session-index"
 import { projectDirectories, sessionsForActiveProject } from "@/pages/layout/helpers"
 import { pathKey } from "@/utils/path-key"
 import { sessionTitle } from "@/utils/session-title"
@@ -68,27 +76,32 @@ export function createHomeSessionSource() {
     enabled: false,
   }))
 
-  const sessionLoad = useQuery(() => ({
-    queryKey: ctx()?.sync.homeSessions.indexKey ?? ["home-sessions-index"],
-    enabled: !!ctx(),
-    queryFn: async ({ signal }) => {
-      const active = ctx()
-      if (!active) return { sessions: [], eventSequence: 0 }
-      const cache = active.sync.homeSessions
-      const eventSequence = cache.eventSequence()
-      const index = await loadHomeSessionIndex(
-        (input, options) => active.sdk.client.v2.session.list(input, options),
-        eventSequence,
-        signal,
-      )
-      cache.complete(eventSequence)
-      return index
-    },
-    retry: false,
-    staleTime: 30_000,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
-  }))
+  const sessionLoad = useQuery(() => {
+    const active = ctx()
+    const ready = !!active?.sync.ready
+    return {
+      queryKey: active?.sync.homeSessions.indexKey ?? ["home-sessions-index"],
+      enabled: homeSessionIndexQueryEnabled({ hasContext: !!active, ready }),
+      queryFn: async ({ signal }) => {
+        const current = ctx()
+        if (!current) return { sessions: [], eventSequence: 0 }
+        const cache = current.sync.homeSessions
+        const eventSequence = cache.eventSequence()
+        const index = await loadHomeSessionIndex(
+          (input, options) => current.sdk.client.v2.session.list(input, options),
+          eventSequence,
+          signal,
+        )
+        cache.complete(eventSequence)
+        return index
+      },
+      retry: shouldRetryHomeSessionIndex,
+      retryDelay: homeSessionIndexRetryDelay,
+      staleTime: 30_000,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+    }
+  })
 
   const allSessions = createMemo(() => {
     const active = ctx()
@@ -96,6 +109,19 @@ export function createHomeSessionSource() {
     const cache = active.sync.homeSessions
     return cache.sessions(sessionLoad.data, events.data)
   })
+
+  const ready = () => !!ctx()?.sync.ready
+  const loading = () =>
+    homeSessionIndexLoading({
+      ready: ready(),
+      isLoading: sessionLoad.isLoading,
+      isError: sessionLoad.isError,
+    })
+  const error = () => {
+    if (!sessionLoad.isError) return
+    const value = sessionLoad.error
+    return value instanceof Error ? value.message : String(value)
+  }
 
   function open(session: Session) {
     const conn = server.current
@@ -192,22 +218,17 @@ export function createHomeSessionSource() {
   const isOpen = (session: Session) =>
     !!server.current && sessionHasOpenTab(tabs.store, ServerConnection.key(server.current!), session)
 
-  const isWorking = (session: Session) => {
-    const active = ctx()
-    if (!active) return false
-    return active.sync.session.data.session_working(session.id)
-  }
-
   return {
     language,
-    loading: () => sessionLoad.isLoading,
+    loading,
+    error,
+    refetch: () => void sessionLoad.refetch(),
     projects,
     allSessions,
     open,
     rename,
     remove,
     isOpen,
-    isWorking,
   }
 }
 
@@ -234,12 +255,26 @@ export function SessionHistoryList() {
         </div>
       }
     >
-      <Show
-        when={groups().length > 0}
-        fallback={
-          <div class="px-1.5 py-2 text-[13px] leading-4 text-v2-text-text-muted [font-weight:440]">
-            {source.language.t("home.sessions.empty")}
+      <Show when={source.error()}>
+        {(message) => (
+          <div class="flex flex-col items-start gap-1.5 px-1.5 py-2">
+            <div class="text-[13px] leading-4 text-v2-text-text-muted [font-weight:440]" title={message()}>
+              {source.language.t("home.sessions.loadFailed")}
+            </div>
+            <ButtonV2 variant="ghost" size="small" data-action="session-history-retry" onClick={() => source.refetch()}>
+              {source.language.t("common.retry")}
+            </ButtonV2>
           </div>
+        )}
+      </Show>
+      <Show
+        when={!source.error() && groups().length > 0}
+        fallback={
+          <Show when={!source.error()}>
+            <div class="px-1.5 py-2 text-[13px] leading-4 text-v2-text-text-muted [font-weight:440]">
+              {source.language.t("home.sessions.empty")}
+            </div>
+          </Show>
         }
       >
         <div class="flex flex-col gap-2">
@@ -254,7 +289,6 @@ export function SessionHistoryList() {
                     <SessionRow
                       session={session}
                       open={source.isOpen(session)}
-                      isWorking={() => source.isWorking(session)}
                       onOpen={() => source.open(session)}
                       onRename={(title) => source.rename(session, title)}
                       onDelete={() => source.remove(session)}
@@ -297,7 +331,25 @@ export function ProjectSessionList(props: {
 
   return (
     <Show when={!props.source.loading()}>
-      <Show when={all().length > 0}>
+      <Show when={props.source.error()}>
+        {(message) => (
+          <div class="mb-1 ml-1 flex flex-col items-start gap-1 pl-5" data-component="project-session-list-error">
+            <div class="px-1.5 text-[12px] leading-4 text-v2-text-text-muted [font-weight:440]" title={message()}>
+              {language.t("home.sessions.loadFailed")}
+            </div>
+            <ButtonV2
+              variant="ghost"
+              size="small"
+              data-action="project-session-retry"
+              class="ml-1.5"
+              onClick={() => props.source.refetch()}
+            >
+              {language.t("common.retry")}
+            </ButtonV2>
+          </div>
+        )}
+      </Show>
+      <Show when={!props.source.error() && all().length > 0}>
         <div class="mb-1 ml-1 flex flex-col gap-px pl-5" data-component="project-session-list">
           <For each={sessions()}>
             {(session) => (
@@ -305,7 +357,6 @@ export function ProjectSessionList(props: {
                 compact
                 session={session}
                 open={props.source.isOpen(session)}
-                isWorking={() => props.source.isWorking(session)}
                 onOpen={() => props.source.open(session)}
                 onRename={(title) => props.source.rename(session, title)}
                 onDelete={() => props.source.remove(session)}
@@ -332,13 +383,21 @@ function SessionRow(props: {
   session: Session
   open: boolean
   compact?: boolean
-  isWorking: () => boolean
   onOpen: () => void
   onRename: (title: string) => Promise<void>
   onDelete: () => Promise<void>
 }) {
   const language = useLanguage()
   const dialog = useDialog()
+  const server = useServer()
+  const global = useGlobal()
+  // Read session_status directly so Solid tracks busy/idle transitions for this row.
+  const isWorking = createMemo(() => {
+    const conn = server.current
+    if (!conn) return false
+    const status = global.ensureServerCtx(conn).sync.session.data.session_status[props.session.id]?.type
+    return (status ?? "idle") !== "idle"
+  })
   const title = createMemo(() => sessionTitle(props.session.title) || props.session.id)
   const time = createMemo(() => {
     const ms = props.session.time.updated ?? props.session.time.created
@@ -480,7 +539,7 @@ function SessionRow(props: {
               fallback={
                 <div class="flex min-w-0 flex-1 flex-col gap-px">
                   <span class="flex min-w-0 items-center gap-1.5">
-                    <Show when={props.isWorking()}>
+                    <Show when={isWorking()}>
                       <Spinner class="size-3 shrink-0" />
                     </Show>
                     <span class="min-w-0 truncate text-[13px] leading-4 tracking-[-0.04px]">{title()}</span>
@@ -490,7 +549,7 @@ function SessionRow(props: {
               }
             >
               <Show
-                when={props.isWorking()}
+                when={isWorking()}
                 fallback={
                   <span
                     class="size-1.5 shrink-0 rounded-full bg-v2-border-border-strong"
@@ -499,7 +558,7 @@ function SessionRow(props: {
                   />
                 }
               >
-                <Spinner class="size-3 shrink-0" />
+                <Spinner class="size-3 shrink-0 text-v2-icon-icon-accent" />
               </Show>
               <span class="min-w-0 flex-1 truncate text-[13px] leading-5 tracking-[-0.01em]">{title()}</span>
               <span class="shrink-0 text-[11px] leading-4 text-v2-text-text-faint [font-weight:400]">{time()}</span>

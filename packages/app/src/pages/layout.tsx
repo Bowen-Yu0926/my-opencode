@@ -52,7 +52,7 @@ import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme/context"
 import { useCommand, type CommandOption } from "@/context/command"
 import { ConstrainDragXAxis, getDraggableId } from "@/utils/solid-dnd"
-import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
+import { Titlebar } from "@/components/titlebar"
 import { useDirectoryPicker } from "@/components/directory-picker"
 import { ServerConnection, useServer } from "@/context/server"
 import { useLanguage, type Locale } from "@/context/language"
@@ -151,41 +151,6 @@ export default function LegacyLayout(props: ParentProps) {
     peek: undefined as string | undefined,
     peeked: false,
   })
-
-  const updateVersion = () => {
-    const state = platform.updater?.state()
-    if (
-      state?.status !== "update-available" &&
-      state?.status !== "downloading" &&
-      state?.status !== "ready" &&
-      state?.status !== "installing"
-    )
-      return
-    return state.version
-  }
-  const updateStatus = () => platform.updater?.state()?.status
-  const updatePercent = () => {
-    const state = platform.updater?.state()
-    return state?.status === "downloading" ? state.percent : undefined
-  }
-  const reportUpdateError = (error: unknown) => {
-    showToast({
-      title: language.t("settings.updates.toast.installFailed.title"),
-      description:
-        error instanceof Error ? error.message : language.t("settings.updates.toast.installFailed.description"),
-    })
-  }
-  const downloadUpdate = () => void platform.updater?.download().catch(reportUpdateError)
-  const dismissUpdate = () => void platform.updater?.dismiss().catch(reportUpdateError)
-  const installUpdate = () => void platform.updater?.install().catch(reportUpdateError)
-  const titlebarUpdate: TitlebarUpdate = {
-    version: updateVersion,
-    status: updateStatus,
-    percent: updatePercent,
-    download: downloadUpdate,
-    dismiss: dismissUpdate,
-    install: installUpdate,
-  }
 
   const editor = createInlineEditorController()
   const setBusy = (directory: string, value: boolean) => {
@@ -2207,12 +2172,7 @@ export default function LegacyLayout(props: ParentProps) {
   return (
     <div class="relative bg-background-base flex-1 min-h-0 min-w-0 flex flex-col select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
       {autoselecting() ?? ""}
-      <Titlebar update={titlebarUpdate} />
-      <Show when={updateStatus() === "ready" && updateVersion()}>
-        {(version) => (
-          <UpdateAvailableToast version={version()} install={installUpdate} language={language} />
-        )}
-      </Show>
+      <Titlebar />
       <div class="flex-1 min-h-0 min-w-0 flex">
         <div class="flex-1 min-h-0 relative">
           <div class="size-full relative overflow-x-hidden">
@@ -2361,36 +2321,3 @@ export default function LegacyLayout(props: ParentProps) {
   )
 }
 
-function UpdateAvailableToast(props: {
-  version: string
-  install: () => void
-  language: ReturnType<typeof useLanguage>
-}) {
-  let toastId: number | undefined
-
-  onMount(() => {
-    toastId = showToast({
-      persistent: true,
-      icon: "download",
-      title: props.language.t("toast.update.title"),
-      description: props.language.t("toast.update.description", { version: props.version }),
-      actions: [
-        {
-          label: props.language.t("toast.update.action.installRestart"),
-          onClick: props.install,
-        },
-        {
-          label: props.language.t("toast.update.action.notYet"),
-          onClick: "dismiss",
-        },
-      ],
-    })
-  })
-
-  onCleanup(() => {
-    if (toastId === undefined) return
-    dismissToast(toastId)
-  })
-
-  return null
-}

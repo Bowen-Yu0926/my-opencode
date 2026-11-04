@@ -188,8 +188,21 @@ function FileTreeSection(props: { refreshTick: number }) {
       </Show>
       <Show when={failed()}>
         {(message) => (
-          <div class="shrink-0 px-1.5 py-2 text-[13px] leading-4 text-v2-text-text-muted [font-weight:440]">
-            {message()}
+          <div class="flex shrink-0 flex-col items-start gap-1.5 px-1.5 py-2">
+            <div
+              class="text-[13px] leading-4 text-v2-text-text-muted [font-weight:440]"
+              title={message()}
+            >
+              {language.t("session.files.loadFailed")}
+            </div>
+            <ButtonV2
+              variant="ghost"
+              size="small"
+              data-action="workspace-file-tree-retry"
+              onClick={() => void file.tree.refresh("")}
+            >
+              {language.t("common.retry")}
+            </ButtonV2>
           </div>
         )}
       </Show>

@@ -365,6 +365,7 @@ export const dict = {
   "common.goForward": "前进",
   "common.loading": "加载中",
   "common.loading.ellipsis": "...",
+  "common.retry": "重试",
   "common.cancel": "取消",
   "common.clear": "清除",
   "common.connect": "连接",
@@ -677,10 +678,7 @@ export const dict = {
   "toast.session.export.failed.description": "导出会话时发生错误",
 
   "toast.session.listFailed.title": "无法加载 {{project}} 的会话",
-  "toast.update.title": "有可用更新",
-  "toast.update.description": "OpenCode 有新版本 ({{version}}) 可安装。",
   "toast.update.action.installRestart": "更新并重启",
-  "toast.update.action.notYet": "稍后",
 
   "error.page.title": "出了点问题",
   "error.page.description": "加载应用程序时发生错误。",
@@ -746,6 +744,7 @@ export const dict = {
   "home.sessions.search.noResults": "未找到与 {{query}} 相关的会话",
   "home.sessions.empty": "这里还没有内容",
   "home.sessions.empty.description": "创建一个会话以开始。",
+  "home.sessions.loadFailed": "无法加载会话",
   "home.sessions.group.today": "今天",
   "home.sessions.group.yesterday": "昨天",
   "home.sessions.group.older": "更早",
@@ -773,6 +772,7 @@ export const dict = {
   "session.files.selectToOpen": "选择要打开的文件",
   "session.files.all": "所有文件",
   "session.files.empty": "无文件",
+  "session.files.loadFailed": "无法加载文件",
   "session.files.binaryContent": "二进制文件（无法显示内容）",
   "session.files.delete.title": "删除文件",
   "session.files.delete.confirm": "将“{{name}}”移到回收站？",
@@ -862,7 +862,6 @@ export const dict = {
   "terminal.connectTicket.statusError": "PTY 连接票证失败，状态为 {{status}}",
 
   "titlebar.update": "更新",
-  "titlebar.update.dismiss": "忽略",
   "titlebar.update.downloading": "下载中 {{percent}}%",
   "titlebar.updateVersion": "更新 {{version}}",
 

@@ -3,8 +3,32 @@ import type { QueryClient } from "@tanstack/solid-query"
 import { createStore } from "solid-js/store"
 import { trimSessions } from "./session-trim"
 import { pathKey } from "@/utils/path-key"
+import { isRetryableServerError } from "@/utils/server-errors"
 
 export const HOME_V2_SESSION_PAGE_LIMIT = 5_000
+export const HOME_SESSION_INDEX_RETRY_LIMIT = 3
+
+/** Do not race v2.session.list against a cold global bootstrap. */
+export function homeSessionIndexQueryEnabled(input: { hasContext: boolean; ready: boolean }) {
+  return input.hasContext && input.ready
+}
+
+/** Disabled queries report isLoading=false — treat not-ready as loading so the UI does not flash empty. */
+export function homeSessionIndexLoading(input: { ready: boolean; isLoading: boolean; isError: boolean }) {
+  if (!input.ready) return true
+  if (input.isError) return false
+  return input.isLoading
+}
+
+export function shouldRetryHomeSessionIndex(failureCount: number, error: unknown) {
+  if (failureCount >= HOME_SESSION_INDEX_RETRY_LIMIT) return false
+  return isRetryableServerError(error)
+}
+
+/** TanStack Query passes a 0-based attempt index into retryDelay. */
+export function homeSessionIndexRetryDelay(attemptIndex: number) {
+  return Math.min(250 * 2 ** attemptIndex, 2000)
+}
 
 export type HomeSessionEvent = {
   type: "session.created" | "session.updated" | "session.deleted"

@@ -440,12 +440,12 @@ export function WorkspaceFilePanel() {
             </div>
           </div>
 
-          <div class="mt-1 flex shrink-0 flex-col gap-0.5 border-t border-v2-border-border-muted px-2 pt-1 pb-1.5">
+          <div class="mt-1 flex shrink-0 items-center gap-0.5 border-t border-v2-border-border-muted px-2 pt-1 pb-1.5">
             <Show when={updateVisible()}>
               <button
                 type="button"
                 data-action="workspace-panel-update"
-                class={`${NAV_ROW} text-v2-text-text-accent hover:text-v2-text-text-accent`}
+                class={`${NAV_ROW} min-w-0 flex-1 text-v2-text-text-accent hover:text-v2-text-text-accent`}
                 title={updateTitle()}
                 aria-label={updateLabel()}
                 disabled={updateStatus() === "downloading" || updateStatus() === "installing"}
@@ -487,7 +487,13 @@ export function WorkspaceFilePanel() {
                 <span class="min-w-0 truncate text-[13px] leading-5 tracking-[-0.01em]">{updateLabel()}</span>
               </button>
             </Show>
-            <button type="button" data-action="workspace-panel-settings" class={NAV_ROW} onClick={openSettings}>
+            <button
+              type="button"
+              data-action="workspace-panel-settings"
+              class={`${NAV_ROW} min-w-0`}
+              classList={{ "flex-1": !updateVisible() }}
+              onClick={openSettings}
+            >
               <IconV2 name="settings-gear" size="small" class="shrink-0 text-v2-icon-icon-muted" />
               <span class="min-w-0 truncate text-[13px] leading-5 tracking-[-0.01em]">
                 {language.t("sidebar.settings")}

@@ -12,6 +12,9 @@ export function HomeSessions(props: {
     <HomeSessionsView
       language={props.sessions.copy.language}
       groups={props.sessions.data.groups}
+      loading={props.sessions.data.loading}
+      error={props.sessions.data.error}
+      onRetry={props.sessions.data.refetch}
       showProjectName={props.sessions.session.showProjectName}
       server={props.sessions.session.server}
       canCreateSession={props.sessions.session.canCreate}

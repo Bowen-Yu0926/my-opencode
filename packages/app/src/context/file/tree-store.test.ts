@@ -21,6 +21,19 @@ async function loadRoot(
 }
 
 describe("createFileTreeStore", () => {
+  test("prepareDir marks the root as loading before listDir", () => {
+    const store = createFileTreeStore({
+      scope: () => "/tmp/project",
+      normalizeDir: (input) => input.replace(/\/+$/, ""),
+      list: async () => [],
+      onError: () => undefined,
+    })
+
+    store.prepareDir("")
+    expect(store.dirState("")?.loading).toBe(true)
+    expect(store.dirState("")?.error).toBeUndefined()
+  })
+
   test("settles after an empty list without staying loading", async () => {
     let calls = 0
     const store = createFileTreeStore({
@@ -99,6 +112,30 @@ describe("createFileTreeStore", () => {
     // Subsequent kickoffs without force must no-op once loaded.
     await store.listDir("")
     expect(calls).toBe(2)
+  })
+
+  test("retries fetch failures with backoff then settles", async () => {
+    let calls = 0
+    const store = createFileTreeStore({
+      scope: () => "/tmp/project",
+      normalizeDir: (input) => input.replace(/\/+$/, ""),
+      list: async () => {
+        calls++
+        if (calls < 3) throw new Error("fetch failed")
+        return [node("ok.ts")]
+      },
+      onError: () => undefined,
+    })
+
+    const pending = store.listDir("")
+    expect(store.dirState("")?.loading).toBe(true)
+    await pending
+    // First attempt failed and scheduled retries; wait for backoff retries.
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+    expect(calls).toBe(3)
+    expect(store.dirState("")?.loading).toBe(false)
+    expect(store.dirState("")?.error).toBeUndefined()
+    expect(store.children("").map((item) => item.path)).toEqual(["ok.ts"])
   })
 
   test("superseded force requests do not leave loading stuck", async () => {

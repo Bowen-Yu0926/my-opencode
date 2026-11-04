@@ -5,12 +5,17 @@ import {
   applyHomeSessionEvent,
   appendHomeSessionEvent,
   createHomeSessionIndexCache,
+  HOME_SESSION_INDEX_RETRY_LIMIT,
   HOME_V2_SESSION_PAGE_LIMIT,
+  homeSessionIndexLoading,
+  homeSessionIndexQueryEnabled,
+  homeSessionIndexRetryDelay,
   loadHomeSessionIndex,
   homeSessionIndexSessions,
   homeSessionIndexRefresh,
   parseHomeSessionIndex,
   retainHomeSessions,
+  shouldRetryHomeSessionIndex,
 } from "./home-session-index"
 
 const session = (input: {
@@ -231,5 +236,54 @@ describe("Home V2 session index", () => {
 
     const index = queryClient.getQueryData<{ sessions: Session[] }>(cache.indexKey)
     expect(index?.sessions.map((item) => item.id)).toEqual(["old", "new"])
+  })
+})
+
+describe("Home session index query readiness", () => {
+  test("waits for sync.ready before enabling the index query", () => {
+    expect(homeSessionIndexQueryEnabled({ hasContext: true, ready: false })).toBe(false)
+    expect(homeSessionIndexQueryEnabled({ hasContext: false, ready: true })).toBe(false)
+    expect(homeSessionIndexQueryEnabled({ hasContext: true, ready: true })).toBe(true)
+  })
+
+  test("keeps the list in a loading state until sync is ready", () => {
+    expect(
+      homeSessionIndexLoading({
+        ready: false,
+        isLoading: false,
+        isError: false,
+      }),
+    ).toBe(true)
+    expect(
+      homeSessionIndexLoading({
+        ready: true,
+        isLoading: true,
+        isError: false,
+      }),
+    ).toBe(true)
+    expect(
+      homeSessionIndexLoading({
+        ready: true,
+        isLoading: false,
+        isError: false,
+      }),
+    ).toBe(false)
+    expect(
+      homeSessionIndexLoading({
+        ready: true,
+        isLoading: false,
+        isError: true,
+      }),
+    ).toBe(false)
+  })
+
+  test("retries cold-start session list failures with backoff", () => {
+    expect(shouldRetryHomeSessionIndex(0, new Error("fetch failed"))).toBe(true)
+    expect(shouldRetryHomeSessionIndex(HOME_SESSION_INDEX_RETRY_LIMIT - 1, new Error("Failed to fetch"))).toBe(true)
+    expect(shouldRetryHomeSessionIndex(HOME_SESSION_INDEX_RETRY_LIMIT, new Error("fetch failed"))).toBe(false)
+    expect(shouldRetryHomeSessionIndex(0, new Error("Permission denied"))).toBe(false)
+    expect(homeSessionIndexRetryDelay(0)).toBe(250)
+    expect(homeSessionIndexRetryDelay(1)).toBe(500)
+    expect(homeSessionIndexRetryDelay(3)).toBe(2000)
   })
 })

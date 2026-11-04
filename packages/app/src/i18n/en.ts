@@ -244,6 +244,7 @@ export const dict = {
   "common.goForward": "Navigate forward",
   "common.loading": "Loading",
   "common.loading.ellipsis": "...",
+  "common.retry": "Retry",
   "common.cancel": "Cancel",
   "common.clear": "Clear",
   "common.open": "Open",
@@ -587,10 +588,7 @@ export const dict = {
   "toast.session.listFailed.title": "Failed to load sessions for {{project}}",
   "toast.project.reloadFailed.title": "Failed to reload {{project}}",
 
-  "toast.update.title": "Update available",
-  "toast.update.description": "A new version of OpenCode ({{version}}) is now available to install.",
   "toast.update.action.installRestart": "Install and restart",
-  "toast.update.action.notYet": "Not yet",
 
   "error.page.title": "Something went wrong",
   "error.page.description": "An error occurred while loading the application.",
@@ -668,6 +666,7 @@ export const dict = {
   "home.sessions.search.noResults": "No sessions found for {{query}}",
   "home.sessions.empty": "Nothing here yet",
   "home.sessions.empty.description": "Create a session to get started",
+  "home.sessions.loadFailed": "Couldn't load sessions",
   "home.sessions.group.today": "Today",
   "home.sessions.group.yesterday": "Yesterday",
   "home.sessions.group.older": "Older",
@@ -700,6 +699,7 @@ export const dict = {
   "session.files.selectToOpen": "Select a file to open",
   "session.files.all": "All files",
   "session.files.empty": "No files",
+  "session.files.loadFailed": "Couldn't load files",
   "session.files.binaryContent": "Binary file (content cannot be displayed)",
   "session.files.delete.title": "Delete file",
   "session.files.delete.confirm": 'Move "{{name}}" to the trash?',
@@ -818,7 +818,6 @@ export const dict = {
   "terminal.connectTicket.statusError": "PTY connect ticket failed with {{status}}",
 
   "titlebar.update": "Update",
-  "titlebar.update.dismiss": "Ignore",
   "titlebar.update.downloading": "Downloading {{percent}}%",
   "titlebar.updateVersion": "Update {{version}}",
 

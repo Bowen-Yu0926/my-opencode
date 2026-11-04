@@ -3,6 +3,8 @@ import type { SessionNotFoundError } from "@opencode-ai/sdk/v2/client"
 import type { ConfigInvalidError, ProviderModelNotFoundError } from "./server-errors"
 import {
   formatServerError,
+  isRetryableFileListError,
+  isRetryableServerError,
   isSessionNotFoundError,
   isTransientServerError,
   parseReadableConfigInvalidError,
@@ -190,5 +192,21 @@ describe("isTransientServerError", () => {
       ),
     ).toBe(true)
     expect(isTransientServerError(new Error("Request failed with status 503"))).toBe(false)
+  })
+})
+
+describe("isRetryableServerError", () => {
+  test("retries cold-start connection and 5xx failures", () => {
+    expect(isRetryableServerError(new Error("fetch failed"))).toBe(true)
+    expect(isRetryableServerError(new Error("Failed to fetch"))).toBe(true)
+    expect(isRetryableServerError(new Error("connect ECONNREFUSED 127.0.0.1:4096"))).toBe(true)
+    expect(isRetryableServerError(new Error("file.list timed out after 45000ms"))).toBe(true)
+    expect(
+      isRetryableServerError(
+        new Error("Request failed with status 503", { cause: { status: 503 } }),
+      ),
+    ).toBe(true)
+    expect(isRetryableServerError(new Error("Permission denied"))).toBe(false)
+    expect(isRetryableFileListError).toBe(isRetryableServerError)
   })
 })

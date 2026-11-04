@@ -567,13 +567,15 @@ export function AppInterface(props: {
   // The visual new layout lives in the router root so it remains mounted across
   // route changes. Draft and session routes override only their server-bound data
   // providers beneath it.
+  //
+  // Do not nest another QueryClientProvider here. GlobalProvider's server sync
+  // (including homeSessions.apply on session create) binds to the AppBaseProviders
+  // QueryClient; a nested client would leave the left session tree on a stale cache.
   const ServerShell = (shellProps: ParentProps) => (
-    <QueryProvider>
-      <SharedProviders>
-        {props.children}
-        {shellProps.children}
-      </SharedProviders>
-    </QueryProvider>
+    <SharedProviders>
+      {props.children}
+      {shellProps.children}
+    </SharedProviders>
   )
 
   return (

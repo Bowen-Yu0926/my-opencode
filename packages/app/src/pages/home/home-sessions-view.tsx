@@ -39,6 +39,9 @@ function isBackgroundOpen(event: MouseEvent) {
 export type HomeSessionsViewProps = {
   language: ReturnType<typeof useLanguage>
   groups: Accessor<HomeSessionGroup[]>
+  loading: Accessor<boolean>
+  error: Accessor<string | undefined>
+  onRetry: () => void
   showProjectName: Accessor<boolean>
   server: Accessor<ServerConnection.Key>
   canCreateSession: Accessor<boolean>
@@ -105,43 +108,58 @@ export function HomeSessionsView(props: HomeSessionsViewProps) {
         />
       </div>
       <div class="-mr-3 min-h-[calc(100cqh-56px)] lg:min-h-[calc(100cqh-80px)]">
-        <Suspense
+        <Show
+          when={!props.loading()}
           fallback={
             <div class="pt-3">
               <HomeSessionSkeleton label={props.language.t("common.loading")} />
             </div>
           }
         >
-          <Show
-            when={props.groups().length > 0}
-            fallback={
-              <HomeSessionsEmpty
-                onNewSession={props.canCreateSession() ? props.onCreateSession : undefined}
-                language={props.language}
-              />
-            }
-          >
-            <div ref={props.onSetContent} class="flex flex-col pt-2 pr-3 pb-10">
-              <For each={props.groups()}>
-                {(group, index) => (
-                  <>
-                    <HomeSessionGroupHeader
-                      title={group.title}
-                      titleOpacity={props.titleOpacity(group.id)}
-                      onSetRef={(element) => props.onSetHeader(group.id, element)}
-                      elevated={index() === 0}
-                    />
-                    <div
-                      class={`flex min-w-0 flex-col gap-px pt-2 ${index() === props.groups().length - 1 ? "" : "mb-4"}`}
-                    >
-                      <For each={group.sessions}>{(record) => <HomeSessionRow {...props} record={record} />}</For>
-                    </div>
-                  </>
-                )}
-              </For>
-            </div>
+          <Show when={props.error()}>
+            {(message) => (
+              <div class="flex flex-col items-start gap-2 pt-3 pr-3" data-component="home-session-load-error">
+                <div class="text-[13px] leading-4 text-v2-text-text-muted [font-weight:440]" title={message()}>
+                  {props.language.t("home.sessions.loadFailed")}
+                </div>
+                <ButtonV2 variant="ghost" size="small" data-action="home-session-retry" onClick={() => props.onRetry()}>
+                  {props.language.t("common.retry")}
+                </ButtonV2>
+              </div>
+            )}
           </Show>
-        </Suspense>
+          <Show when={!props.error()}>
+            <Show
+              when={props.groups().length > 0}
+              fallback={
+                <HomeSessionsEmpty
+                  onNewSession={props.canCreateSession() ? props.onCreateSession : undefined}
+                  language={props.language}
+                />
+              }
+            >
+              <div ref={props.onSetContent} class="flex flex-col pt-2 pr-3 pb-10">
+                <For each={props.groups()}>
+                  {(group, index) => (
+                    <>
+                      <HomeSessionGroupHeader
+                        title={group.title}
+                        titleOpacity={props.titleOpacity(group.id)}
+                        onSetRef={(element) => props.onSetHeader(group.id, element)}
+                        elevated={index() === 0}
+                      />
+                      <div
+                        class={`flex min-w-0 flex-col gap-px pt-2 ${index() === props.groups().length - 1 ? "" : "mb-4"}`}
+                      >
+                        <For each={group.sessions}>{(record) => <HomeSessionRow {...props} record={record} />}</For>
+                      </div>
+                    </>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </Show>
+        </Show>
       </div>
     </section>
   )

@@ -7,8 +7,12 @@ import { type Accessor, createEffect, createMemo, createRoot, type JSX, startTra
 import { produce } from "solid-js/store"
 import { useCommand } from "@/context/command"
 import {
+  homeSessionIndexLoading,
+  homeSessionIndexQueryEnabled,
+  homeSessionIndexRetryDelay,
   loadHomeSessionIndex,
   retainHomeSessions,
+  shouldRetryHomeSessionIndex,
   type HomeSessionEvents,
 } from "@/context/global-sync/home-session-index"
 import type { LocalProject } from "@/context/layout"
@@ -58,27 +62,32 @@ export function createHomeSessionsController(home: HomeController) {
     initialData: { sequence: 0, entries: [] } satisfies HomeSessionEvents,
     enabled: false,
   }))
-  const sessionLoad = useQuery(() => ({
-    queryKey: homeSessions().indexKey,
-    enabled: !!home.server.focusedContext(),
-    queryFn: async ({ signal }) => {
-      const ctx = home.server.focusedContext()
-      if (!ctx) return { sessions: [], eventSequence: 0 }
-      const cache = homeSessions()
-      const eventSequence = cache.eventSequence()
-      const index = await loadHomeSessionIndex(
-        (input, options) => ctx.sdk.client.v2.session.list(input, options),
-        eventSequence,
-        signal,
-      )
-      cache.complete(eventSequence)
-      return index
-    },
-    retry: false,
-    staleTime: 30_000,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
-  }))
+  const sessionLoad = useQuery(() => {
+    const ctx = home.server.focusedContext()
+    const ready = !!home.server.focusedSync().ready
+    return {
+      queryKey: homeSessions().indexKey,
+      enabled: homeSessionIndexQueryEnabled({ hasContext: !!ctx, ready }),
+      queryFn: async ({ signal }) => {
+        const current = home.server.focusedContext()
+        if (!current) return { sessions: [], eventSequence: 0 }
+        const cache = homeSessions()
+        const eventSequence = cache.eventSequence()
+        const index = await loadHomeSessionIndex(
+          (input, options) => current.sdk.client.v2.session.list(input, options),
+          eventSequence,
+          signal,
+        )
+        cache.complete(eventSequence)
+        return index
+      },
+      retry: shouldRetryHomeSessionIndex,
+      retryDelay: homeSessionIndexRetryDelay,
+      staleTime: 30_000,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+    }
+  })
   const indexedSessions = createMemo(() =>
     retainHomeSessions(
       homeSessions().sessions(sessionLoad.data, sessionEventLoad.data),
@@ -177,7 +186,18 @@ export function createHomeSessionsController(home: HomeController) {
     data: {
       records,
       groups,
-      loading: () => sessionLoad.isLoading,
+      loading: () =>
+        homeSessionIndexLoading({
+          ready: !!home.server.focusedContext() && !!home.server.focusedSync().ready,
+          isLoading: sessionLoad.isLoading,
+          isError: sessionLoad.isError,
+        }),
+      error: () => {
+        if (!sessionLoad.isError) return
+        const value = sessionLoad.error
+        return value instanceof Error ? value.message : String(value)
+      },
+      refetch: () => void sessionLoad.refetch(),
       searchRecords: allRecords,
     },
     session: {

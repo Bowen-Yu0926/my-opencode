@@ -55,6 +55,33 @@ export function isTransientServerError(error: unknown) {
   )
 }
 
+/**
+ * Cold server / Instance bootstrap often fails with connection / 5xx noise before
+ * the backend is ready. Retry these without treating every abort as fatal.
+ */
+export function isRetryableServerError(error: unknown) {
+  if (isTransientServerError(error)) return true
+  if (error instanceof Error && /timed out after \d+ms/i.test(error.message)) return true
+  const status = serverErrorStatus(error)
+  if (status !== undefined && status >= 500 && status <= 599) return true
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : ""
+  if (!message) return false
+  return (
+    /\b50[0-9]\b/.test(message) ||
+    /fetch failed/i.test(message) ||
+    /Failed to fetch/i.test(message) ||
+    /NetworkError/i.test(message) ||
+    /ECONNREFUSED/i.test(message) ||
+    /ECONNRESET/i.test(message) ||
+    /ETIMEDOUT/i.test(message) ||
+    /ENOTFOUND/i.test(message) ||
+    /socket hang up/i.test(message) ||
+    /other side closed/i.test(message)
+  )
+}
+
+export const isRetryableFileListError = isRetryableServerError
+
 function serverErrorStatus(error: unknown) {
   if (error === null || typeof error !== "object") return
   if ("cause" in error) {

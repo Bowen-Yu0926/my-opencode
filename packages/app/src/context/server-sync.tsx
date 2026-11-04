@@ -45,6 +45,7 @@ import { useGlobal } from "./global"
 import { ServerConnection, useServer } from "./server"
 import { retry } from "@opencode-ai/core/util/retry"
 import type { ServerScope } from "@/utils/server-scope"
+import { joinDirectoryBootstrap } from "./global-sync/directory-ready"
 import { createHomeSessionIndexCache } from "./global-sync/home-session-index"
 import { persisted } from "@/utils/persist"
 import type { ServerApi } from "@/utils/server"
@@ -555,6 +556,21 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
     return promise
   }
 
+  /**
+   * Wait until the directory Instance bootstrap has finished (or is already warm)
+   * so file.list does not race a cold worktree.
+   */
+  async function whenDirectoryReady(directory: string) {
+    const key = directoryKey(directory)
+    if (!key) return
+    const [store] = children.child(directory)
+    await joinDirectoryBootstrap({
+      status: store.status,
+      pending: booting.get(key),
+      start: () => bootstrapInstance(directory),
+    })
+  }
+
   const indexSession = (info: Parameters<typeof session.remember>[0]) => {
     const key = directoryKey(info.directory)
     const existing = children.children[key]
@@ -729,6 +745,7 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
     child: children.child,
     peek: children.peek,
     disableMcp: children.disableMcp,
+    whenDirectoryReady,
     queryOptions: queryOptionsApi,
     refreshProviders,
     dropConnectedProvider,
