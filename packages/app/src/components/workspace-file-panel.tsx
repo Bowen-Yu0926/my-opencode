@@ -27,6 +27,11 @@ const NAV_ROW =
   "focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:text-v2-text-text-base focus-visible:outline-none\n" +
   "disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-v2-text-text-muted"
 
+const NAV_ACTION =
+  `${NAV_ROW} group cursor-pointer transition-[background-color,color,transform] duration-[120ms] ease-out\n` +
+  "active:scale-[0.97] active:bg-v2-overlay-simple-overlay-pressed active:text-v2-text-text-base\n" +
+  "disabled:active:scale-100 disabled:active:bg-transparent"
+
 export function WorkspaceFilePanel() {
   const language = useLanguage()
   const server = useServer()
@@ -255,17 +260,30 @@ export function WorkspaceFilePanel() {
             <button
               type="button"
               data-action="workspace-panel-new-session"
-              class={NAV_ROW}
+              class={NAV_ACTION}
               onClick={newSession}
               disabled={!activeDirectory()}
             >
-              <IconV2 name="workspace-new" size="small" class="shrink-0 text-v2-icon-icon-muted" />
+              <IconV2
+                name="workspace-new"
+                size="small"
+                class="shrink-0 text-v2-icon-icon-muted transition-colors duration-[120ms] group-hover:text-v2-icon-icon-base group-active:text-v2-icon-icon-base"
+              />
               <span class="min-w-0 truncate text-[13px] leading-5 tracking-[-0.01em]">
                 {language.t("sidebar.action.newSession")}
               </span>
             </button>
-            <button type="button" data-action="workspace-panel-search" class={NAV_ROW} onClick={() => command.show()}>
-              <IconV2 name="magnifying-glass" size="small" class="shrink-0 text-v2-icon-icon-muted" />
+            <button
+              type="button"
+              data-action="workspace-panel-search"
+              class={NAV_ACTION}
+              onClick={() => command.show()}
+            >
+              <IconV2
+                name="magnifying-glass"
+                size="small"
+                class="shrink-0 text-v2-icon-icon-muted transition-colors duration-[120ms] group-hover:text-v2-icon-icon-base group-active:text-v2-icon-icon-base"
+              />
               <span class="min-w-0 truncate text-[13px] leading-5 tracking-[-0.01em]">
                 {language.t("sidebar.action.search")}
               </span>
